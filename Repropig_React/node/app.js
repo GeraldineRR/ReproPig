@@ -13,6 +13,10 @@ app.use(cors())
 
 app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)
+app.use('/api/Nacimiento',NacimientoRoutes)
+app.use('/api/mortalidad', mortalidadRoutes)
+app.use('/api/Partos', PartosRoutes)
+app.use('/api/responsables', responsablesRoutes)
 
 
 try {
