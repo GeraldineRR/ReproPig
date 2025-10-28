@@ -7,6 +7,7 @@ import NacimientoRoutes from './routes/NacimientoRoutes.js'
 import mortalidadRoutes from './routes/mortalidadRoutes.js'
 import PartosRoutes from './routes/PartosRoutes.js'
 import responsablesRoutes from './routes/responsablesRoutes.js'
+import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
 import dotenv from 'dotenv'
 
 const app = express()
@@ -21,6 +22,7 @@ app.use('/api/Nacimiento',NacimientoRoutes)
 app.use('/api/mortalidad', mortalidadRoutes)
 app.use('/api/Partos', PartosRoutes)
 app.use('/api/responsables', responsablesRoutes)
+app.use('/api/reproducciones', reproduccionesRoutes)
 
 
 try {
