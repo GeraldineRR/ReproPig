@@ -7,7 +7,7 @@ const PorcinoModel = db.define('porcinos', {
     Num_Chapeta: { type: DataTypes.INTEGER },
     Nom_Porcino: { type: DataTypes.STRING },
     Fec_Nac_Porcino: { type: DataTypes.DATE },
-    Genero_Porcino: { type: DataTypes.CHAR },
+    Genero_Porcino: { type: DataTypes.CHAR ('F', 'M')},
     Cant_Pez_Porcino: { type: DataTypes.INTEGER, allowNull: true },
     Origen_Porcino: { type: DataTypes.STRING, allowNull: true },
     Id_Raza: { type: DataTypes.NUMBER },

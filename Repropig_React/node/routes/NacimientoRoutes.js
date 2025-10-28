@@ -1,4 +1,4 @@
-import express from 'expres'
+import express from 'express'
 import { getAllNacimiento, getNacimiento, createNacimiento,updateNacimiento, deleteNacimiento }from '../controllers/NacimientoController.js'
 
 const router = express.Router()

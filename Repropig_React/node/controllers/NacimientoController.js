@@ -1,6 +1,6 @@
-import NacimientoService from "../services/NacimientoService";
+import NacimientoService from "../services/NacimientoService.js";
 
-export const getAllNacimiento = async (requestAnimationFrame, res) => {
+export const getAllNacimiento = async (req, res) => {
     try{
         const Nacimiento = await NacimientoService.getAll()
         res.status(200).json(Nacimiento)
@@ -20,7 +20,7 @@ export const getNacimiento = async (req,res) => {
 export const createNacimiento = async (req, res) =>{
     try{
         const Nacimiento = await NacimientoService.create(req.body)
-        res.status(201).json({message:"Nacimiento creado",player})
+        res.status(201).json({message:"Nacimiento creado", Nacimiento})
     }catch(error){
         res.status(400).json({message:error.message})
     }

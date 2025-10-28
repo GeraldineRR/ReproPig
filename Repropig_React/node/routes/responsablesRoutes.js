@@ -1,13 +1,12 @@
 import express from 'express'
-import { getALLResponsables, getResponsables, createResponsables, updateResponsables, delateresponsables } from '../controllers/responsableController.js'
-import { createResponsables } from '../controllers/playerController';
+import { getAllResponsables, getResponsables, createResponsables, updateResponsables, deleteResponsables } from '../controllers/responsablesController.js';
 
 const router = express.Router();
 
-router.get('/', getALLResponsables);
+router.get('/', getAllResponsables);
 router.get('/:id', getResponsables);
 router.post('/', createResponsables);
 router.put('/:id', updateResponsables);
-router.delete('/:id', delateresponsables);
+router.delete('/:id', deleteResponsables);
 
 export default router;
