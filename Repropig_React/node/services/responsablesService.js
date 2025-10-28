@@ -1,4 +1,4 @@
-import resposablesmodel from "../models/playerModel"; 
+import resposablesmodel from "../models/responsablesModel.js"; 
 
 class responsablesservice {
 

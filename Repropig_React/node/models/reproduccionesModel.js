@@ -6,8 +6,8 @@ const reproduccionesModel = db.define('reproducciones', {
     Id_Porcino: { type: DataTypes.NUMBER }, 
     Id_Porcino_MachoRep: { type: DataTypes.NUMBER },
     Fecha_servicio: { type: DataTypes.DATE },
-    Tipo_Servicio: { type: DataTypes.ENUM('Monta', 'Inseminacion') },
-    Resultado: { type: DataTypes.ENUM('pendiente', '1RC','2RC','preñada','vacia') },
+    Tipo_Servicio: { type: DataTypes.STRING('Monta', 'Inseminacion') },
+    Resultado: { type: DataTypes.STRING('pendiente', '1RC','2RC','preñada','vacia') },
 }, {
     freezeTableName: true
 })
