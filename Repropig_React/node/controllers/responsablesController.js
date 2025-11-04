@@ -1,8 +1,8 @@
-import responsablesservice from '../services/responsablesService.js';
+import ResponsablesService from "../services/ResponsablesService.js";
 
 export const getAllResponsables = async (req, res) => {
     try {
-        const responsables = await responsablesservice.getALL();
+        const responsables = await ResponsablesService.getAll()
         res.status(200).json(responsables)
 
     } catch (error) {
@@ -10,49 +10,46 @@ export const getAllResponsables = async (req, res) => {
     }
 }
 
+
 export const getResponsables = async (req, res) => {
     try {
-
-        const responsables = await responsablesservice.getById(req.params.id);
-        res.status(200).json(responsables)
+        const responsable = await ResponsablesService.getById(req.params.id)
+        res.status(200).json(responsable)
 
     } catch (error) {
         res.status(404).json({ message: error.message })
-
     }
 }
+
 
 export const createResponsables = async (req, res) => {
     try {
-        
-        const Responsables = await responsablesservice.create(req.body)
-        res.status(201).json({message: 'Resposable Creado', Responsables})
+        const responsable = await ResponsablesService.create(req.body)
+        res.status(201).json({message: 'responsable creado', responsable})
 
     } catch (error) {
-
         res.status(400).json({ message: error.message })
-
     }
 }
+
 
 export const updateResponsables = async (req, res) => {
     try {
-        await responsablesservice.update(req.params.id, req.body)
-        res.status(200).json({ message: 'Resposable Actualizado correctamente' })
+        await ResponsablesService.update(req.params.id, req.body)
+        res.status(200).json({ message: 'responsable actualizado correctamente' })
 
     } catch (error) {
         res.status(400).json({ message: error.message })
-
     }
 }
 
+
 export const deleteResponsables = async (req, res) => {
     try {
-        await responsablesservice.delete(req.params.id)
+        await ResponsablesService.delete(req.params.id)
         res.status(204).send()
 
     } catch (error) {
         res.status(400).json({ message: error.message })
-
     }
 }
