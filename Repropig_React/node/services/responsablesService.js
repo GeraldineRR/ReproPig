@@ -15,12 +15,12 @@ class responsablesservice {
     }
 
     async create(data) {
-        return await resposablesmodel.create(data);
+        return await resposablesmodel.create(data)
     }
 
 
     async update(id, data) {
-        const result = await resposablesmodel.update(data, { where: {id} })
+        const result = await resposablesmodel.update(data, { where: {id_responsable: id} })
         const update = result[0];
 
         if (update === 0) throw new Error('Resposable no encontrado o sin cambios');
@@ -29,7 +29,7 @@ class responsablesservice {
     }
 
     async delete(id) {
-        const delate = await resposablesmodel.destroy({ where: {id} });
+        const delate = await resposablesmodel.destroy({ where: {id_responsable: id} });
 
         if (!delate) throw new Error('Resposable no encontrado');
         return true;
