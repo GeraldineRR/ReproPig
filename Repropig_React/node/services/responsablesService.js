@@ -1,41 +1,35 @@
-import resposablesmodel from "../models/responsablesModel.js"; 
+import ResponsablesModel from "../models/responsablesModel.js"
 
-class responsablesservice {
+class ResponsablesService {
 
-    async getALL() {
-        return await resposablesmodel.findAll();
+    async getAll() {
+        return await ResponsablesModel.findAll()
     }
 
     async getById(id) {
-
-        const resposable = await resposablesmodel.findByPk(id);
-        if (!resposable) throw new Error('Resposable not found');
-        return resposable;
-
+        const responsable = await ResponsablesModel.findByPk(id)
+        if (!responsable) throw new Error('Responsable no encontrado')
+        return responsable
     }
 
     async create(data) {
-        return await resposablesmodel.create(data);
+        return await ResponsablesModel.create(data)
     }
 
-
     async update(id, data) {
-        const result = await resposablesmodel.update(data, { where: {id} })
-        const update = result[0];
+        const result = await ResponsablesModel.update(data, { where: { id_responsable: id } })
+        const update = result[0]
 
-        if (update === 0) throw new Error('Resposable no encontrado o sin cambios');
-
+        if (update === 0) throw new Error('Responsable no encontrado o sin cambios')
         return true
     }
 
     async delete(id) {
-        const delate = await resposablesmodel.destroy({ where: {id} });
+        const deleted = await ResponsablesModel.destroy({ where: { id_responsable: id } })
 
-        if (!delate) throw new Error('Resposable no encontrado');
-        return true;
+        if (!deleted) throw new Error('Responsable no encontrado')
+        return true
     }
-
 }
 
-
-export default new responsablesservice();
+export default new ResponsablesService()
