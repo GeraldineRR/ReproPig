@@ -10,7 +10,6 @@ export const getAllPorcinos = async (req, res) => {
     }
 }
 
-
 export const getPorcino = async (req, res) => {
     try {
         const porcino = await PorcinoService.getById(req.params.id)
@@ -20,7 +19,6 @@ export const getPorcino = async (req, res) => {
         res.status(404).json({ message: error.message })
     }
 }
-
 
 export const createPorcino = async (req, res) => {
     try {

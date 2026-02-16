@@ -1,13 +1,27 @@
 import PorcinoModel from "../models/porcinoModel.js"
+import RazaModel from "../models/razaModel.js"
 
 class PorcinoService {
 
     async getAll() {
-        return await PorcinoModel.findAll()
+        return await PorcinoModel.findAll({ 
+            include: [
+                { 
+                model: RazaModel,
+                as: 'razas'},
+            ]
+        })
     }
 
     async getById(id) {
-        const porcino = await PorcinoModel.findByPk(id)
+        const porcino = await PorcinoModel.findByPk(id, {
+            include: [
+                {
+                    model: RazaModel,
+                    as: 'razas'
+                }
+            ]
+    })
         if (!porcino) throw new Error('Porcino no encontrado')
         return porcino
     }
