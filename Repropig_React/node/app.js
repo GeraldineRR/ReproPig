@@ -3,7 +3,6 @@ import cors from 'cors'
 import db from './database/db.js'
 import porcinoRoutes from './routes/porcinoRoutes.js'
 import razaRoutes from './routes/razaRoutes.js'
-import NacimientoRoutes from './routes/NacimientoRoutes.js'
 import MedicamentosRoutes from './routes/MedicamentosRoutes.js'
 import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
 import colectaRoutes from './routes/colectaRoutes.js'
@@ -28,7 +27,6 @@ app.use(cors())
 // Rutas
 app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)
-app.use('/api/Nacimiento', NacimientoRoutes)
 app.use('/api/medicamentos', MedicamentosRoutes)
 app.use('/api/reproducciones', reproduccionesRoutes)
 app.use('/api/colecta', colectaRoutes)
