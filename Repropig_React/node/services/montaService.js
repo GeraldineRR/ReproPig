@@ -1,19 +1,29 @@
 import montaModel from "../models/montaModel.js";
-
+import PorcinoModel from "../models/porcinoModel.js";
 
 class montaService {
 
     async getAll() {
         return await montaModel.findAll({
-            
+            include: [
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',
+                }
+            ]
         })
     }
 
     async getById(id) {
 
-        const Monta = await montaModel.findByPk(id)
-        if (!Monta) throw new Error('Monta no encontrada');
-        return Monta;
+        const Monta = await montaModel.findByPk(id, {
+    include: [{
+        model: PorcinoModel,
+        as: 'porcino'
+    }]
+})
+        if (!Monta) throw new Error('Monta no encontrada')
+        return Monta
     }
 
 

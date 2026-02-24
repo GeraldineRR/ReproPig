@@ -1,9 +1,13 @@
 import inseminacionModel from "../models/inseminacionModel.js";
-
+import PorcinoModel from "../models/porcinoModel.js";
 class inseminacionService {
 
     async getAll() {
         return await inseminacionModel.findAll({
+             include: [{
+                model: PorcinoModel,
+                as: 'porcino'
+            }]
             
         })
     }
