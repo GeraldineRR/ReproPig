@@ -1,13 +1,10 @@
 import db from '../database/db.js';
 import { DataTypes } from 'sequelize';
 
-const reproduccionesModel = db.define('reproducciones', {
+const reproduccionesModel = db.define('reproduccion', {
     Id_Reproduccion: { type: DataTypes.NUMBER, primaryKey: true, autoIncrement: true },
-    Id_Porcino: { type: DataTypes.NUMBER }, 
-    Id_Porcino_MachoRep: { type: DataTypes.NUMBER },
-    Fecha_servicio: { type: DataTypes.DATE },
-    Tipo_Servicio: { type: DataTypes.STRING('Monta', 'Inseminacion') },
-    Resultado: { type: DataTypes.STRING('pendiente', '1RC','2RC','preñada','vacia') },
+    Id_Cerda: { type: DataTypes.NUMBER }, 
+    Activo: { type:DataTypes.TEXT},
 }, {
     freezeTableName: true
 })
