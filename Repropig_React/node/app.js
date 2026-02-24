@@ -5,33 +5,40 @@ import porcinoRoutes from './routes/porcinoRoutes.js'
 import razaRoutes from './routes/razaRoutes.js'
 import NacimientoRoutes from './routes/NacimientoRoutes.js'
 import MedicamentosRoutes from './routes/MedicamentosRoutes.js'
-import PartosRoutes from './routes/PartosRoutes.js'
-import responsablesRoutes from './routes/responsablesRoutes.js'
 import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
-import dotenv from 'dotenv'
+import colectaRoutes from './routes/colectaRoutes.js'
+import montaRoutes from './routes/montaRoutes.js'
+import inseminacionRoutes from './routes/inseminacionRoutes.js'
 import MedicamentosModel from './models/MedicamentosModel.js'
-import ResponsablesModel from './models/responsablesModel.js'
+import dotenv from 'dotenv'
+
+
+
 import PorcinoModel from './models/porcinoModel.js'
+import RazaModel from './models/razaModel.js'
+import montaModel from './models/montaModel.js'
+import colectaModel from './models/colectaModel.js'
+import inseminacionModel from './models/inseminacionModel.js'
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
 
-
+// Rutas
 app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)
-app.use('/api/Nacimiento',NacimientoRoutes)
+app.use('/api/Nacimiento', NacimientoRoutes)
 app.use('/api/medicamentos', MedicamentosRoutes)
-app.use('/api/Partos', PartosRoutes)
-app.use('/api/responsables', responsablesRoutes)
 app.use('/api/reproducciones', reproduccionesRoutes)
+app.use('/api/colecta', colectaRoutes)
+app.use('/api/monta', montaRoutes)
+app.use('/api/inseminacion', inseminacionRoutes)
 
-
+// Conexión DB
 try {
     await db.authenticate()
     console.log('Conexión a la base de datos exitosa')
-
 } catch (error) {
     console.error('Error al conectar a la base de datos:', error)
     process.exit(1)
@@ -44,7 +51,21 @@ app.get('/', (req, res) => {
 dotenv.config();
 const PORT = process.env.PORT || 8000;
 
+// Relaciones
+PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'razas' })
+RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
+
+colectaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })
+
+montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(montaModel, { foreignKey: 'Id_Porcino', as: 'montas' })
+
+inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
+
 app.listen(PORT, () => {
     console.log(`Server up running in http://localhost:${PORT}`)
 })
+
 export default app

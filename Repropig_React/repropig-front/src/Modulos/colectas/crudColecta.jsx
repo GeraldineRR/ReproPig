@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import apiAxios from "../api/axiosConfig.js";
+import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import ColectaForm from "./colectaForm.jsx";
 
@@ -17,7 +17,7 @@ const CrudColecta = () => {
         { name: 'Fecha', selector: row => row.Fecha },
         { name: 'Uso_colecta', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
-        { name: 'Id_Porcino', selector: row => row.Id_Porcino },
+        { name: 'Id_Porcino', selector: row => row.porcino?.Id_Porcino || row.Id_Porcino },
         { name: 'Id_Responsables', selector: row => row.Id_Responsables },
         { name: 'Volumen', selector: row => row.volumen },
         { name: 'Color', selector: row => row.color },
@@ -75,7 +75,7 @@ const CrudColecta = () => {
                 <div className="col-2">
                     <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal"
                     onClick={() => setRowToEdit({})}> {/*limpiar el formulario para agregar un nuevo registro*/}
-                        Nuevo
+                        Nueva Colecta
                     </button>
                 </div>
                 <DataTable
@@ -103,7 +103,8 @@ const CrudColecta = () => {
                             <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
                         </div>
                         <div className="modal-body">
-                            <ColectaForm hideModal={hideModal} rowToEdit={rowToEdit} />
+                            <ColectaForm hideModal={hideModal} rowToEdit={rowToEdit}refreshTable={getAllColectas}/>
+
                         </div>
                     </div>
                 </div>

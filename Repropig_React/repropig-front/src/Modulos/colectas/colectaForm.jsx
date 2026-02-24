@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import apiAxios from "../api/axiosConfig.js";
+import apiAxios from "../../api/axiosConfig.js";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
 
-const ColectaForm = ({hideModal, rowToEdit = {}}) => {
+
+const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable }) => {
     const MySwal = WithReactContent(Swal)
 
-    const [Id_colecta, setId_colecta] = useState('');
     const [Fecha, setFecha] = useState('');
     const [Uso_colecta, setUso_colecta] = useState('');
     const [Tipo, setTipo] = useState('');
@@ -18,13 +18,27 @@ const ColectaForm = ({hideModal, rowToEdit = {}}) => {
     const [cant_generada, setCant_generada] = useState('');
     const [cant_utilizada, setCant_utilizada] = useState('');
     const [Observaciones, setObservaciones] = useState('');
-
+    const [porcinos, setPorcinos] = useState([]);
     const [textFormButton, setTextFormButton] = useState('Agregar Colecta');
+
+    useEffect(() => {
+        getPorcinos()
+    }, [])
+
+    const getPorcinos = async () => {
+        try{
+        const response = await apiAxios.get('/api/porcino')
+        setPorcinos(response.data)
+        console.log(response.data)
+    }catch(error){
+        console.error('Error al obtener porcinos:', error);
+    }
+    }
 
     useEffect(() => {
         if (rowToEdit.Id_colecta) {
             loadDataInform()
-        }else{
+        } else {
             setFecha('')
             setUso_colecta('')
             setTipo('')
@@ -36,72 +50,83 @@ const ColectaForm = ({hideModal, rowToEdit = {}}) => {
             setCant_generada('')
             setCant_utilizada('')
             setObservaciones('')
+            setTextFormButton('Agregar Colecta')
         }
     }, [rowToEdit]);
-    
+
     const loadDataInform = () => {
-            setFecha(rowToEdit.Fecha)
-            setUso_colecta(rowToEdit.Uso_colecta)
-            setTipo(rowToEdit.Tipo)
-            setId_Porcino(rowToEdit.Id_Porcino)
-            setId_Responsables(rowToEdit.Id_Responsables)
-            setVolumen(rowToEdit.volumen)
-            setColor(rowToEdit.color)
-            setOlor(rowToEdit.olor)
-            setCant_generada(rowToEdit.cant_generada)
-            setCant_utilizada(rowToEdit.cant_utilizada)
-            setObservaciones(rowToEdit.Observaciones)
-            setTextFormButton('Actualizar Colecta')
+        setFecha(rowToEdit.Fecha?.split('T')[0] || '')
+        setUso_colecta(rowToEdit.Uso_colecta)
+        setTipo(rowToEdit.Tipo)
+        setId_Porcino(rowToEdit.Id_Porcino)
+        setId_Responsables(rowToEdit.Id_Responsables)
+        setVolumen(rowToEdit.volumen)
+        setColor(rowToEdit.color)
+        setOlor(rowToEdit.olor)
+        setCant_generada(rowToEdit.cant_generada)
+        setCant_utilizada(rowToEdit.cant_utilizada)
+        setObservaciones(rowToEdit.Observaciones)
+        setTextFormButton('Actualizar Colecta')
     }
 
     const gestionarForm = async (e) => {
         e.preventDefault();
-            const formData = {
-                Fecha,
-                Uso_colecta,
-                Tipo,
-                Id_Porcino,
-                Id_Responsables,
-                volumen,
-                color,
-                olor,
-                cant_generada,
-                cant_utilizada,
-                Observaciones
-            };
+        const formData = {
+            Fecha,
+            Uso_colecta,
+            Tipo,
+            Id_Porcino,
+            Id_Responsables,
+            volumen: parseFloat(volumen) || 0,
+            color,
+            olor,
+            cant_generada: parseFloat(cant_generada) || 0,
+            cant_utilizada: parseFloat(cant_utilizada) || 0,
+            Observaciones
+        };
 
         if (textFormButton === 'Agregar Colecta') {
             try {
-               const response = await apiAxios.post('/api/colecta',formData, {
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            })//enviar el formulario al backend con el metodo post 
-                const data =response.data// axios devuelve el cuerpo de la respuesta en la propiedad data
+                const response = await apiAxios.post('/api/colecta', formData, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })//enviar el formulario al backend con el metodo post 
+                const data = response.data// axios devuelve el cuerpo de la respuesta en la propiedad data
 
-                alert('Colecta creada con éxito')
+                
+
                 MySwal.fire({
-                    title:"Actualizacion exitosa",
-                    text:"colecta creada con éxito",
-                    icon:"success",
+                    title: "Actualizacion exitosa",
+                    text: "colecta creada con éxito",
+                    icon: "success",
                 })
+
                 hideModal()
+                refreshTable()
 
             } catch (error) {
                 console.error('Error al crear colecta:', error.response ? error.response.data : error.message);
                 alert(error.message)
             }
-        }else if (textFormButton === 'Actualizar Colecta') {
+        } else if (textFormButton === 'Actualizar Colecta') {
             try {
-                const response = await apiAxios.put('/api/colecta/'+rowToEdit.Id_colecta, formData, {
+                const response = await apiAxios.put('/api/colecta/' + rowToEdit.Id_colecta, formData, {
                     headers: {
                         'Content-Type': 'application/json',
                     }
                 })//enviar el formulario al backend con el metodo post
 
-                    const data =response.data// axios devuelve el cuerpo de la respuesta en la propiedad data
-                    alert('Colecta actualizada con éxito')
-                    hideModal()
+                const data = response.data// axios devuelve el cuerpo de la respuesta en la propiedad data
+                hideModal()
+                refreshTable()
+                
+                MySwal.fire({
+                    title: "Actualizacion exitosa",
+                    text: "Colecta actualizada con éxito",
+                    icon: "success",
+                })
+
             } catch (error) {
                 console.error('Error al actualizar colecta:', error.response ? error.response.data : error.message);
                 alert(error.message)
@@ -130,22 +155,25 @@ const ColectaForm = ({hideModal, rowToEdit = {}}) => {
                         <option value="No">No</option>
                     </select>
                 </div>
-                <div>
+                <div className="mb-3">
                     <label className="form-label">Tipo</label>
                     <select className="form-select"
                         value={Tipo}
                         onChange={e => setTipo(e.target.value)}>
                         <option value="">Seleccione</option>
-                        <option value="Colecta">Interno</option>
+                        <option value="Interno">Interno</option>
                         <option value="Externo">Externo</option>
                     </select>
                 </div>
-                <div>
-                    <label className="form-label">ID Porcino</label>
-                    <input type="text" className="form-control"
-                        value={Id_Porcino}
-                        onChange={e => setId_Porcino(e.target.value)} />
-                </div>
+                <div className="mb-3">
+                    <label htmlFor="Id_porcino" className="form-label">Porcino</label>
+                    <select id="Id_porcino" className="form-select" value={Id_Porcino} onChange={e => setId_Porcino(e.target.value)}>
+                        <option value="">Seleccione un porcino</option>
+                        {porcinos.map(porcino => (
+                            <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>{porcino.Nom_Porcino}</option>
+                        ))}
+                    </select>
+                </div> 
                 <div className="mb-3">
                     <label className="form-label">ID Responsable</label>
                     <input type="text" className="form-control"

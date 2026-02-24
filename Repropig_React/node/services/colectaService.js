@@ -1,17 +1,18 @@
 import colectaModel from "../models/colectaModel.js";
+import PorcinoModel from "../models/porcinoModel.js";
 
 class colectaService {
 
     async getAll() {
-        return await colectaModel.findAll()
-        //     {
-        //         include: [{
-        //             model: PorcinoModel,
-        //             as: 'Id_porcino',
+        return await colectaModel.findAll(
+            {
+                include: [{
+                    model: PorcinoModel,
+                    as: 'porcino',
         
-        //         }]
-            
-        // })
+                }]
+        }
+    )
     }
 
     async getById(id) {
