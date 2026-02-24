@@ -79,10 +79,10 @@ const NavBar = () => {
                 <NavLink className="nav-link text-white px-2 small opacity-80" to="/colecta">Colecta</NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link text-white px-2 small opacity-80" to="/Seguimiento Cerda">Seguimiento Cerda</NavLink>
+                <NavLink className="nav-link text-white px-2 small opacity-80" to="/Seguimiento_Cerda">Seguimiento Cerda</NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link text-white px-2 small opacity-80" to="/Seguimiento Camada">Seguimiento Camada</NavLink>
+                <NavLink className="nav-link text-white px-2 small opacity-80" to="/Seguimiento_Camada">Seguimiento Camada</NavLink>
               </li>
 
               <li className="nav-item">
@@ -145,10 +145,10 @@ const NavBar = () => {
             <button onClick={() => revisarOffCanvas('/colecta')} className="list-group-item list-group-item-action py-3 border-bottom text-secondary">
               Colecta
             </button>
-            <button onClick={() => revisarOffCanvas('/Seguimiento Cerda')} className="list-group-item list-group-item-action py-3 border-bottom text-secondary">
+            <button onClick={() => revisarOffCanvas('/Seguimiento_Cerda')} className="list-group-item list-group-item-action py-3 border-bottom text-secondary">
               Seguimiento Cerda
             </button>
-            <button onClick={() => revisarOffCanvas('/Seguimiento Camada')} className="list-group-item list-group-item-action py-3 border-bottom text-secondary">
+            <button onClick={() => revisarOffCanvas('/Seguimiento_Camada')} className="list-group-item list-group-item-action py-3 border-bottom text-secondary">
               Seguimiento Camada
             </button>
             <button onClick={() => revisarOffCanvas('/Medicamentos')} className="list-group-item list-group-item-action py-3 border-bottom text-secondary">

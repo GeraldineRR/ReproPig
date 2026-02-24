@@ -16,6 +16,9 @@ import CrudInseminacion from "./Modulos/inseminaciones/crudInseminacion"
 import CrudMedicamentos from "./Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Reproducciones/crudReproducciones"
 
+// Modulos Alejandra
+import CrudSeguimiento_Cerda from "./Modulos/Seguimiento_Cerda/CrudSeguimiento_Cerda"
+
 function App() {
   return (
     <>
@@ -36,6 +39,9 @@ function App() {
         {/* Módulos Andry */}
         <Route path="/medicamentos" element={<CrudMedicamentos />} />
         <Route path="/reproducciones" element={<CrudReproducciones />} />
+
+        {/* Módulos Alejandra */}
+        <Route path="/seguimiento_cerda" element={<CrudSeguimiento_Cerda />} />
 
       </Routes>
     </>
