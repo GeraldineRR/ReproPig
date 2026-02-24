@@ -8,7 +8,11 @@ class ResponsablesService {
 
     async getById(id) {
         const responsable = await ResponsablesModel.findByPk(id)
-        if (!responsable) throw new Error('Responsable no encontrado')
+
+        if (!responsable) {
+            throw new Error('Responsable no encontrado')
+        }
+
         return responsable
     }
 
@@ -17,17 +21,28 @@ class ResponsablesService {
     }
 
     async update(id, data) {
-        const result = await ResponsablesModel.update(data, { where: { id_responsable: id } })
-        const update = result[0]
+        const result = await ResponsablesModel.update(data, { 
+            where: { Id_Responsable: id }  
+        })
 
-        if (update === 0) throw new Error('Responsable no encontrado o sin cambios')
+        const updated = result[0]
+
+        if (updated === 0) {
+            throw new Error('Responsable no encontrado o sin cambios')
+        }
+
         return true
     }
 
     async delete(id) {
-        const deleted = await ResponsablesModel.destroy({ where: { id_responsable: id } })
+        const deleted = await ResponsablesModel.destroy({ 
+            where: { Id_Responsable: id }   
+        })
 
-        if (!deleted) throw new Error('Responsable no encontrado')
+        if (!deleted) {
+            throw new Error('Responsable no encontrado')
+        }
+
         return true
     }
 }

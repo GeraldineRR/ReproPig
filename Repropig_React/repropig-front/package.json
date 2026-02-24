@@ -1,5 +1,5 @@
 {
-  "name": "repropig_mysql",
+  "name": "package.json",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -10,14 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^1.13.2",
+    "axios": "^1.13.1",
     "bootstrap": "^5.3.8",
-    "install": "^0.13.0",
-    "npm": "^11.6.2",
+    "localforage": "^1.10.0",
+    "match-sorter": "^8.1.0",
     "react": "^19.1.1",
     "react-data-table-component": "^7.7.0",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5",
+    "sort_by": "^1.2.0",
     "sweetalert2": "^11.26.3",
     "sweetalert2-react-content": "^5.1.0"
   },
@@ -26,15 +27,10 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react-swc": "^4.1.0",
-    "autoprefixer": "^10.4.24",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.4.0",
-    "init": "^0.1.2",
-    "npx": "^10.2.2",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.4",
     "vite": "^7.1.7"
   }
 }
