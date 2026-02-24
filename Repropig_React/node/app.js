@@ -3,8 +3,16 @@ import cors from 'cors'
 import db from './database/db.js'
 import porcinoRoutes from './routes/porcinoRoutes.js'
 import razaRoutes from './routes/razaRoutes.js'
+import NacimientoRoutes from './routes/NacimientoRoutes.js'
+import MedicamentosRoutes from './routes/MedicamentosRoutes.js'
+import PartosRoutes from './routes/PartosRoutes.js'
+import responsablesRoutes from './routes/responsablesRoutes.js'
+import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
 import dotenv from 'dotenv'
+import MedicamentosModel from './models/MedicamentosModel.js'
+import ResponsablesModel from './models/responsablesModel.js'
 import PorcinoModel from './models/porcinoModel.js'
+<<<<<<< HEAD
 import RazaModel from './models/razaModel.js'
 import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
@@ -14,6 +22,8 @@ import inseminacionRoutes from './routes/inseminacionRoutes.js'
 import inseminacionModel from './models/inseminacionModel.js'
 import { fileURLToPath } from 'url'
 import path from 'path'
+=======
+>>>>>>> feature-Andry
 
 
 const app = express()
@@ -24,10 +34,18 @@ app.use(cors())
 
 app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)
+<<<<<<< HEAD
 app.use('/api/colecta', colectaRoutes)
 app.use('/api/monta', montaRoutes)
 app.use('/api/inseminacion', inseminacionRoutes)
 
+=======
+app.use('/api/Nacimiento',NacimientoRoutes)
+app.use('/api/medicamentos', MedicamentosRoutes)
+app.use('/api/Partos', PartosRoutes)
+app.use('/api/responsables', responsablesRoutes)
+app.use('/api/reproducciones', reproduccionesRoutes)
+>>>>>>> feature-Andry
 
 
 try {
@@ -58,5 +76,8 @@ PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as : 'insemi
 app.listen(PORT, () => {
     console.log(`Server up running in http://localhost:${PORT}`)
 })
+<<<<<<< HEAD
 
+=======
+>>>>>>> feature-Andry
 export default app
