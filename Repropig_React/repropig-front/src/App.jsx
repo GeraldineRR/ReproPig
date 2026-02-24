@@ -15,30 +15,35 @@ import CrudInseminacion from "./Modulos/inseminaciones/crudInseminacion"
 // Módulos Andry
 import CrudMedicamentos from "./Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Reproducciones/crudReproducciones"
+import Login from "./pages/Login";
 
 function App() {
   return (
-    <>
-      <NavBar />
-      <Routes>
+    <Routes>
 
-        {/* Landing */}
-        <Route path="/" element={<Landing />} />
+      {/* Landing SIN Navbar */}
+      <Route path="/" element={<Landing />} />
 
-        {/* Home */}
-        <Route path="/home" element={<Home />} />
+      {/* Todas las demás rutas CON Navbar */}
+      <Route
+        path="/*"
+        element={
+          <>
+            <NavBar />
+            <Routes>
+              <Route path="home" element={<Home />} />
+              <Route path="colectas" element={<CrudColecta />} />
+              <Route path="montas" element={<CrudMonta />} />
+              <Route path="inseminaciones" element={<CrudInseminacion />} />
+              <Route path="medicamentos" element={<CrudMedicamentos />} />
+              <Route path="reproducciones" element={<CrudReproducciones />} />
+              <Route path="/login" element={<Login />} />
+            </Routes>
+          </>
+        }
+      />
 
-        {/* Módulos David */}
-        <Route path="/colectas" element={<CrudColecta />} />
-        <Route path="/montas" element={<CrudMonta />} />
-        <Route path="/inseminaciones" element={<CrudInseminacion />} />
-
-        {/* Módulos Andry */}
-        <Route path="/medicamentos" element={<CrudMedicamentos />} />
-        <Route path="/reproducciones" element={<CrudReproducciones />} />
-
-      </Routes>
-    </>
+    </Routes>
   )
 }
 
