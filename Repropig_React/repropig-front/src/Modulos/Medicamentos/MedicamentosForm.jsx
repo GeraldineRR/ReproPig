@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import apiAxios from "../api/axiosConfig.js"
+import apiAxios from "../../api/axiosConfig.js"
 
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'

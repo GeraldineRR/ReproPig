@@ -8,16 +8,17 @@ import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
 import colectaRoutes from './routes/colectaRoutes.js'
 import montaRoutes from './routes/montaRoutes.js'
 import inseminacionRoutes from './routes/inseminacionRoutes.js'
-import MedicamentosModel from './models/MedicamentosModel.js'
+
 import dotenv from 'dotenv'
 
-
-
+import reproduccionesModel from './models/reproduccionesModel.js'
+import MedicamentosModel from './models/MedicamentosModel.js'
 import PorcinoModel from './models/porcinoModel.js'
 import RazaModel from './models/razaModel.js'
 import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
+
 
 const app = express()
 
@@ -62,6 +63,8 @@ PorcinoModel.hasMany(montaModel, { foreignKey: 'Id_Porcino', as: 'montas' })
 inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
 
+reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
+PorcinoModel.hasMany(reproduccionesModel, {  foreignKey: 'Id_Cerda', as: 'reproducciones' })
 app.listen(PORT, () => {
     console.log(`Server up running in http://localhost:${PORT}`)
 })
