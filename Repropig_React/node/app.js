@@ -8,8 +8,10 @@ import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
 import colectaRoutes from './routes/colectaRoutes.js'
 import montaRoutes from './routes/montaRoutes.js'
 import inseminacionRoutes from './routes/inseminacionRoutes.js'
+import responsablesRoutes from './routes/responsablesRoutes.js' // 👈 agregado
 
 import dotenv from 'dotenv'
+dotenv.config() // 👈 movido arriba (mejor práctica)
 
 import reproduccionesModel from './models/reproduccionesModel.js'
 import MedicamentosModel from './models/MedicamentosModel.js'
@@ -18,7 +20,6 @@ import RazaModel from './models/razaModel.js'
 import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
-
 
 const app = express()
 
@@ -33,6 +34,7 @@ app.use('/api/reproducciones', reproduccionesRoutes)
 app.use('/api/colecta', colectaRoutes)
 app.use('/api/monta', montaRoutes)
 app.use('/api/inseminacion', inseminacionRoutes)
+app.use('/api/responsables', responsablesRoutes) // 👈 agregado
 
 // Conexión DB
 try {
@@ -47,8 +49,7 @@ app.get('/', (req, res) => {
     res.send('Hola mundo ADSO')
 })
 
-dotenv.config();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8000
 
 // Relaciones
 PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'razas' })
@@ -64,7 +65,8 @@ inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porci
 PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
 
 reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
-PorcinoModel.hasMany(reproduccionesModel, {  foreignKey: 'Id_Cerda', as: 'reproducciones' })
+PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
+
 app.listen(PORT, () => {
     console.log(`Server up running in http://localhost:${PORT}`)
 })

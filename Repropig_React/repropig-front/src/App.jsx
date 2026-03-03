@@ -1,5 +1,5 @@
-import { Routes, Route } from "react-router-dom"
-import Navbar from "./components/layout/Navbar" // el navbar inteligente
+import { Routes, Route } from "react-router-dom" 
+import Navbar from "./components/layout/Navbar"
 
 // Landing
 import Landing from "./pages/landing"
@@ -14,6 +14,9 @@ import CrudInseminacion from "./Modulos/inseminaciones/crudInseminacion"
 import CrudMedicamentos from "./Modulos/Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Modulos/Reproducciones/crudReproducciones"
 
+// 🔥 Módulo JuanFe
+import CrudResponsables from "./Responsables/crudresponsables.jsx"
+
 function App() {
   return (
     <>
@@ -27,6 +30,9 @@ function App() {
         <Route path="/inseminaciones" element={<CrudInseminacion />} />
         <Route path="/medicamentos" element={<CrudMedicamentos />} />
         <Route path="/reproducciones" element={<CrudReproducciones />} />
+
+        {/* Ruta nueva */}
+        <Route path="/responsables" element={<CrudResponsables />} />
       </Routes>
     </>
   )
