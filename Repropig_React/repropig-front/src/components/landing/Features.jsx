@@ -13,9 +13,10 @@ function Features() {
     { nombre: "Responsables",         ruta: "/responsables",    icon: "👤", color: "#F0F4FF", accent: "#A0B0E8", desc: "Gestión de responsables y roles del sistema porcícola.",                                    activo: true },
     { nombre: "Porcinos",             ruta: "/porcinos",        icon: "🐖", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro y seguimiento completo de los porcinos de la granja.",                             activo: true },
     { nombre: "Razas",             ruta: "/razas",               icon: "🧬", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro de las razas de porcinos.",                             activo: true },
+    { nombre: "Partos",               ruta: null,               icon: "🍼", color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.",                           activo: true },
     // ── Próximamente ──
     
-    { nombre: "Partos",               ruta: null,               icon: "🍼", color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.",                           activo: false },
+    
     { nombre: "Historial",            ruta: null,               icon: "📋", color: "#F4F4F0", accent: "#B0B8A0", desc: "Historial completo de eventos y registros del sistema.",                                   activo: false },
   ]
 

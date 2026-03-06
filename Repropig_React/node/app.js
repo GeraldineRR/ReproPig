@@ -77,6 +77,8 @@ PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'insemin
 reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
 PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
 
+// 
+
 app.listen(PORT, () => {
     console.log(`Server up running in http://localhost:${PORT}`)
 })

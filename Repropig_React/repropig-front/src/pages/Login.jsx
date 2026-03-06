@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
 import apiAxios from '../api/axiosConfig'
 import { useAuth } from '../context/AuthContext'
+import logo from '../assets/logo.png'
 
 export default function Login() {
     const [modo, setModo] = useState('login') // 'login' | 'register'
@@ -121,8 +122,7 @@ export default function Login() {
             }}>
                 {/* Header */}
                 <div className="text-center mb-4">
-                    <div style={{ fontSize: '44px' }}>🐷</div>
-                    <h2 style={{ color: '#C97A85', fontWeight: 'bold', margin: '8px 0 4px' }}>ReproPig</h2>
+                    <img src={logo} alt="ReproPig" style={{ height: '90px', objectFit: 'contain', marginBottom: '8px', display: 'block', margin: '0 auto 8px' }} />
                     <p style={{ color: '#aaa', fontSize: '0.9rem' }}>
                         {modo === 'login' ? 'Inicia sesión para continuar' : 'Crea tu cuenta'}
                     </p>
@@ -168,13 +168,13 @@ export default function Login() {
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Nombres</label>
                                 <input type="text" className="form-control" value={form.Nombres}
-                                    onChange={e => setForm({...form, Nombres: e.target.value})}
+                                    onChange={e => setForm({ ...form, Nombres: e.target.value })}
                                     required style={inputStyle} />
                             </div>
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Apellidos</label>
                                 <input type="text" className="form-control" value={form.Apellidos}
-                                    onChange={e => setForm({...form, Apellidos: e.target.value})}
+                                    onChange={e => setForm({ ...form, Apellidos: e.target.value })}
                                     required style={inputStyle} />
                             </div>
                         </div>
@@ -182,13 +182,13 @@ export default function Login() {
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Documento</label>
                                 <input type="text" className="form-control" value={form.Documento}
-                                    onChange={e => setForm({...form, Documento: e.target.value})}
+                                    onChange={e => setForm({ ...form, Documento: e.target.value })}
                                     required style={inputStyle} />
                             </div>
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Cargo</label>
                                 <select className="form-select" value={form.Cargo}
-                                    onChange={e => setForm({...form, Cargo: e.target.value})}
+                                    onChange={e => setForm({ ...form, Cargo: e.target.value })}
                                     required style={inputStyle}>
                                     <option value="">Seleccione</option>
                                     <option value="Gestor">Gestor</option>
@@ -201,13 +201,13 @@ export default function Login() {
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Teléfono</label>
                                 <input type="text" className="form-control" value={form.Telefono}
-                                    onChange={e => setForm({...form, Telefono: e.target.value})}
+                                    onChange={e => setForm({ ...form, Telefono: e.target.value })}
                                     style={inputStyle} />
                             </div>
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Email</label>
                                 <input type="email" className="form-control" value={form.Email}
-                                    onChange={e => setForm({...form, Email: e.target.value})}
+                                    onChange={e => setForm({ ...form, Email: e.target.value })}
                                     required style={inputStyle} />
                             </div>
                         </div>
@@ -216,14 +216,14 @@ export default function Login() {
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Contraseña</label>
                                 <input type="password" className="form-control" value={form.Password}
                                     placeholder="Mín. 6 caracteres"
-                                    onChange={e => setForm({...form, Password: e.target.value})}
+                                    onChange={e => setForm({ ...form, Password: e.target.value })}
                                     required style={inputStyle} />
                             </div>
                             <div className="col-6 mb-3">
                                 <label className="form-label fw-semibold" style={{ color: '#555' }}>Confirmar</label>
                                 <input type="password" className="form-control" value={form.confirmar}
                                     placeholder="••••••••"
-                                    onChange={e => setForm({...form, confirmar: e.target.value})}
+                                    onChange={e => setForm({ ...form, confirmar: e.target.value })}
                                     required style={inputStyle} />
                             </div>
                         </div>

@@ -2,9 +2,11 @@ import { useEffect, useState, useRef } from "react";
 import apiAxios from "../../api/axiosConfig";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
+import { useNavigate } from 'react-router-dom'
 
 const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) => {
     const MySwal = WithReactContent(Swal)
+    const navigate = useNavigate()
 
     const [Fec_hora, setFec_hora] = useState('');
     const [Id_Porcino, setId_Porcino] = useState('');
@@ -13,9 +15,9 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const [Id_Reproduccion, setId_Reproduccion] = useState('');
     const [porcinos, setPorcinos] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [reproduccionesActivas, setReproduccionesActivas] = useState([]);
     const [textFormButton, setTextFormButton] = useState('Agregar Monta');
 
-    // ✅ useRef para evitar loop infinito con preloaded
     const preloadedRef = useRef(null)
 
     useEffect(() => {
@@ -26,19 +28,35 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data)
-        } catch (error) {
-            console.error('Error al obtener porcinos:', error);
-        }
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
+        } catch (error) { console.error('Error al obtener porcinos:', error) }
     }
 
     const getResponsables = async () => {
         try {
             const response = await apiAxios.get('/responsables')
             setResponsables(response.data)
-        } catch (error) {
-            console.error('Error al obtener responsables:', error);
-        }
+        } catch (error) { console.error('Error al obtener responsables:', error) }
+    }
+
+    const getReproduccionesActivas = async (idPorcino) => {
+        if (!idPorcino) { setReproduccionesActivas([]); return }
+        try {
+            const response = await apiAxios.get('/reproducciones/')
+            const activas = response.data.filter(r =>
+                r.Id_Cerda == idPorcino &&
+                r.Activo === 'Si' &&
+                r.TipoReproduccion === 'Monta'
+            )
+            setReproduccionesActivas(activas)
+        } catch (error) { console.error('Error al obtener reproducciones:', error) }
+    }
+
+    const handlePorcinoChange = (e) => {
+        const val = e.target.value
+        setId_Porcino(val)
+        setId_Reproduccion('')
+        getReproduccionesActivas(val)
     }
 
     const parsearResponsables = (valor) => {
@@ -51,7 +69,6 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         return isNaN(num) ? [] : [num]
     }
 
-    // ✅ useEffect para rowToEdit (edición)
     useEffect(() => {
         if (rowToEdit.Id_Monta) {
             setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
@@ -59,6 +76,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setObservaciones(rowToEdit.Observaciones)
             setId_Reproduccion(rowToEdit.Id_Reproduccion)
+            getReproduccionesActivas(rowToEdit.Id_Porcino)
             setTextFormButton('Actualizar Monta')
         } else if (!preloaded.Id_Reproduccion) {
             setFec_hora('')
@@ -66,11 +84,11 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             setId_Responsable([])
             setObservaciones('')
             setId_Reproduccion('')
+            setReproduccionesActivas([])
             setTextFormButton('Agregar Monta')
         }
     }, [rowToEdit]);
 
-    // ✅ useEffect separado para preloaded — solo corre una vez por instancia
     useEffect(() => {
         if (preloaded.Id_Reproduccion && preloadedRef.current !== preloaded.Id_Reproduccion) {
             preloadedRef.current = preloaded.Id_Reproduccion
@@ -91,20 +109,15 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
     const gestionarForm = async (e) => {
         e.preventDefault();
-
         if (Id_Responsable.length === 0) {
             MySwal.fire({ icon: 'warning', title: 'Requerido', text: 'Debes seleccionar al menos un responsable' })
             return
         }
-
         const formData = {
-            Fec_hora,
-            Id_Porcino,
+            Fec_hora, Id_Porcino,
             Id_Responsable: JSON.stringify(Id_Responsable),
-            Observaciones,
-            Id_Reproduccion,
+            Observaciones, Id_Reproduccion,
         };
-
         try {
             if (textFormButton === 'Agregar Monta') {
                 await apiAxios.post('/monta', formData)
@@ -141,7 +154,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             <div className="mb-3">
                 <label className="form-label">Porcino (Cerda)</label>
                 <select className="form-select" value={Id_Porcino}
-                    onChange={e => setId_Porcino(e.target.value)}
+                    onChange={handlePorcinoChange}
                     disabled={esPrellenado} required>
                     <option value="">Seleccione</option>
                     {porcinos.map(p => (
@@ -151,6 +164,38 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                 {esPrellenado && <small className="text-muted">Asignado desde la reproducción</small>}
             </div>
 
+            {/* ✅ Select reproducción — solo si no es prellenado */}
+            {!esPrellenado && (
+                <div className="mb-3">
+                    <label className="form-label">Reproducción activa</label>
+                    <select className="form-select" value={Id_Reproduccion}
+                        onChange={e => setId_Reproduccion(e.target.value)} required>
+                        <option value="">
+                            {!Id_Porcino
+                                ? 'Primero seleccione una cerda'
+                                : reproduccionesActivas.length === 0
+                                    ? 'No hay reproducciones de Monta activas'
+                                    : 'Seleccione una reproducción'}
+                        </option>
+                        {reproduccionesActivas.map(r => (
+                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
+                                #{r.Id_Reproduccion} — {r.porcino?.Nom_Porcino || `Cerda #${r.Id_Cerda}`}
+                            </option>
+                        ))}
+                    </select>
+                    {Id_Porcino && reproduccionesActivas.length === 0 && (
+                        <div className="alert alert-warning py-2 mt-2">
+                            <small className="d-block mb-2">⚠️ Esta cerda no tiene reproducciones de Monta activas.</small>
+                            <button type="button" className="btn btn-sm btn-warning fw-semibold"
+                                onClick={() => { hideModal(); navigate('/reproducciones') }}>
+                                ➕ Crear reproducción
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ✅ Estos campos siempre se muestran */}
             <div className="mb-3">
                 <label className="form-label fw-semibold">
                     Responsables <span className="text-danger">*</span>
@@ -178,14 +223,6 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                 <label className="form-label">Observaciones</label>
                 <textarea className="form-control" value={Observaciones}
                     onChange={e => setObservaciones(e.target.value)} />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Id Reproducción</label>
-                <input type="text" className="form-control" value={Id_Reproduccion}
-                    onChange={e => setId_Reproduccion(e.target.value)}
-                    disabled={esPrellenado} required />
-                {esPrellenado && <small className="text-muted">Asignado automáticamente</small>}
             </div>
 
             <input type="submit" className="btn btn-primary w-50" value={textFormButton} />

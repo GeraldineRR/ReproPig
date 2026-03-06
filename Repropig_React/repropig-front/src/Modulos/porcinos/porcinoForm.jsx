@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import apiAxios from "../../axios/axiosConfig.js"
+import apiAxios from "../../api/axiosConfig"
 
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -125,7 +125,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
     const getRazas = async () => {
         try {
-            const response = await apiAxios.get('/api/raza/')
+            const response = await apiAxios.get('/raza/')
             setRazas(response.data)
         } catch (error) {
             console.error("Error cargando razas:", error)
@@ -174,7 +174,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
         try {
             if (textFormButton === 'Enviar') {
-                await apiAxios.post('/api/porcino/', formData, {
+                await apiAxios.post('/porcino/', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 })
 
@@ -197,7 +197,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
                     return
                 }
 
-                await apiAxios.put(`/api/porcino/${porcinoEdit.Id_Porcino}`, formData, {
+                await apiAxios.put(`/porcino/${porcinoEdit.Id_Porcino}`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 })
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import apiAxios from "../../axios/axiosConfig.js"
+import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import PorcinoForm from "./porcinoForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -34,7 +34,7 @@ const CrudPorcinos = () => {
     { name: 'Nombre', selector: row => row.Nom_Porcino, },
     { name: 'Chapeta', selector: row => row.Num_Chapeta, },
     { name: 'Placa Sena', selector: row => row.Plac_Sena_Porcino, },
-    { name: 'Raza', selector: row => row.razas.Nom_Raza, sortable: false,},
+    { name: 'Raza', selector: row => row.razas?.Nom_Raza || '—', sortable: false,},
     { name: 'Sexo', selector: row => { const sexo = row.Gen_Porcino?.trim().toLowerCase()
     if ( sexo === 'm') {
       return ( <span className="fw-normal"> <i className="fa-solid fa-mars text-primary me-1"></i> Macho </span> ) }
@@ -81,7 +81,7 @@ const CrudPorcinos = () => {
     }, [])
 
     const getAllPorcinos = async () => {
-        const response = await apiAxios.get('/api/porcino/')
+        const response = await apiAxios.get('/porcino/')
         setPorcinos(response.data)
         console.log(response.data)
     }
