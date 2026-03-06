@@ -5,7 +5,7 @@ import MedicamentosForm from "./MedicamentosForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 
-const crudMedicamentos = () =>{
+const CrudMedicamentos = () =>{
     const [Medicamentos, setMedicamentos] = useState([])
     const [medicamentoEdit, setmedicamentoEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
@@ -31,7 +31,7 @@ const crudMedicamentos = () =>{
 
 
     const getAllMedicamentos = async () =>{
-        const response = await apiAxios.get('/api/medicamentos/')
+        const response = await apiAxios.get('/medicamentos/')
         setMedicamentos(response.data)
         console.log(response.data)
     }
@@ -91,7 +91,7 @@ const crudMedicamentos = () =>{
 
 
 
-<div className="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div className="modal-dialog">
     <div className="modal-content">
       <div className="modal-header">
@@ -109,4 +109,4 @@ const crudMedicamentos = () =>{
     )
 }
 
-export default crudMedicamentos
+export default CrudMedicamentos

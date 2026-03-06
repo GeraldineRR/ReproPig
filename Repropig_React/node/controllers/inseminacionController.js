@@ -1,4 +1,4 @@
-import inseminacionservice from "../services/inseminacionservice.js";
+import inseminacionservice from "../services/inseminacionService.js";
 
 // obtener todas las inseminaciones
 export const getAllinseminacion = async (req, res) => {

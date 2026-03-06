@@ -8,10 +8,11 @@ import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
 import colectaRoutes from './routes/colectaRoutes.js'
 import montaRoutes from './routes/montaRoutes.js'
 import inseminacionRoutes from './routes/inseminacionRoutes.js'
-import responsablesRoutes from './routes/responsablesRoutes.js' // 👈 agregado
+import responsablesRoutes from './routes/responsablesRoutes.js'
+import authRoutes from './routes/authRoutes.js'
 
 import dotenv from 'dotenv'
-dotenv.config() // 👈 movido arriba (mejor práctica)
+dotenv.config()
 
 import reproduccionesModel from './models/reproduccionesModel.js'
 import MedicamentosModel from './models/MedicamentosModel.js'
@@ -20,6 +21,7 @@ import RazaModel from './models/razaModel.js'
 import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
+// ❌ ResponsablesModel ya no se necesita para asociaciones
 
 const app = express()
 
@@ -31,10 +33,11 @@ app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)
 app.use('/api/medicamentos', MedicamentosRoutes)
 app.use('/api/reproducciones', reproduccionesRoutes)
-app.use('/api/colecta', colectaRoutes)
+app.use('/api/colectas', colectaRoutes)
 app.use('/api/monta', montaRoutes)
 app.use('/api/inseminacion', inseminacionRoutes)
-app.use('/api/responsables', responsablesRoutes) // 👈 agregado
+app.use('/api/responsables', responsablesRoutes)
+app.use('/api/auth', authRoutes)
 
 // Conexión DB
 try {
@@ -51,19 +54,26 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 8000
 
-// Relaciones
+// ====== Relaciones Porcino ======
 PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'razas' })
 RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
 
+// ====== Relaciones Colecta ======
 colectaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })
+// ❌ Quitadas asociaciones colecta → responsable (Id_Responsables es JSON text, no FK)
 
+// ====== Relaciones Monta ======
 montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(montaModel, { foreignKey: 'Id_Porcino', as: 'montas' })
+// ❌ Quitadas asociaciones monta → responsable
 
+// ====== Relaciones Inseminacion ======
 inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
+// ❌ Quitadas asociaciones inseminacion → responsable
 
+// ====== Relaciones Reproduccion ======
 reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
 PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
 

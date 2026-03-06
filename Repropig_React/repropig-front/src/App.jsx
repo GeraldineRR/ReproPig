@@ -1,13 +1,15 @@
-import { Routes, Route } from "react-router-dom" 
+import { Routes, Route } from "react-router-dom"
 import Navbar from "./components/layout/Navbar"
+import RutaProtegida from "./components/layout/RutaProtegida"
 
-// Landing
+// Landing y Auth
 import Landing from "./pages/landing"
+import Login from "./pages/Login"
 import Home from "./home/home"
 
 // Geral
-import CrudPorcinos from "./porcinos/crudPorcinos.jsx"
-import CrudRazas from "./razas/crudRazas.jsx"
+import CrudPorcinos from "./Modulos/porcinos/crudPorcinos.jsx"
+import CrudRazas from "./Modulos/razas/crudRazas.jsx"
 
 // Módulos David
 import CrudColecta from "./Modulos/colectas/crudColecta"
@@ -19,27 +21,35 @@ import CrudMedicamentos from "./Modulos/Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Modulos/Reproducciones/crudReproducciones"
 
 // Módulo JuanFe
-import CrudResponsables from "./Responsables/crudresponsables.jsx"
+import CrudResponsables from "./Modulos/Responsables/crudresponsables.jsx"
 
 function App() {
   return (
     <>
       <Navbar />
 
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/porcino" element={<CrudPorcinos />} />
-        <Route path="/raza" element={<CrudRazas />} />
-        <Route path="/colectas" element={<CrudColecta />} />
-        <Route path="/montas" element={<CrudMonta />} />
-        <Route path="/inseminaciones" element={<CrudInseminacion />} />
-        <Route path="/medicamentos" element={<CrudMedicamentos />} />
-        <Route path="/reproducciones" element={<CrudReproducciones />} />
+      <div style={{ paddingTop: '70px' }}>
+        <Routes>
 
-        {/* Ruta nueva */}
-        <Route path="/responsables" element={<CrudResponsables />} />
-      </Routes>
+          {/* Rutas públicas */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
+
+          {/* Rutas protegidas */}
+          <Route path="/home" element={<RutaProtegida><Home /></RutaProtegida>} />
+
+          <Route path="/porcinos" element={<RutaProtegida><CrudPorcinos /></RutaProtegida>} />
+          <Route path="/razas" element={<RutaProtegida><CrudRazas /></RutaProtegida>} />
+
+          <Route path="/colectas" element={<RutaProtegida><CrudColecta /></RutaProtegida>} />
+          <Route path="/montas" element={<RutaProtegida><CrudMonta /></RutaProtegida>} />
+          <Route path="/inseminaciones" element={<RutaProtegida><CrudInseminacion /></RutaProtegida>} />
+          <Route path="/medicamentos" element={<RutaProtegida><CrudMedicamentos /></RutaProtegida>} />
+          <Route path="/reproducciones" element={<RutaProtegida><CrudReproducciones /></RutaProtegida>} />
+          <Route path="/responsables" element={<RutaProtegida><CrudResponsables /></RutaProtegida>} />
+
+        </Routes>
+      </div>
     </>
   )
 }

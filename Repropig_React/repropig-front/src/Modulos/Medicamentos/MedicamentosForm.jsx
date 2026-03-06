@@ -45,10 +45,10 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
 
         try {
             if (!medicamentoEdit) {
-                await apiAxios.post('/api/medicamentos/', data)
+                await apiAxios.post('/medicamentos/', data)
             } else {
                 await apiAxios.put(
-                    `/api/medicamentos/${medicamentoEdit.Id_Medicamento}`,
+                    `/medicamentos/${medicamentoEdit.Id_Medicamento}`,
                     data
                 )
             }

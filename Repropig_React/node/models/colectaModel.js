@@ -7,7 +7,7 @@ const colectaModel = db.define('colecta', {
     Uso_colecta: { type: DataTypes.ENUM('Si', 'No') },
     Tipo: { type: DataTypes.ENUM('Interno', 'Externo') },
     Id_Porcino: { type: DataTypes.INTEGER },
-    Id_Responsables: { type: DataTypes.STRING },
+    Id_Responsable: { type: DataTypes.STRING },
     volumen: { type: DataTypes.DECIMAL(6, 2) },
     color: { type: DataTypes.STRING(50) },
     olor: { type: DataTypes.STRING(50) },
