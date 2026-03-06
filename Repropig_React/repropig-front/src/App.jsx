@@ -5,6 +5,10 @@ import Navbar from "./components/layout/Navbar"
 import Landing from "./pages/landing"
 import Home from "./home/home"
 
+// Geral
+import CrudPorcinos from "./porcinos/crudPorcinos.jsx"
+import CrudRazas from "./razas/crudRazas.jsx"
+
 // Módulos David
 import CrudColecta from "./Modulos/colectas/crudColecta"
 import CrudMonta from "./Modulos/montas/crudMonta"
@@ -14,7 +18,7 @@ import CrudInseminacion from "./Modulos/inseminaciones/crudInseminacion"
 import CrudMedicamentos from "./Modulos/Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Modulos/Reproducciones/crudReproducciones"
 
-// 🔥 Módulo JuanFe
+// Módulo JuanFe
 import CrudResponsables from "./Responsables/crudresponsables.jsx"
 
 function App() {
@@ -25,6 +29,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/porcino" element={<CrudPorcinos />} />
+        <Route path="/raza" element={<CrudRazas />} />
         <Route path="/colectas" element={<CrudColecta />} />
         <Route path="/montas" element={<CrudMonta />} />
         <Route path="/inseminaciones" element={<CrudInseminacion />} />
