@@ -8,8 +8,8 @@ import Login from "./pages/Login"
 import Home from "./home/home"
 
 // Geral
-import CrudPorcinos from "./porcinos/crudPorcinos.jsx"
-import CrudRazas from "./razas/crudRazas.jsx"
+import CrudPorcinos from "./Modulos/porcinos/crudPorcinos.jsx"
+import CrudRazas from "./Modulos/razas/crudRazas.jsx"
 
 // Módulos David
 import CrudColecta from "./Modulos/colectas/crudColecta"
@@ -38,8 +38,8 @@ function App() {
           {/* Rutas protegidas */}
           <Route path="/home" element={<RutaProtegida><Home /></RutaProtegida>} />
 
-          <Route path="/porcino" element={<RutaProtegida><CrudPorcinos /></RutaProtegida>} />
-          <Route path="/raza" element={<RutaProtegida><CrudRazas /></RutaProtegida>} />
+          <Route path="/porcinos" element={<RutaProtegida><CrudPorcinos /></RutaProtegida>} />
+          <Route path="/razas" element={<RutaProtegida><CrudRazas /></RutaProtegida>} />
 
           <Route path="/colectas" element={<RutaProtegida><CrudColecta /></RutaProtegida>} />
           <Route path="/montas" element={<RutaProtegida><CrudMonta /></RutaProtegida>} />
