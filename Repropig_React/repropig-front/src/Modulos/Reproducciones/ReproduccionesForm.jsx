@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig"
 import Swal from "sweetalert2"
 import withReactContent from "sweetalert2-react-content"
 
-const ReproduccionesForm = ({ hideModal, reproduccionEdit }) => {
+const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada }) => {
 
     const MySwal = withReactContent(Swal)
-    const navigate = useNavigate()
 
     const [Id_Reproduccion, setId_Reproduccion] = useState('')
     const [Id_Cerda, setId_Cerda] = useState('')
@@ -16,24 +14,23 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit }) => {
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
-    // Traer porcinos desde la API
     useEffect(() => {
-        const getPorcinos = async () => {
-            try {
-                const response = await apiAxios.get('/api/porcino')
-                setPorcinos(response.data)
-            } catch (error) {
-                console.error("Error al obtener porcinos:", error)
-            }
-        }
         getPorcinos()
     }, [])
 
-    // Cargar datos cuando se edita
+    const getPorcinos = async () => {
+        try {
+            const response = await apiAxios.get('/porcino')
+            setPorcinos(response.data)
+        } catch (error) {
+            console.error("Error al obtener porcinos:", error)
+        }
+    }
+
     useEffect(() => {
-        if (reproduccionEdit) {
+        if (reproduccionEdit?.Id_Reproduccion) {
             setId_Reproduccion(reproduccionEdit.Id_Reproduccion || '')
-            setId_Cerda(reproduccionEdit.Id_Cerda || '')
+            setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
             setActivo(reproduccionEdit.Activo || '')
             setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
             setTextFormButton("Actualizar")
@@ -44,9 +41,8 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit }) => {
             setTipoReproduccion('')
             setTextFormButton("Enviar")
         }
-    }, [reproduccionEdit])
+    }, [reproduccionEdit?.Id_Reproduccion])
 
-    // Si cambia Activo a "No", limpiar el tipo
     const handleActivoChange = (valor) => {
         setActivo(valor)
         if (valor !== 'Si') setTipoReproduccion('')
@@ -55,7 +51,6 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit }) => {
     const gestionarForm = async (e) => {
         e.preventDefault()
 
-        // Validar que seleccione tipo si está activo
         if (Activo === 'Si' && !TipoReproduccion) {
             MySwal.fire({
                 icon: 'warning',
@@ -73,143 +68,126 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit }) => {
 
         try {
             if (textFormButton === 'Enviar') {
-                await apiAxios.post('/api/reproducciones', data)
+                const response = await apiAxios.post('/reproducciones', data)
+                const nuevaReproduccion = response.data?.reproducciones || response.data
+
+                await MySwal.fire({
+                    icon: 'success',
+                    title: 'Reproducción creada',
+                    text: TipoReproduccion
+                        ? `Ahora completa los datos de ${TipoReproduccion}`
+                        : 'Reproducción registrada correctamente'
+                })
+
+                hideModal()
+
+                // Abrir modal encadenado al crear
+                if (TipoReproduccion && onReproduccionCreada) {
+                    onReproduccionCreada({
+                        tipo: TipoReproduccion,
+                        Id_Reproduccion: nuevaReproduccion.Id_Reproduccion,
+                        Id_Porcino: Number(Id_Cerda)
+                    })
+                }
+
             } else {
-                await apiAxios.put(`/api/reproducciones/${Id_Reproduccion}`, data)
-            }
+                await apiAxios.put(`/reproducciones/${Id_Reproduccion}`, data)
 
-            // Determinar ruta destino según el tipo
-            const rutaDestino = TipoReproduccion === 'Monta'
-                ? '/montas'
-                : TipoReproduccion === 'Inseminacion'
-                ? '/inseminaciones'
-                : null
+                await MySwal.fire({
+                    icon: 'success',
+                    title: 'Éxito',
+                    text: TipoReproduccion
+                        ? `Reproducción actualizada. Ahora completa los datos de ${TipoReproduccion}`
+                        : 'Reproducción actualizada correctamente'
+                })
 
-            await MySwal.fire({
-                icon: 'success',
-                title: 'Éxito',
-                text: reproduccionEdit
-                    ? 'Reproducción actualizada correctamente'
-                    : 'Reproducción creada correctamente'
-            })
+                hideModal()
 
-            hideModal()
-
-            // Redirigir automáticamente al módulo correspondiente
-            if (rutaDestino) {
-                navigate(rutaDestino)
+                // ✅ También abrir modal encadenado al actualizar
+                if (TipoReproduccion && onReproduccionCreada) {
+                    onReproduccionCreada({
+                        tipo: TipoReproduccion,
+                        Id_Reproduccion: Number(Id_Reproduccion),
+                        Id_Porcino: Number(Id_Cerda)
+                    })
+                }
             }
 
         } catch (error) {
-            console.error(error.response?.data || error.message)
-            MySwal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'No se pudo guardar la reproducción'
-            })
+            const mensaje = error.response?.data?.message || error.message
+            MySwal.fire({ icon: 'error', title: 'Error', text: mensaje })
         }
     }
 
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
-            {/* Cerda */}
             <div className="mb-3">
                 <label className="form-label">Cerda</label>
-                <select
-                    className="form-control"
-                    value={Id_Cerda || ""}
-                    onChange={(e) => setId_Cerda(e.target.value)}
-                    required
-                >
+                <select className="form-control" value={Id_Cerda}
+                    onChange={(e) => setId_Cerda(e.target.value)} required>
                     <option value="">Seleccione...</option>
                     {porcinos.map(porcino => (
-                        <option
-                            key={porcino.Id_Porcino}
-                            value={porcino.Id_Porcino}
-                        >
+                        <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
                             {porcino.Nom_Porcino}
                         </option>
                     ))}
                 </select>
             </div>
 
-            {/* Activo */}
             <div className="mb-3">
                 <label className="form-label">Activo</label>
-                <select
-                    className="form-control"
-                    value={Activo || ""}
-                    onChange={(e) => handleActivoChange(e.target.value)}
-                    required
-                >
+                <select className="form-control" value={Activo}
+                    onChange={(e) => handleActivoChange(e.target.value)} required>
                     <option value="">Seleccione...</option>
                     <option value="Si">Si</option>
                     <option value="No">No</option>
                 </select>
             </div>
 
-            {/* Tipo de Reproducción — solo aparece si Activo = Si */}
             {Activo === 'Si' && (
                 <div className="mb-3">
                     <label className="form-label fw-semibold">
                         Tipo de Reproducción <span className="text-danger">*</span>
                     </label>
                     <div className="d-flex gap-3">
-
-                        {/* Monta */}
-                        <div
-                            onClick={() => setTipoReproduccion('Monta')}
+                        <div onClick={() => setTipoReproduccion('Monta')}
                             className="border rounded p-3 text-center flex-fill"
                             style={{
                                 cursor: 'pointer',
-                                borderStyle: 'solid',
                                 borderWidth: TipoReproduccion === 'Monta' ? '2px' : '1px',
                                 borderColor: TipoReproduccion === 'Monta' ? '#e75480' : '#dee2e6',
                                 backgroundColor: TipoReproduccion === 'Monta' ? '#fff0f5' : '#fff',
                                 transition: 'all 0.2s'
-                            }}
-                        >
+                            }}>
                             <div style={{ fontSize: 28 }}>🐷</div>
-                            <div className="fw-bold mt-1"
-                                style={{ color: TipoReproduccion === 'Monta' ? '#e75480' : '#555' }}>
+                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Monta' ? '#e75480' : '#555' }}>
                                 Monta
                             </div>
                             <small className="text-muted">Natural</small>
                         </div>
 
-                        {/* Inseminación */}
-                        <div
-                            onClick={() => setTipoReproduccion('Inseminacion')}
+                        <div onClick={() => setTipoReproduccion('Inseminacion')}
                             className="border rounded p-3 text-center flex-fill"
                             style={{
                                 cursor: 'pointer',
-                                borderStyle: 'solid',
                                 borderWidth: TipoReproduccion === 'Inseminacion' ? '2px' : '1px',
                                 borderColor: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#dee2e6',
                                 backgroundColor: TipoReproduccion === 'Inseminacion' ? '#f0f6ff' : '#fff',
                                 transition: 'all 0.2s'
-                            }}
-                        >
+                            }}>
                             <div style={{ fontSize: 28 }}>💉</div>
-                            <div className="fw-bold mt-1"
-                                style={{ color: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#555' }}>
+                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#555' }}>
                                 Inseminación
                             </div>
                             <small className="text-muted">Artificial</small>
                         </div>
-
                     </div>
                 </div>
             )}
 
-            {/* Botón */}
             <div className="mb-3">
-                <input
-                    type="submit"
-                    className="btn btn-primary w-100"
-                    value={textFormButton}
-                />
+                <input type="submit" className="btn btn-primary w-100" value={textFormButton} />
             </div>
 
         </form>
