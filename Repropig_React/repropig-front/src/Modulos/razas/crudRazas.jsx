@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import apiAxios from "../../axios/axiosConfig.js"
+import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import RazaForm from "./RazaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -39,7 +39,7 @@ const CrudRazas = () => {
     }, [])
 
     const getAllRazas = async () => {
-        const response = await apiAxios.get('/api/raza/')
+        const response = await apiAxios.get('/raza/')
         setRazas(response.data)
     }
 

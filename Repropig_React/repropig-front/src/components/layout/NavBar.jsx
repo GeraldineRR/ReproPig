@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import logo from "../../assets/logo.png";
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -98,7 +99,7 @@ export default function Navbar() {
 
       <nav className={`rp-navbar ${isLanding ? "rp-landing" : "rp-dashboard"}`}>
         <div className="rp-container">
-          <Link to={usuario ? "/home" : "/"} className="rp-logo">🐷 ReproPig</Link>
+          <Link to={usuario ? "/home" : "/"} className="rp-logo"><img src={logo} alt="ReproPig" style={{ height: "130px", objectFit: "contain" }} /></Link>
 
           {/* Links desktop */}
           {!usuario ? (

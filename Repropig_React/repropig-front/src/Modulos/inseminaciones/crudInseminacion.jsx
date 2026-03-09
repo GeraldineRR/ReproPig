@@ -80,8 +80,9 @@ const CrudInseminacion = () => {
                     {/* ✅ Ver Colecta asociada */}
                     {row.Id_colecta && (
                         <button className="btn btn-sm btn-success"
+                            title="Ver Colecta"
                             onClick={() => navigate('/colectas')}>
-                            🧪 Colecta
+                            🧪
                         </button>
                     )}
                 </div>

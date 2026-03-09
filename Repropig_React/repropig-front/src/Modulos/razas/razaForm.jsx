@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import apiAxios from "../../axios/axiosConfig.js"
+import apiAxios from "../../api/axiosConfig"
 
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -46,7 +46,7 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
 
             if (textFormButton === 'Guardar') {
 
-                await apiAxios.post('/api/razas/', {
+                await apiAxios.post('/razas/', {
                     Nom_Raza
                 })
 
@@ -69,7 +69,7 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
                     return
                 }
 
-                await apiAxios.put(`/api/razas/${razaEdit.Id_Raza}`, {
+                await apiAxios.put(`/razas/${razaEdit.Id_Raza}`, {
                     Nom_Raza
                 })
 

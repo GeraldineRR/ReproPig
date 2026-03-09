@@ -241,11 +241,7 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                         <input type="number" step="0.01" className="form-control" value={cant_generada}
                             onChange={e => setCant_generada(e.target.value)} />
                     </div>
-                    <div className="mb-3">
-                        <label className="form-label">Cantidad Utilizada</label>
-                        <input type="number" step="0.01" className="form-control" value={cant_utilizada}
-                            onChange={e => setCant_utilizada(e.target.value)} />
-                    </div>
+                
                 </>
             )}
 
