@@ -9,6 +9,7 @@ import colectaRoutes from './routes/colectaRoutes.js'
 import montaRoutes from './routes/montaRoutes.js'
 import inseminacionRoutes from './routes/inseminacionRoutes.js'
 import responsablesRoutes from './routes/responsablesRoutes.js'
+import PartosRoutes from './routes/PartosRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 
 import dotenv from 'dotenv'
@@ -21,6 +22,7 @@ import RazaModel from './models/razaModel.js'
 import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
+import PartosModel from './models/PartosModel.js'
 // ❌ ResponsablesModel ya no se necesita para asociaciones
 
 const app = express()
@@ -36,6 +38,7 @@ app.use('/api/reproducciones', reproduccionesRoutes)
 app.use('/api/colectas', colectaRoutes)
 app.use('/api/monta', montaRoutes)
 app.use('/api/inseminacion', inseminacionRoutes)
+app.use('/api/Partos', PartosRoutes)
 app.use('/api/responsables', responsablesRoutes)
 app.use('/api/auth', authRoutes)
 
