@@ -21,7 +21,6 @@ import RazaModel from './models/razaModel.js'
 import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
-// ❌ ResponsablesModel ya no se necesita para asociaciones
 
 const app = express()
 

@@ -159,24 +159,23 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
         const edadActualCalculada = calcularEdadActual(Fec_Nac_Porcino)
         setEdadActual(edadActualCalculada)
 
-        const formData = new FormData()
-        formData.append('Num_Chapeta', Num_Chapeta)
-        formData.append('Nom_Porcino', Nom_Porcino)
-        formData.append('Fec_Nac_Porcino', Fec_Nac_Porcino)
-        formData.append('Gen_Porcino', Gen_Porcino)
-        formData.append('Plac_Sena_Porcino', Plac_Sena_Porcino)
-        formData.append('Proc_Porcino', Proc_Porcino)
-        formData.append('Lug_Proc_Porcino', Lug_Proc_Porcino)
-        formData.append('Fec_Llegada', Fec_Llegada)
-        formData.append('Peso_Llegada', Peso_Llegada)
-        formData.append('Edad_Llegada', Number(edadCalculada))
-        formData.append('Id_Raza', Id_Raza)
+        const data = {
+            Num_Chapeta,
+            Nom_Porcino,
+            Fec_Nac_Porcino,
+            Gen_Porcino,
+            Plac_Sena_Porcino,
+            Proc_Porcino,
+            Lug_Proc_Porcino,
+            Fec_Llegada,
+            Peso_Llegada,
+            Edad_Llegada: Number(edadCalculada),
+            Id_Raza
+        }
 
         try {
             if (textFormButton === 'Enviar') {
-                await apiAxios.post('/porcino/', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                })
+                await apiAxios.post('/porcino/', data)
 
                 await reload()
 
@@ -197,9 +196,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
                     return
                 }
 
-                await apiAxios.put(`/porcino/${porcinoEdit.Id_Porcino}`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                })
+                await apiAxios.put(`/porcino/${porcinoEdit.Id_Porcino}`, data)
 
                 await reload()
 
@@ -226,22 +223,22 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
             <div className="mb-3">
                 <label htmlFor="Nom_Porcino" className="form-label">Nombre</label>
-                <input type="text" id="Nom_Porcino" className="form-control" value={Nom_Porcino} onChange={(e) => setNombre(e.target.value)} required/>
+                <input type="text" id="Nom_Porcino" className="form-control" value={Nom_Porcino} onChange={(e) => setNombre(e.target.value)} required />
             </div>
 
             <div className="mb-3">
                 <label htmlFor="Num_Chapeta" className="form-label">Chapeta</label>
-                <input type="number" id="Num_Chapeta" className="form-control" value={Num_Chapeta} onChange={(e) => setNumChapeta(e.target.value)} required/>
+                <input type="number" id="Num_Chapeta" className="form-control" value={Num_Chapeta} onChange={(e) => setNumChapeta(e.target.value)} required />
             </div>
 
             <div className="mb-3">
                 <label htmlFor="Plac_Sena_Porcino" className="form-label">Placa Sena</label>
-                <input type="number" id="Plac_Sena_Porcino" className="form-control" value={Plac_Sena_Porcino} onChange={(e) => setPlacaSena(e.target.value)} required/>
+                <input type="number" id="Plac_Sena_Porcino" className="form-control" value={Plac_Sena_Porcino} onChange={(e) => setPlacaSena(e.target.value)} required />
             </div>
 
             <div className="mb-3">
                 <label htmlFor="Fec_Nac_Porcino" className="form-label">Fecha de Nacimiento</label>
-                <input type="date" id="Fec_Nac_Porcino" className="form-control" value={Fec_Nac_Porcino} onChange={(e) => setFecNacimiento(e.target.value)} required/>
+                <input type="date" id="Fec_Nac_Porcino" className="form-control" value={Fec_Nac_Porcino} onChange={(e) => setFecNacimiento(e.target.value)} required />
             </div>
 
             <div className="mb-3">
@@ -281,12 +278,12 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
             <div className="mb-3">
                 <label htmlFor="Fec_Llegada" className="form-label">Fecha de Llegada</label>
-                <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"}/>
+                <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"} required/>
             </div>
 
             <div className="mb-3">
                 <label htmlFor="Peso_Llegada" className="form-label">Peso de Llegada</label>
-                <input type="number" step="0.01" className="form-control" value={Peso_Llegada} onChange={(e) => setPesoLlegada(e.target.value)}/>
+                <input type="number" step="0.01" className="form-control" value={Peso_Llegada} onChange={(e) => setPesoLlegada(e.target.value)} />
             </div>
 
             <div className="mb-3">
