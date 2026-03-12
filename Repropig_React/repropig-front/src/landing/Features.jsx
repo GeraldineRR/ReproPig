@@ -5,19 +5,19 @@ const isLoggedIn = true // ← cambia por tu hook de auth cuando esté listo
 function Features() {
   const modulos = [
     // ── Disponibles ──
-    { nombre: "Inseminación",         ruta: "/inseminaciones", icon: "💉", color: "#FFE4EC", accent: "#E8A0B0", desc: "Gestión profesional del módulo de inseminación con control y trazabilidad completa.",      activo: true },
-    { nombre: "Colecta",              ruta: "/colectas",        icon: "🧪", color: "#E4F0FF", accent: "#A0B8E8", desc: "Gestión profesional del módulo de colecta con control y trazabilidad completa.",              activo: true },
-    { nombre: "Monta",                ruta: "/montas",          icon: "🐷", color: "#FFE8E0", accent: "#E8B0A0", desc: "Gestión profesional del módulo de monta con control y trazabilidad completa.",                activo: true },
-    { nombre: "Medicamentos",         ruta: "/medicamentos",    icon: "💊", color: "#E8F4E4", accent: "#A0C8A0", desc: "Gestión profesional del módulo de medicamentos con control y trazabilidad completa.",        activo: true },
-    { nombre: "Reproducciones",       ruta: "/reproducciones",  icon: "🔬", color: "#FFF4E0", accent: "#E8C880", desc: "Gestión profesional del módulo de reproducciones con control y trazabilidad completa.",      activo: true },
-    { nombre: "Responsables",         ruta: "/responsables",    icon: "👤", color: "#F0F4FF", accent: "#A0B0E8", desc: "Gestión de responsables y roles del sistema porcícola.",                                    activo: true },
-    { nombre: "Porcinos",             ruta: "/porcinos",        icon: "🐖", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro y seguimiento completo de los porcinos de la granja.",                             activo: true },
-    { nombre: "Razas",             ruta: "/razas",               icon: "🧬", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro de las razas de porcinos.",                             activo: true },
-    { nombre: "Partos",               ruta: null,               icon: "🍼", color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.",                           activo: true },
+    { nombre: "Inseminación", ruta: "/inseminaciones", icon: "💉", color: "#FFE4EC", accent: "#E8A0B0", desc: "Gestión profesional del módulo de inseminación con control y trazabilidad completa.", activo: true },
+    { nombre: "Colecta", ruta: "/colectas", icon: "🧪", color: "#E4F0FF", accent: "#A0B8E8", desc: "Gestión profesional del módulo de colecta con control y trazabilidad completa.", activo: true },
+    { nombre: "Monta", ruta: "/montas", icon: "🐷", color: "#FFE8E0", accent: "#E8B0A0", desc: "Gestión profesional del módulo de monta con control y trazabilidad completa.", activo: true },
+    { nombre: "Medicamentos", ruta: "/medicamentos", icon: "💊", color: "#E8F4E4", accent: "#A0C8A0", desc: "Gestión profesional del módulo de medicamentos con control y trazabilidad completa.", activo: true },
+    { nombre: "Reproducciones", ruta: "/reproducciones", icon: "🔬", color: "#FFF4E0", accent: "#E8C880", desc: "Gestión profesional del módulo de reproducciones con control y trazabilidad completa.", activo: true },
+    { nombre: "Responsables", ruta: "/responsables", icon: "👤", color: "#F0F4FF", accent: "#A0B0E8", desc: "Gestión de responsables y roles del sistema porcícola.", activo: true },
+    { nombre: "Porcinos", ruta: "/porcinos", icon: "🐖", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro y seguimiento completo de los porcinos de la granja.", activo: true },
+    { nombre: "Razas", ruta: "/razas", icon: "🧬", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro de las razas de porcinos.", activo: true },
+    { nombre: "Partos", ruta: "/partos", icon: "🍼", color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.", activo: true },
     // ── Próximamente ──
-    
-    
-    { nombre: "Historial",            ruta: null,               icon: "📋", color: "#F4F4F0", accent: "#B0B8A0", desc: "Historial completo de eventos y registros del sistema.",                                   activo: false },
+
+
+    { nombre: "Historial", ruta: null, icon: "📋", color: "#F4F4F0", accent: "#B0B8A0", desc: "Historial completo de eventos y registros del sistema.", activo: false },
   ]
 
   return (
@@ -209,7 +209,7 @@ function Features() {
                 Inicia sesión o crea tu cuenta para acceder.
               </p>
               <div className="rp-feat-lock-btns">
-                <Link to="/login"    className="rp-btn-solid">Iniciar sesión</Link>
+                <Link to="/login" className="rp-btn-solid">Iniciar sesión</Link>
                 <Link to="/register" className="rp-btn-ghost">Registrarse</Link>
               </div>
             </div>

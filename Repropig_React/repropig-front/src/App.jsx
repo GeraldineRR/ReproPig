@@ -17,6 +17,7 @@ import CrudInseminacion from "./Modulos/inseminaciones/crudInseminacion"
 import CrudMedicamentos from "./Modulos/Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Modulos/Reproducciones/crudReproducciones"
 import CrudResponsables from "./Modulos/Responsables/crudresponsables"
+import CrudPartos from "./Modulos/Partos/crudPartos"
 
 function App() {
 
@@ -39,6 +40,7 @@ function App() {
         <Route path="/medicamentos" element={<CrudMedicamentos />} />
         <Route path="/reproducciones" element={<CrudReproducciones />} />
         <Route path="/responsables" element={<CrudResponsables />} />
+        <Route path="/partos" element={<CrudPartos />} />
 
       </Route>
 

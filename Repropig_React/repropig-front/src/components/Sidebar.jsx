@@ -69,6 +69,9 @@ export default function Sidebar() {
 
           {reproOpen && (
             <div className="ml-4 flex flex-col">
+              <NavLink to="/reproducciones" className={linkClass}>
+                Reproducciones
+              </NavLink>
 
               <NavLink to="/montas" className={linkClass}>
                 Montas
@@ -82,9 +85,7 @@ export default function Sidebar() {
                 Colectas
               </NavLink>
 
-              <NavLink to="/reproducciones" className={linkClass}>
-                Reproducciones
-              </NavLink>
+              
 
             </div>
           )}
