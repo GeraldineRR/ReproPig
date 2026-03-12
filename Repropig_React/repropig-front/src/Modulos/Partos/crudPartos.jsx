@@ -1,4 +1,4 @@
-import apiAxios from "../api/axiosConfig.js";
+import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
 import DataTable from 'react-data-table-component';
 import PartosForm from "./PartoForm.jsx";

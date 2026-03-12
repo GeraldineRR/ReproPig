@@ -46,7 +46,7 @@ export default function Login() {
         try {
             const response = await apiAxios.post('/auth/login', { email, password })
             login(response.data.token, response.data.usuario)
-            navigate('/home')
+            navigate('/dashboard')
         } catch (err) {
             setError(err.response?.data?.message || 'Error al iniciar sesión')
         } finally {

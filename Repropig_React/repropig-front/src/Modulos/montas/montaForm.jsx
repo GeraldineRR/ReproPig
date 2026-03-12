@@ -10,10 +10,12 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
     const [Fec_hora, setFec_hora] = useState('');
     const [Id_Porcino, setId_Porcino] = useState('');
+    const [Id_Cerdo, setId_Cerdo] = useState('');
     const [Id_Responsable, setId_Responsable] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
     const [Id_Reproduccion, setId_Reproduccion] = useState('');
-    const [porcinos, setPorcinos] = useState([]);
+    const [hembras, setHembras] = useState([]);
+    const [machos, setMachos] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [reproduccionesActivas, setReproduccionesActivas] = useState([]);
     const [textFormButton, setTextFormButton] = useState('Agregar Monta');
@@ -28,7 +30,8 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
+            setHembras(response.data.filter(p => p.Gen_Porcino === 'H'))
+            setMachos(response.data.filter(p => p.Gen_Porcino === 'M'))
         } catch (error) { console.error('Error al obtener porcinos:', error) }
     }
 
@@ -73,6 +76,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         if (rowToEdit.Id_Monta) {
             setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
             setId_Porcino(rowToEdit.Id_Porcino)
+            setId_Cerdo(rowToEdit.Id_Cerdo || '')
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setObservaciones(rowToEdit.Observaciones)
             setId_Reproduccion(rowToEdit.Id_Reproduccion)
@@ -81,6 +85,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         } else if (!preloaded.Id_Reproduccion) {
             setFec_hora('')
             setId_Porcino('')
+            setId_Cerdo('')
             setId_Responsable([])
             setObservaciones('')
             setId_Reproduccion('')
@@ -95,6 +100,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             setId_Porcino(preloaded.Id_Porcino || '')
             setId_Reproduccion(preloaded.Id_Reproduccion || '')
             setFec_hora('')
+            setId_Cerdo('')
             setId_Responsable([])
             setObservaciones('')
             setTextFormButton('Agregar Monta')
@@ -114,7 +120,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             return
         }
         const formData = {
-            Fec_hora, Id_Porcino,
+            Fec_hora, Id_Porcino, Id_Cerdo,
             Id_Responsable: JSON.stringify(Id_Responsable),
             Observaciones, Id_Reproduccion,
         };
@@ -152,12 +158,12 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Porcino (Cerda)</label>
+                <label className="form-label">Cerda</label>
                 <select className="form-select" value={Id_Porcino}
                     onChange={handlePorcinoChange}
                     disabled={esPrellenado} required>
                     <option value="">Seleccione</option>
-                    {porcinos.map(p => (
+                    {hembras.map(p => (
                         <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
                     ))}
                 </select>
@@ -195,7 +201,18 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                 </div>
             )}
 
-            {/* ✅ Estos campos siempre se muestran */}
+            {/* ✅ Cerdo macho que realizó la monta */}
+            <div className="mb-3">
+                <label className="form-label">Cerdo (Macho)</label>
+                <select className="form-select" value={Id_Cerdo}
+                    onChange={e => setId_Cerdo(e.target.value)} required>
+                    <option value="">Seleccione el macho</option>
+                    {machos.map(p => (
+                        <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
+                    ))}
+                </select>
+            </div>
+
             <div className="mb-3">
                 <label className="form-label fw-semibold">
                     Responsables <span className="text-danger">*</span>

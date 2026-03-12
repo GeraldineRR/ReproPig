@@ -30,7 +30,7 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data)
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'M'))
         } catch (error) {
             console.error('Error al obtener porcinos:', error);
         }
@@ -180,7 +180,7 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
 
                     {esInterno && (
                         <div className="mb-3">
-                            <label className="form-label">Cerda (Porcino)</label>
+                            <label className="form-label">Cerdo (Macho)</label>
                             <select className="form-select" value={Id_Porcino}
                                 onChange={e => setId_Porcino(e.target.value)} required>
                                 <option value="">Seleccione un porcino</option>
@@ -237,11 +237,11 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                             onChange={e => setOlor(e.target.value)} />
                     </div>
                     <div className="mb-3">
-                        <label className="form-label">Cantidad Generada</label>
+                        <label className="form-label">Cantidad Generada de Pajillas</label>
                         <input type="number" step="0.01" className="form-control" value={cant_generada}
                             onChange={e => setCant_generada(e.target.value)} />
                     </div>
-                
+
                 </>
             )}
 

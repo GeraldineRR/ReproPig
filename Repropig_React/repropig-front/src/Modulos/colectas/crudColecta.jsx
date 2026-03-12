@@ -61,17 +61,19 @@ const CrudColecta = () => {
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
         { name: 'Uso', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
-        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || (row.Id_Porcino ? `#${row.Id_Porcino}` : '—') },
+        { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' }, 
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Volumen', selector: row => row.volumen },
         { name: 'Color', selector: row => row.color },
         { name: 'Olor', selector: row => row.olor },
         { name: 'Generada', selector: row => row.cant_generada },
         { name: 'Utilizada', selector: row => row.cant_utilizada },
-        { name: 'Disponibles', cell: row => {
-            const disp = (row.cant_generada || 0) - (row.cant_utilizada || 0)
-            return <span className={disp <= 0 ? 'badge bg-danger' : disp <= 2 ? 'badge bg-warning' : 'badge bg-success'}>{disp}</span>
-        }},
+        {
+            name: 'Disponibles', cell: row => {
+                const disp = (row.cant_generada || 0) - (row.cant_utilizada || 0)
+                return <span className={disp <= 0 ? 'badge bg-danger' : disp <= 2 ? 'badge bg-warning' : 'badge bg-success'}>{disp}</span>
+            }
+        },
         { name: 'Observaciones', selector: row => row.Observaciones },
         {
             name: 'Acciones', cell: row => (
