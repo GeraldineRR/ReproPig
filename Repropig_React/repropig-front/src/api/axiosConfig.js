@@ -8,7 +8,6 @@ const apiAxios = axios.create({
     },
 });
 
-// ✅ Interceptor que agrega el token JWT en cada petición
 apiAxios.interceptors.request.use((config) => {
     const token = sessionStorage.getItem('token')
     if (token) {
