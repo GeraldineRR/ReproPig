@@ -13,9 +13,11 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Observaciones, setObservaciones] = useState('')
     const [Id_Porcino, setId_Porcino] = useState('')
     const [Id_Responsable, setId_Responsable] = useState('')
+    const [Id_Medicamento, setId_Medicamento] = useState('')
     
     const [porcinos, setPorcinos] = useState([])
-    const [Responsables, setResponsables] = useState([])
+    const [responsables, setResponsables] = useState([])
+    const [medicamentos, setMedicamentos] = useState([])
     
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
@@ -24,7 +26,11 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     }, [])
 
     useEffect(() => {
-        getResponsable()
+        getResponsables()
+    }, [])
+
+    useEffect(() => {
+        getMedicamentos()
     }, [])
 
     useEffect(() => {
@@ -35,6 +41,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setObservaciones(Seguimiento_CerdaEdit.Observaciones ?? '')
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
             setId_Responsable(Seguimiento_CerdaEdit.Id_Responsable ?? '')
+            setId_Medicamento(Seguimiento_CerdaEdit.Id_Medicamento ?? '')
             setTextFormButton("Actualizar")
         } else {
             setId_Seguimiento_Cerda('')
@@ -43,13 +50,14 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setObservaciones('')
             setId_Porcino('')
             setId_Responsable('')
+            setId_Medicamento('')
             setTextFormButton("Enviar")
         }
     }, [Seguimiento_CerdaEdit])
 
     const getPorcinos = async () => {
         try {
-            const porcinos = await apiAxios.get('/api/porcino/')
+            const porcinos = await apiAxios.get('/api/Porcino/')
             setPorcinos(porcinos.data)
             console.log(porcinos.data)
         } catch (error) {
@@ -58,7 +66,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         }
     }
 
-    const getResponsable = async () => {
+    const getResponsables = async () => {
         try {
             const responsables = await apiAxios.get('/api/responsables/')
             setResponsables(responsables.data)
@@ -69,6 +77,16 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         }
     }
 
+    const getMedicamentos = async () => {
+        try {
+            const medicamentos = await apiAxios.get('/api/medicamentos/')
+            setMedicamentos(medicamentos.data)
+            console.log('Medicamentos:', medicamentos.data)
+        } catch (error) {
+            console.error('Error obteniendo medicamentos:', error)
+            setMedicamentos([])
+        }
+    }
     const gestionarForm = async (e) => {
         e.preventDefault()
 
@@ -77,7 +95,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             Hora,
             Observaciones,
             Id_Porcino,
-            Id_Responsable
+            Id_Responsable,
+            Id_Medicamento
         }
 
         try {
@@ -178,13 +197,32 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                     required
                 >
                     <option value="">Selecciona...</option>
-                    {Responsables.map((responsable) => (
-                        <option key={responsable.id_responsable} value={responsable.id_responsable}>
+                    {responsables.map((responsable) => (
+                        <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
                             {responsable.Nombres} {responsable.Apellidos}
                         </option>
-                    ))}
+                        ))}
                 </select>
             </div>
+
+            <div className="mb-3">
+                <label htmlFor="Id_Medicamento" className="form-label">Medicamento</label>
+                <select 
+                    id="Id_Medicamento" 
+                    className="form-control" 
+                    value={Id_Medicamento} 
+                    onChange={(e) => setId_Medicamento(e.target.value)} 
+                    required
+                >
+                    <option value="">Selecciona...</option>
+                    {medicamentos.map((medicamento) => (
+                        <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
+                            {medicamento.Nombre}
+                        </option>
+                        ))}
+                </select>
+            </div>
+
 
            
             <div className="mb-3">

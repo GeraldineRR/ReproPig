@@ -9,6 +9,7 @@ const Seguimiento_CerdaModel = db.define('Seguimiento_Cerda', {
     Observaciones: { type: DataTypes.STRING },
     Id_Porcino: { type: DataTypes.INTEGER },
     Id_Responsable: { type: DataTypes.INTEGER },
+    Id_Medicamento: { type: DataTypes.INTEGER },
 },{
     freezeTableName: true,
 })

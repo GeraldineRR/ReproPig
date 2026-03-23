@@ -1,18 +1,19 @@
-import { useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import NavBar from './navBar.jsx'
+import CrudSeguimiento_Cerda from './Modulos/Seguimiento_Cerda/CrudSeguimiento_Cerda.jsx'
 
-import { Routes, Route, Navigate } from 'react-router-dom';
-import CrudResponsables from './Responsables/crudresponsables.jsx';
 
 function App() {
+
   return (
-    <Routes>
-      
-      {/* Redirige la raíz a /responsables */}
-      <Route path="/" element={<Navigate to="/responsables" />} />
-
-      <Route path="/responsables" element={<CrudResponsables />} />
-
-    </Routes>
+    <div>
+      <NavBar />
+      <Routes>
+        <Route path="/" element={<div className="container mt-5"><h1>Pagina Principal</h1></div>} />
+        <Route path="/Seguimiento_Cerda" element={<CrudSeguimiento_Cerda />} />
+        
+      </Routes>
+    </div>
   )
 }
 
