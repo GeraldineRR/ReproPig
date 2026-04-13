@@ -10,6 +10,7 @@ import montaRoutes from './routes/montaRoutes.js'
 import inseminacionRoutes from './routes/inseminacionRoutes.js'
 import responsablesRoutes from './routes/responsablesRoutes.js'
 import PartosRoutes from './routes/PartosRoutes.js'
+import Seguimiento_CerdaRoutes from './routes/Seguimiento_CerdaRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 
 import dotenv from 'dotenv'
@@ -23,6 +24,8 @@ import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
 import PartosModel from './models/PartosModel.js'
+import responsablesModel from './models/responsablesModel.js'
+import SeguimientoCerda_Model from './models/Seguimiento_CerdaModel.js'
 // ❌ ResponsablesModel ya no se necesita para asociaciones
 
 const app = express()
@@ -41,6 +44,7 @@ app.use('/api/inseminacion', inseminacionRoutes)
 app.use('/api/Partos', PartosRoutes)
 app.use('/api/responsables', responsablesRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/Seguimiento_Cerda',Seguimiento_CerdaRoutes)
 
 // Conexión DB
 try {
@@ -81,6 +85,15 @@ reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porci
 PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
 reproduccionesModel.hasMany(montaModel, { foreignKey: 'Id_Reproduccion', as: 'montas' })
 reproduccionesModel.hasMany(inseminacionModel, { foreignKey: 'Id_Reproduccion', as: 'inseminaciones' })
+// ====== Relaciones Seguimiento Cerda ======
+responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
+
+PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcinos' })
+
+MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
 
 app.listen(PORT, () => {

@@ -22,14 +22,16 @@ const Dashboard = () => {
                 apiAxios.get('/colectas'),
                 apiAxios.get('/monta'),
                 apiAxios.get('/inseminacion'),
-                apiAxios.get('/reproducciones/')
+                apiAxios.get('/reproducciones/'),
+                apiAxios.get('/Seguimiento_Cerda/')
             ])
             setStats({
                 porcinos: porcinos.data.length,
                 colectas: colectas.data.length,
                 montas: montas.data.length,
                 inseminaciones: inseminaciones.data.length,
-                reproducciones: reproducciones.data.length
+                reproducciones: reproducciones.data.length,
+                Seguimiento_Cerda: Seguimiento_Cerda.data.length
             })
             // Últimas 5 reproducciones
             const ultimas = [...reproducciones.data].reverse().slice(0, 5)
@@ -48,6 +50,7 @@ const Dashboard = () => {
         { nombre: 'Colectas', icono: '🧪', ruta: '/colectas', color: '#A0C4FF', desc: 'Material genético' },
         { nombre: 'Medicamentos', icono: '💊', ruta: '/medicamentos', color: '#FFC6FF', desc: 'Control sanitario' },
         { nombre: 'Responsables', icono: '👥', ruta: '/responsables', color: '#FDFFB6', desc: 'Equipo de trabajo' },
+        { nombre: 'Seguimiento de Cerdas', icono: '�‍⚕️', ruta: '/Seguimiento_Cerda', color: '#A0C4FF', desc: 'Control reproductivo' },
     ]
 
     const statCards = [
