@@ -235,21 +235,16 @@ function Hero() {
 
           {/* ── CONTENIDO ── */}
           <div className="rp-hero-content">
-            <div className="rp-hero-eyebrow">🐷 Sistema Integral Porcícola</div>
-
             <h1 className="rp-hero-h1">
               ReproPig
-              <span className="rp-accent">Gestión Reproductiva Inteligente</span>
+              <span className="rp-accent">Gestión Reproductiva Porcicola Inteligente</span>
             </h1>
-
             <p className="rp-hero-sub">
               Control eficiente de gestión reproductiva de porcinos
               en un solo sistema moderno y profesional.
             </p>
-
             <WeatherCard />
           </div>
-
         </div>
       </section>
     </>
