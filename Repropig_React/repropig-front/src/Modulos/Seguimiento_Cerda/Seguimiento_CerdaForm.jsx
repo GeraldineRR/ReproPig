@@ -3,7 +3,6 @@ import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
-
 const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => {
 
     const MySwal = withReactContent(Swal)
@@ -15,11 +14,11 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Id_Porcino, setId_Porcino] = useState('')
     const [Id_Responsable, setId_Responsable] = useState('')
     const [Id_Medicamento, setId_Medicamento] = useState('')
-    
+
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
-    
+
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     useEffect(() => {
@@ -132,51 +131,51 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
-           
+
             <div className="mb-3">
                 <label htmlFor="Fecha" className="form-label">Fecha</label>
-                <input 
-                    type="date" 
-                    id="Fecha" 
-                    className="form-control" 
-                    value={Fecha} 
-                    onChange={(e) => setFecha(e.target.value)} 
+                <input
+                    type="date"
+                    id="Fecha"
+                    className="form-control"
+                    value={Fecha}
+                    onChange={(e) => setFecha(e.target.value)}
                     required
                 />
             </div>
 
             <div className="mb-3">
                 <label htmlFor="Hora" className="form-label">Hora</label>
-                <input 
-                    type="time" 
-                    id="Hora" 
-                    className="form-control" 
-                    value={Hora} 
-                    onChange={(e) => setHora(e.target.value)} 
+                <input
+                    type="time"
+                    id="Hora"
+                    className="form-control"
+                    value={Hora}
+                    onChange={(e) => setHora(e.target.value)}
                     required
                 />
             </div>
 
-          
+
             <div className="mb-3">
                 <label htmlFor="Observaciones" className="form-label">Observaciones</label>
-                <textarea 
-                    id="Observaciones" 
-                    className="form-control" 
-                    value={Observaciones} 
-                    onChange={(e) => setObservaciones(e.target.value)} 
+                <textarea
+                    id="Observaciones"
+                    className="form-control"
+                    value={Observaciones}
+                    onChange={(e) => setObservaciones(e.target.value)}
                     rows="3"
                 />
             </div>
 
-         
+
             <div className="mb-3">
                 <label htmlFor="Id_Porcino" className="form-label">Porcino</label>
-                <select 
-                    id="Id_Porcino" 
-                    className="form-control" 
-                    value={Id_Porcino} 
-                    onChange={(e) => setId_Porcino(e.target.value)} 
+                <select
+                    id="Id_Porcino"
+                    className="form-control"
+                    value={Id_Porcino}
+                    onChange={(e) => setId_Porcino(e.target.value)}
                     required
                 >
                     <option value="">Selecciona...</option>
@@ -190,11 +189,11 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
             <div className="mb-3">
                 <label htmlFor="Id_Responsable" className="form-label">Responsable</label>
-                <select 
-                    id="Id_Responsable" 
-                    className="form-control" 
-                    value={Id_Responsable} 
-                    onChange={(e) => setId_Responsable(e.target.value)} 
+                <select
+                    id="Id_Responsable"
+                    className="form-control"
+                    value={Id_Responsable}
+                    onChange={(e) => setId_Responsable(e.target.value)}
                     required
                 >
                     <option value="">Selecciona...</option>
@@ -202,17 +201,17 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                         <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
                             {responsable.Nombres} {responsable.Apellidos}
                         </option>
-                        ))}
+                    ))}
                 </select>
             </div>
 
             <div className="mb-3">
                 <label htmlFor="Id_Medicamento" className="form-label">Medicamento</label>
-                <select 
-                    id="Id_Medicamento" 
-                    className="form-control" 
-                    value={Id_Medicamento} 
-                    onChange={(e) => setId_Medicamento(e.target.value)} 
+                <select
+                    id="Id_Medicamento"
+                    className="form-control"
+                    value={Id_Medicamento}
+                    onChange={(e) => setId_Medicamento(e.target.value)}
                     required
                 >
                     <option value="">Selecciona...</option>
@@ -220,12 +219,10 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                         <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
                             {medicamento.Nombre}
                         </option>
-                        ))}
+                    ))}
                 </select>
             </div>
 
-
-           
             <div className="mb-3">
                 <input
                     type="submit"
