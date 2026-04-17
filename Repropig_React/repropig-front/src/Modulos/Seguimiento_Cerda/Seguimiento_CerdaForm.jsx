@@ -104,7 +104,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                 await apiAxios.post('/Seguimiento_Cerda/', data)
             } else {
                 await apiAxios.put(
-                    `/api/Seguimiento_Cerda/${Id_Seguimiento_Cerda}`,
+                    `/Seguimiento_Cerda/${Id_Seguimiento_Cerda}`,
                     data
                 )
             }
@@ -222,8 +222,6 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                     ))}
                 </select>
             </div>
-
-
 
             <div className="mb-3">
                 <input

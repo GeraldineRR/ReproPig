@@ -1,6 +1,7 @@
 import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import responsablesModel from "../models/responsablesModel.js";
+import MedicamentosModel from "../models/MedicamentosModel.js";
 
 class Seguimiento_CerdaService {
     async getAll() {
@@ -30,6 +31,15 @@ class Seguimiento_CerdaService {
                     model: MedicamentosModel,
                     as: 'medicamentos'
                 },
+            ]
+        })
+    }
+    async getAll() {
+        return await Seguimiento_CerdaModel.findAll({ 
+            include: [
+                { 
+                model: MedicamentosModel,
+                as: 'medicamentos'},
             ]
         })
     }

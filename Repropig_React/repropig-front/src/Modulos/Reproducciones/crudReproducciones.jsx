@@ -64,24 +64,12 @@ const CrudReproducciones = () => {
         }
     }
 
-    // ✅ Abrir modal de monta encadenado desde la tabla
     const handleAbrirMonta = (row) => {
-        setModalEncadenado({
-            tipo: 'Monta',
-            Id_Reproduccion: row.Id_Reproduccion,
-            Id_Porcino: row.Id_Cerda
-        })
-        setTimeout(() => abrirModal(modalMontaRef, modalMontaInstanceRef), 200)
+        navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })
     }
 
-    // ✅ Abrir modal de inseminación encadenado desde la tabla
     const handleAbrirInseminacion = (row) => {
-        setModalEncadenado({
-            tipo: 'Inseminacion',
-            Id_Reproduccion: row.Id_Reproduccion,
-            Id_Porcino: row.Id_Cerda
-        })
-        setTimeout(() => abrirModal(modalInseminacionRef, modalInseminacionInstanceRef), 200)
+        navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })
     }
 
     const columnsTable = [
