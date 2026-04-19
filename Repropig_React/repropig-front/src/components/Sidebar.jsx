@@ -74,6 +74,12 @@ export default function Sidebar() {
                 Razas
               </NavLink>
 
+              <NavLink to="/crias" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Crías
+              </NavLink>
+
             </div>
 
           )}
@@ -116,15 +122,6 @@ export default function Sidebar() {
               </NavLink>
 
               <NavLink
-                to="/inseminaciones"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Inseminaciones
-              </NavLink>
-
-              <NavLink
                 to="/colectas"
                 className={({ isActive }) =>
                   `${linkClass} ${isActive ? activeClass : ""}`
@@ -133,16 +130,44 @@ export default function Sidebar() {
                 Colectas
               </NavLink>
 
-            </div>
+              <NavLink
+                to="/inseminaciones"
+                className={({ isActive }) =>
+                  `${linkClass} ${isActive ? activeClass : ""}`
+                }
+              >
+                Inseminaciones
+              </NavLink>
 
-          )}
+              <NavLink to="/partos" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Partos
+              </NavLink>
 
-        </div>
+              <NavLink to="/segcamada" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Seguimiento de Camada
+              </NavLink>
+
+              <NavLink to="/seguimiento_cerda" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Seguimiento de Cerda
+              </NavLink>
+
+            </div >
+
+          )
+          }
+
+        </div >
 
 
         {/* Sanidad */}
 
-        <div>
+        < div >
 
           <div
             className={buttonClass}
@@ -152,29 +177,31 @@ export default function Sidebar() {
             <span>{sanidadOpen ? "▼" : "▶"}</span>
           </div>
 
-          {sanidadOpen && (
+          {
+            sanidadOpen && (
 
-            <div className="ml-4 flex flex-col gap-1">
+              <div className="ml-4 flex flex-col gap-1">
 
-              <NavLink
-                to="/medicamentos"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Medicamentos
-              </NavLink>
+                <NavLink
+                  to="/medicamentos"
+                  className={({ isActive }) =>
+                    `${linkClass} ${isActive ? activeClass : ""}`
+                  }
+                >
+                  Medicamentos
+                </NavLink>
 
-            </div>
+              </div>
 
-          )}
+            )
+          }
 
-        </div>
+        </div >
 
 
         {/* Administración */}
 
-        <div>
+        < div >
 
           <div
             className={buttonClass}
@@ -184,27 +211,29 @@ export default function Sidebar() {
             <span>{adminOpen ? "▼" : "▶"}</span>
           </div>
 
-          {adminOpen && (
+          {
+            adminOpen && (
 
-            <div className="ml-4 flex flex-col gap-1">
+              <div className="ml-4 flex flex-col gap-1">
 
-              <NavLink
-                to="/responsables"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Responsables
-              </NavLink>
+                <NavLink
+                  to="/responsables"
+                  className={({ isActive }) =>
+                    `${linkClass} ${isActive ? activeClass : ""}`
+                  }
+                >
+                  Responsables
+                </NavLink>
 
-            </div>
+              </div>
 
-          )}
+            )
+          }
 
-        </div>
+        </div >
 
-      </nav>
+      </nav >
 
-    </aside>
+    </aside >
   )
 }
