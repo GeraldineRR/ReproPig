@@ -10,6 +10,7 @@ import montaRoutes from './routes/montaRoutes.js'
 import inseminacionRoutes from './routes/inseminacionRoutes.js'
 import responsablesRoutes from './routes/responsablesRoutes.js'
 import PartosRoutes from './routes/PartosRoutes.js'
+import Seguimiento_CerdaRoutes from './routes/Seguimiento_CerdaRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import criaRoutes from './routes/criaRoutes.js'
 import segcamadaRoutes from './routes/segcamadaRoutes.js'
@@ -51,6 +52,7 @@ app.use('/api/cria', criaRoutes)
 app.use('/api/segcamada', segcamadaRoutes)
 app.use('/api/Seguimiento_Cerda', Seguimiento_CerdaRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/Seguimiento_Cerda',Seguimiento_CerdaRoutes)
 
 // Conexión DB
 try {
@@ -118,6 +120,15 @@ reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porci
 PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
 reproduccionesModel.hasMany(montaModel, { foreignKey: 'Id_Reproduccion', as: 'montas' })
 reproduccionesModel.hasMany(inseminacionModel, { foreignKey: 'Id_Reproduccion', as: 'inseminaciones' })
+// ====== Relaciones Seguimiento Cerda ======
+responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
+
+PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcinos' })
+
+MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
 
 app.listen(PORT, () => {

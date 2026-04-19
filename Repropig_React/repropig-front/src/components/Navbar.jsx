@@ -1,5 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 export default function Navbar() {
 
@@ -15,9 +16,21 @@ export default function Navbar() {
 
     <nav className="h-16 bg-gradient-to-r from-[#E8A0A8] to-[#C97A85] flex items-center justify-between px-6 text-white shadow">
 
-      <h1 className="text-lg font-bold">
-        Repropig
-      </h1>
+      {/* LOGO */}
+      <div
+        onClick={() => navigate(usuario ? "/dashboard" : "/")}
+        className="flex items-center gap-3 cursor-pointer"
+      >
+        <img
+          src={logo}
+          alt="ReproPig"
+          className="h-9 w-auto"
+        />
+
+        <h1 className="text-xl font-bold tracking-wide">
+          ReproPig
+        </h1>
+      </div>
 
       <div className="flex items-center gap-4">
 

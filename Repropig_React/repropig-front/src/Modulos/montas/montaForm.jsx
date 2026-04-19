@@ -42,17 +42,26 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         } catch (error) { console.error('Error al obtener responsables:', error) }
     }
 
+    // ✅ CORREGIDO: ya NO filtra por tipo de reproducción
     const getReproduccionesActivas = async (idPorcino) => {
-        if (!idPorcino) { setReproduccionesActivas([]); return }
+        if (!idPorcino) {
+            setReproduccionesActivas([])
+            return
+        }
+
         try {
             const response = await apiAxios.get('/reproducciones/')
+
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
-                r.Activo === 'Si' &&
-                r.TipoReproduccion === 'Monta'
+                r.Activo === 'Si'
             )
+
             setReproduccionesActivas(activas)
-        } catch (error) { console.error('Error al obtener reproducciones:', error) }
+
+        } catch (error) {
+            console.error('Error al obtener reproducciones:', error)
+        }
     }
 
     const handlePorcinoChange = (e) => {
@@ -115,27 +124,60 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
     const gestionarForm = async (e) => {
         e.preventDefault();
+
         if (Id_Responsable.length === 0) {
-            MySwal.fire({ icon: 'warning', title: 'Requerido', text: 'Debes seleccionar al menos un responsable' })
+            MySwal.fire({
+                icon: 'warning',
+                title: 'Requerido',
+                text: 'Debes seleccionar al menos un responsable'
+            })
             return
         }
+
         const formData = {
-            Fec_hora, Id_Porcino, Id_Cerdo,
+            Fec_hora,
+            Id_Porcino,
+            Id_Cerdo,
             Id_Responsable: JSON.stringify(Id_Responsable),
-            Observaciones, Id_Reproduccion,
+            Observaciones,
+            Id_Reproduccion,
         };
+
         try {
+
             if (textFormButton === 'Agregar Monta') {
+
                 await apiAxios.post('/monta', formData)
-                MySwal.fire({ title: "Registro exitoso", text: "Monta creada con éxito", icon: "success" })
+
+                MySwal.fire({
+                    title: "Registro exitoso",
+                    text: "Monta creada con éxito",
+                    icon: "success"
+                })
+
             } else {
+
                 await apiAxios.put('/monta/' + rowToEdit.Id_Monta, formData)
-                MySwal.fire({ title: "Actualización exitosa", text: "Monta actualizada con éxito", icon: "success" })
+
+                MySwal.fire({
+                    title: "Actualización exitosa",
+                    text: "Monta actualizada con éxito",
+                    icon: "success"
+                })
+
             }
+
             hideModal()
             refreshTable()
+
         } catch (error) {
-            MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
+
+            MySwal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.response?.data?.message || error.message
+            })
+
         }
     };
 
@@ -146,103 +188,118 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
             {esPrellenado && (
                 <div className="alert alert-success py-2 mb-3">
-                    <i className="fa-solid fa-circle-check me-2"></i>
                     Cerda y reproducción asignadas automáticamente.
                 </div>
             )}
 
             <div className="mb-3">
                 <label className="form-label">Fecha</label>
-                <input type="date" className="form-control" value={Fec_hora}
-                    onChange={e => setFec_hora(e.target.value)} required />
+                <input type="date" className="form-control"
+                    value={Fec_hora}
+                    onChange={e => setFec_hora(e.target.value)}
+                    required />
             </div>
 
             <div className="mb-3">
                 <label className="form-label">Cerda</label>
-                <select className="form-select" value={Id_Porcino}
+                <select className="form-select"
+                    value={Id_Porcino}
                     onChange={handlePorcinoChange}
-                    disabled={esPrellenado} required>
+                    disabled={esPrellenado}
+                    required>
+
                     <option value="">Seleccione</option>
+
                     {hembras.map(p => (
-                        <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
+                        <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                            {p.Nom_Porcino}
+                        </option>
                     ))}
+
                 </select>
-                {esPrellenado && <small className="text-muted">Asignado desde la reproducción</small>}
             </div>
 
-            {/* ✅ Select reproducción — solo si no es prellenado */}
             {!esPrellenado && (
+
                 <div className="mb-3">
+
                     <label className="form-label">Reproducción activa</label>
-                    <select className="form-select" value={Id_Reproduccion}
-                        onChange={e => setId_Reproduccion(e.target.value)} required>
+
+                    <select
+                        className="form-select"
+                        value={Id_Reproduccion}
+                        onChange={e => setId_Reproduccion(e.target.value)}
+                        required>
+
                         <option value="">
+
                             {!Id_Porcino
                                 ? 'Primero seleccione una cerda'
                                 : reproduccionesActivas.length === 0
-                                    ? 'No hay reproducciones de Monta activas'
+                                    ? 'No hay reproducciones activas'
                                     : 'Seleccione una reproducción'}
+
                         </option>
+
                         {reproduccionesActivas.map(r => (
                             <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                #{r.Id_Reproduccion} — {r.porcino?.Nom_Porcino || `Cerda #${r.Id_Cerda}`}
+                                #{r.Id_Reproduccion}
                             </option>
                         ))}
+
                     </select>
+
                     {Id_Porcino && reproduccionesActivas.length === 0 && (
+
                         <div className="alert alert-warning py-2 mt-2">
-                            <small className="d-block mb-2">⚠️ Esta cerda no tiene reproducciones de Monta activas.</small>
-                            <button type="button" className="btn btn-sm btn-warning fw-semibold"
-                                onClick={() => { hideModal(); navigate('/reproducciones') }}>
-                                ➕ Crear reproducción
+
+                            Esta cerda no tiene reproducciones activas.
+
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-warning ms-2"
+                                onClick={() => {
+                                    hideModal();
+                                    navigate('/reproducciones')
+                                }}>
+
+                                Crear reproducción
+
                             </button>
+
                         </div>
+
                     )}
+
                 </div>
+
             )}
 
-            {/* ✅ Cerdo macho que realizó la monta */}
             <div className="mb-3">
                 <label className="form-label">Cerdo (Macho)</label>
-                <select className="form-select" value={Id_Cerdo}
-                    onChange={e => setId_Cerdo(e.target.value)} required>
-                    <option value="">Seleccione el macho</option>
+                <select
+                    className="form-select"
+                    value={Id_Cerdo}
+                    onChange={e => setId_Cerdo(e.target.value)}
+                    required>
+
+                    <option value="">Seleccione</option>
+
                     {machos.map(p => (
-                        <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
+                        <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                            {p.Nom_Porcino}
+                        </option>
                     ))}
+
                 </select>
             </div>
 
-            <div className="mb-3">
-                <label className="form-label fw-semibold">
-                    Responsables <span className="text-danger">*</span>
-                    <small className="text-muted fw-normal ms-2">
-                        ({Id_Responsable.length} seleccionado{Id_Responsable.length !== 1 ? 's' : ''})
-                    </small>
-                </label>
-                <div className="border rounded p-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                    {responsables.map(resp => (
-                        <div key={resp.Id_Responsable} className="form-check">
-                            <input className="form-check-input" type="checkbox"
-                                id={`resp-monta-${resp.Id_Responsable}`}
-                                checked={Id_Responsable.includes(resp.Id_Responsable)}
-                                onChange={() => toggleResponsable(resp.Id_Responsable)} />
-                            <label className="form-check-label" htmlFor={`resp-monta-${resp.Id_Responsable}`}>
-                                {resp.Nombres} {resp.Apellidos}
-                                <span className="badge bg-secondary ms-2" style={{ fontSize: '0.7rem' }}>{resp.Cargo}</span>
-                            </label>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <input
+                type="submit"
+                className="btn btn-primary w-50"
+                value={textFormButton}
+            />
 
-            <div className="mb-3">
-                <label className="form-label">Observaciones</label>
-                <textarea className="form-control" value={Observaciones}
-                    onChange={e => setObservaciones(e.target.value)} />
-            </div>
-
-            <input type="submit" className="btn btn-primary w-50" value={textFormButton} />
         </form>
     );
 };
