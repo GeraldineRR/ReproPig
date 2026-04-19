@@ -43,12 +43,16 @@ export default function Sidebar() {
           {animalesOpen && (
             <div className="ml-4 flex flex-col">
 
+            <NavLink to="/razas" className={linkClass}>
+                Razas
+              </NavLink>
+
               <NavLink to="/porcinos" className={linkClass}>
                 Porcinos
               </NavLink>
 
-              <NavLink to="/razas" className={linkClass}>
-                Razas
+              <NavLink to="/crias" className={linkClass}>
+                Crías
               </NavLink>
 
             </div>
@@ -73,19 +77,29 @@ export default function Sidebar() {
                 Reproducciones
               </NavLink>
 
-              <NavLink to="/montas" className={linkClass}>
-                Montas
+              <NavLink to="/colectas" className={linkClass}>
+                Colectas
               </NavLink>
 
               <NavLink to="/inseminaciones" className={linkClass}>
                 Inseminaciones
               </NavLink>
 
-              <NavLink to="/colectas" className={linkClass}>
-                Colectas
+              <NavLink to="/montas" className={linkClass}>
+                Montas
               </NavLink>
 
-              
+              <NavLink to="/partos" className={linkClass}>
+                Partos
+              </NavLink>
+
+              <NavLink to="/segcamada" className={linkClass}>
+                Seguimiento de Camada
+              </NavLink>
+
+              <NavLink to="/seguimiento_cerda" className={linkClass}>
+                Seguimiento de Cerda
+              </NavLink>
 
             </div>
           )}

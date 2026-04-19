@@ -242,7 +242,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Genero_Porcino" className="form-label">Genero</label>
+                <label htmlFor="Genero_Porcino" className="form-label">Sexo</label>
                 <select id="Genero_Porcino" className="form-control" value={Gen_Porcino} onChange={(e) => setGenero(e.target.value)} required>
                     <option value="">Selecciona...</option>
                     <option value="H">Hembra</option>
@@ -278,7 +278,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
             <div className="mb-3">
                 <label htmlFor="Fec_Llegada" className="form-label">Fecha de Llegada</label>
-                <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"} required/>
+                <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"} required />
             </div>
 
             <div className="mb-3">

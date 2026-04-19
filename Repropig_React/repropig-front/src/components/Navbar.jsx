@@ -16,7 +16,7 @@ export default function Navbar() {
     <nav className="h-16 bg-gradient-to-r from-[#E8A0A8] to-[#C97A85] flex items-center justify-between px-6 text-white shadow">
 
       <h1 className="text-lg font-bold">
-        🐷 ReproPig
+        Repropig
       </h1>
 
       <div className="flex items-center gap-4">
