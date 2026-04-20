@@ -1,11 +1,19 @@
-import axios from 'axios'
-const API_URL= import.meta.env.VITE_API_URL
+import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL 
 
 const apiAxios = axios.create({
-    baseURL : API_URL,
+    baseURL: API_URL,
     headers: {
-        "Content-Type": 'application/json'
+        'Content-Type': 'application/json',
+    },
+});
+
+apiAxios.interceptors.request.use((config) => {
+    const token = sessionStorage.getItem('token')
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`
     }
-})
+    return config
+}, (error) => Promise.reject(error))
 
 export default apiAxios

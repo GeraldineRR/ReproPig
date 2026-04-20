@@ -1,7 +1,7 @@
-import Navbar from "../components/layout/NavBar"
-import Hero from "../components/landing/Hero"
-import Features from "../components/landing/Features"
-import Footer from "../components/layout/Footer"
+import Navbar from "../components/Navbar"
+import Hero from "../landing/Hero"
+import Features from "../landing/Features"
+import Footer from "../layout/Footer"
 
 function Landing() {
   return (

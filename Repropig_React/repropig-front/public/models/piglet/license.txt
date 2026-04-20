@@ -1,0 +1,11 @@
+Model Information:
+* title:	Piglet
+* source:	https://sketchfab.com/3d-models/piglet-8343f141936f4c799ed980a3c7c3ae27
+* author:	grs (https://sketchfab.com/sgrosjean)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Piglet" (https://sketchfab.com/3d-models/piglet-8343f141936f4c799ed980a3c7c3ae27) by grs (https://sketchfab.com/sgrosjean) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
