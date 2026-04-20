@@ -42,7 +42,14 @@ function App() {
         <Route path="/inseminaciones" element={<CrudInseminacion />} />
         <Route path="/medicamentos" element={<CrudMedicamentos />} />
         <Route path="/reproducciones" element={<CrudReproducciones />} />
-        <Route path="/responsables" element={<CrudResponsables />} />
+        <Route
+          path="/responsables"
+          element={
+            <RutaProtegida rolesPermitidos={["instructor"]}>
+              <CrudResponsables />
+            </RutaProtegida>
+          }
+        />
         <Route path="/partos" element={<CrudPartos />} />
         <Route path="/crias" element={<CrudCrias />} />
         <Route path="/segcamada" element={<CrudSegcamada />} />

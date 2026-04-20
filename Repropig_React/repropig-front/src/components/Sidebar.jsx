@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
 
 export default function Sidebar() {
 
@@ -7,6 +8,7 @@ export default function Sidebar() {
   const [reproOpen, setReproOpen] = useState(false)
   const [sanidadOpen, setSanidadOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
+  const { usuario } = useAuth()
 
   const linkClass =
     "flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-[#E8A0A8] hover:text-white transition"
@@ -200,20 +202,18 @@ export default function Sidebar() {
 
 
         {/* Administración */}
+        {usuario?.cargo === "instructor" && (
+          <div>
 
-        < div >
+            <div
+              className={buttonClass}
+              onClick={() => setAdminOpen(!adminOpen)}
+            >
+              👨‍🌾 Administración
+              <span>{adminOpen ? "▼" : "▶"}</span>
+            </div>
 
-          <div
-            className={buttonClass}
-            onClick={() => setAdminOpen(!adminOpen)}
-          >
-            👨‍🌾 Administración
-            <span>{adminOpen ? "▼" : "▶"}</span>
-          </div>
-
-          {
-            adminOpen && (
-
+            {adminOpen && (
               <div className="ml-4 flex flex-col gap-1">
 
                 <NavLink
@@ -226,11 +226,10 @@ export default function Sidebar() {
                 </NavLink>
 
               </div>
+            )}
 
-            )
-          }
-
-        </div >
+          </div>
+        )}
 
       </nav >
 
