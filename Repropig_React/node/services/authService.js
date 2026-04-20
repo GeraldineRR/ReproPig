@@ -36,6 +36,7 @@ class AuthService {
                 apellidos: responsable.Apellidos,
                 email: responsable.Email,
                 cargo: responsable.Cargo
+                
             }
         }
     }

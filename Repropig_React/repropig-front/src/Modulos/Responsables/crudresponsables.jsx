@@ -78,7 +78,9 @@ const CrudResponsables = () => {
         const nombre = responsable.Nombres?.toLowerCase() || '';
         const apellido = responsable.Apellidos?.toLowerCase() || '';
         return nombre.includes(textToSearch) || apellido.includes(textToSearch)
-    });
+    })
+
+    .sort((a, b) => b.Id_Responsable - a.Id_Responsable)
 
     const hidemodal = () => {
         document.getElementById('closeModal').click();
@@ -100,11 +102,11 @@ const CrudResponsables = () => {
                             onChange={(e) => setFilterText(e.target.value)} />
                     </div>
                     <div className="col-auto d-flex gap-2">
-                        <button type="button" className="btn btn-primary"
+                       {/* <button type="button" className="btn btn-primary"
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             onClick={() => { setRowToEdit({}); setTextformbutton('Nuevo') }}>
                             Nuevo
-                        </button>
+                        </button>*/}
 
                         {/* ✅ Botón crear usuario — solo para instructores */}
                         {usuario?.cargo === 'Instructor' && (

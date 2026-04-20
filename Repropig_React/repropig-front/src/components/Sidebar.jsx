@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
 
 export default function Sidebar() {
 
@@ -174,7 +175,7 @@ export default function Sidebar() {
 
         {/* Administración */}
 
-        <div>
+        < div >
 
           <div
             className={buttonClass}
@@ -184,24 +185,28 @@ export default function Sidebar() {
             <span>{adminOpen ? "▼" : "▶"}</span>
           </div>
 
-          {adminOpen && (
+          {
+            adminOpen && (
 
-            <div className="ml-4 flex flex-col gap-1">
+              <div className="ml-4 flex flex-col gap-1">
 
-              <NavLink
-                to="/responsables"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Responsables
-              </NavLink>
+                <NavLink
+                  to="/responsables"
+                  className={({ isActive }) =>
+                    `${linkClass} ${isActive ? activeClass : ""}`
+                  }
+                >
+                  Responsables
+                </NavLink>
 
-            </div>
+              </div>
 
-          )}
+            )
+          }
 
-        </div>
+        </div >
+
+          
 
       </nav>
 
