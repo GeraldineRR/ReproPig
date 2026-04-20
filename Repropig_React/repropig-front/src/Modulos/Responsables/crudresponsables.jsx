@@ -108,7 +108,7 @@ const CrudResponsables = () => {
                         </button>*/}
 
                         {/* ✅ Botón crear usuario — solo para instructores */}
-                        {usuario?.cargo === 'Instructor' && (
+                        {usuario?.cargo === 'instructor' && (
                             <button type="button" className="btn btn-success"
                                 data-bs-toggle="modal" data-bs-target="#modalRegister">
                                 👤 Crear usuario
