@@ -5,7 +5,7 @@ import ResponsablesForm from "./responsablesForm.jsx";
 import RegisterUsuario from "./RegisterUsuario.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 
-const CrudResponsables = () => {    
+const CrudResponsables = () => {
 
     const { usuario } = useAuth()
     const [responsables, setResponsables] = useState([]);
@@ -79,8 +79,7 @@ const CrudResponsables = () => {
         const apellido = responsable.Apellidos?.toLowerCase() || '';
         return nombre.includes(textToSearch) || apellido.includes(textToSearch)
     })
-
-    .sort((a, b) => b.Id_Responsable - a.Id_Responsable)
+    .sort((a, b) => b.Id_Responsable - a.Id_Responsable) // Desc
 
     const hidemodal = () => {
         document.getElementById('closeModal').click();

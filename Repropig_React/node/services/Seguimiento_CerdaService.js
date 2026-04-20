@@ -5,20 +5,32 @@ import MedicamentosModel from "../models/MedicamentosModel.js";
 
 class Seguimiento_CerdaService {
     async getAll() {
-        return await Seguimiento_CerdaModel.findAll({ 
+        return await Seguimiento_CerdaModel.findAll({
             include: [
-                { 
-                model: PorcinoModel,
-                as: 'porcinos'},
+                {
+                    model: PorcinoModel,
+                    as: 'porcinos'
+                },
             ]
         })
     }
     async getAll() {
-        return await Seguimiento_CerdaModel.findAll({ 
+        return await Seguimiento_CerdaModel.findAll({
             include: [
-                { 
-                model: responsablesModel,
-                as: 'responsables'},
+                {
+                    model: responsablesModel,
+                    as: 'responsables'
+                },
+            ]
+        })
+    }
+    async getAll() {
+        return await Seguimiento_CerdaModel.findAll({
+            include: [
+                {
+                    model: MedicamentosModel,
+                    as: 'medicamentos'
+                },
             ]
         })
     }

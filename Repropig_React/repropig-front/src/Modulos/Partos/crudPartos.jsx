@@ -9,23 +9,23 @@ const CrudPartos = () => {
     const [filterText, setFilterText] = useState("");
     const [rowToEdit, setRowToEdit] = useState({});
 
-    const [textFormButton, setTextFormButton] = useState("Enviar")
-
+    // 🔹 Cerrar modal y refrescar tabla
     const hideModal = () => {
         const closeButton = document.getElementById('closeModal');
         if (closeButton) {
             closeButton.click();
         }
-        getAllPartos(); // refresca tabla después de guardar
+        getAllPartos();
     };
 
+    // 🔹 Columnas de la tabla
     const columnsTable = [
-        { name: 'Id_parto', selector: row => row.Id_parto, sortable: true },
-        { name: 'Id_Porcino', selector: row => row.Id_Porcino, sortable: true },
+        { name: 'Id_Porcino', selector: row => row.porcinos?.Nom_Porcino, sortable: true },
         { name: 'Fec_inicio', selector: row => row.Fec_inicio },
         { name: 'Hor_inicial', selector: row => row.Hor_inicial },
         { name: 'Nac_vivos', selector: row => row.Nac_vivos },
         { name: 'Nac_momias', selector: row => row.Nac_momias },
+        { name: 'Nac_muertos', selector: row => row.Nac_muertos },
         { name: 'Pes_camada', selector: row => row.Pes_camada },
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Fec_fin', selector: row => row.Fec_fin },
@@ -48,25 +48,28 @@ const CrudPartos = () => {
         }
     ];
 
+    // 🔹 Cargar datos
     useEffect(() => {
         getAllPartos();
     }, []);
 
     const getAllPartos = async () => {
         try {
-            const response = await apiAxios.get('/api/Partos');
+            const response = await apiAxios.get('/partos/');
             setPartos(response.data);
         } catch (error) {
             console.error("Error al obtener partos:", error);
         }
     };
 
+    // 🔹 Filtro seguro
     const newListPartos = partos.filter((row) => {
         const textToSearch = filterText.toLowerCase();
+
         return (
             row.Id_parto?.toString().includes(textToSearch) ||
             row.Id_Porcino?.toString().includes(textToSearch) ||
-            row.Observaciones?.toLowerCase().includes(textToSearch)
+            (row.Observaciones?.toLowerCase() || "").includes(textToSearch)
         );
     });
 
@@ -90,7 +93,8 @@ const CrudPartos = () => {
                             className="btn btn-primary"
                             data-bs-toggle="modal"
                             data-bs-target="#exampleModal"
-                            onClick={() => { setRowToEdit([]); setTextFormButton("Nuevo") }}>
+                            onClick={() => setRowToEdit({})}
+                        >
                             Nuevo Registro
                         </button>
                     </div>
@@ -106,6 +110,7 @@ const CrudPartos = () => {
                     striped
                 />
 
+                {/* Modal */}
                 <div
                     className="modal fade"
                     id="exampleModal"
@@ -129,19 +134,7 @@ const CrudPartos = () => {
                                 <PartosForm
                                     hideModal={hideModal}
                                     rowToEdit={rowToEdit}
-                                    textFormButton={textFormButton}
-                                    setTextFormButton={setTextFormButton}
                                 />
-                            </div>
-
-                            <div className="modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn btn-secondary"
-                                    data-bs-dismiss="modal"
-                                >
-                                    Cerrar
-                                </button>
                             </div>
 
                         </div>

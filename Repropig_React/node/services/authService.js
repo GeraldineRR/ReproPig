@@ -35,8 +35,7 @@ class AuthService {
                 nombres: responsable.Nombres,
                 apellidos: responsable.Apellidos,
                 email: responsable.Email,
-                cargo: responsable.Cargo
-                
+                cargo: responsable.Cargo.toLowerCase()
             }
         }
     }
