@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // ✅ agregar useLocation
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import InseminacionForm from "./inseminacionForm.jsx";
@@ -9,6 +9,9 @@ import WithReactContent from "sweetalert2-react-content";
 const CrudInseminacion = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
+    const location = useLocation() // ✅ agregar
+    const filtroDesdeReproduccion = location.state || null // ✅ { Id_Reproduccion, Id_Porcino }
+
     const [inseminaciones, setInseminaciones] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
@@ -77,7 +80,6 @@ const CrudInseminacion = () => {
                         onClick={() => handleDelete(row)}>
                         <i className="fa-solid fa-trash"></i>
                     </button>
-                    {/* ✅ Ver Colecta asociada */}
                     {row.Id_colecta && (
                         <button className="btn btn-sm btn-success"
                             title="Ver Colecta"
@@ -109,7 +111,13 @@ const CrudInseminacion = () => {
         }
     }
 
-    const newListInseminaciones = inseminaciones.filter(item => {
+    // ✅ Primero filtra por reproducción si viene desde Reproducciones
+    const inseminacionesFiltradas = filtroDesdeReproduccion
+        ? inseminaciones.filter(i => i.Id_Reproduccion == filtroDesdeReproduccion.Id_Reproduccion)
+        : inseminaciones
+
+    // ✅ Luego aplica el buscador sobre lo ya filtrado
+    const newListInseminaciones = inseminacionesFiltradas.filter(item => {
         const text = filterText.toLowerCase().trim();
         const fecha = item.Fec_hora?.toString().toLowerCase() || '';
         const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || '';
@@ -119,6 +127,22 @@ const CrudInseminacion = () => {
 
     return (
         <div className="container mt-5">
+
+            {/* ✅ Banner de filtro activo */}
+            {filtroDesdeReproduccion && (
+                <div className="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-3">
+                    <span>
+                        💉 Mostrando inseminaciones de la reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                    </span>
+                    <button
+                        className="btn btn-sm btn-outline-dark"
+                        onClick={() => window.history.replaceState({}, '', window.location.pathname)
+                            || window.location.reload()}>
+                        ✖ Ver todas
+                    </button>
+                </div>
+            )}
+
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
                     <input className="form-control" placeholder="🔍 Buscar..."
@@ -145,7 +169,13 @@ const CrudInseminacion = () => {
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>
                         <div className="modal-body">
-                            <InseminacionForm hideModal={hideModal} rowToEdit={rowToEdit} refreshTable={getAllInseminaciones} />
+                            {/* ✅ Si viene filtrado, pasa preloaded al form */}
+                            <InseminacionForm
+                                hideModal={hideModal}
+                                rowToEdit={rowToEdit}
+                                refreshTable={getAllInseminaciones}
+                                preloaded={filtroDesdeReproduccion || {}}
+                            />
                         </div>
                     </div>
                 </div>

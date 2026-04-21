@@ -7,7 +7,7 @@ const ResponsablesModel = db.define('responsable', {
     Apellidos: { type: DataTypes.STRING },
     Documento: { type: DataTypes.STRING },
     Cargo: { type: DataTypes.ENUM('Gestor', 'Instructor', 'Pasante') },
-    Telefono: { type: DataTypes.INTEGER },
+    Telefono: { type: DataTypes.STRING},
     Email: { type: DataTypes.STRING },
     Password: { type: DataTypes.STRING }, // ✅ campo contraseña
     Estado: { type: DataTypes.ENUM('Activo', 'Inactivo') }
