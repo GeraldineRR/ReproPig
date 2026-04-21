@@ -6,6 +6,7 @@ import apiAxios from "../api/axiosConfig"
 const Dashboard = () => {
 
   const { usuario } = useAuth()
+  console.log("Usuario completo:", usuario)
   const navigate = useNavigate()
 
   const [stats, setStats] = useState({
@@ -56,17 +57,20 @@ const Dashboard = () => {
     }
   }
 
-  const modulos = [
-    { nombre: "Porcinos", icono: "🐖", ruta: "/porcinos", desc: "Gestiona tu plantel" },
-    { nombre: "Razas", icono: "🧬", ruta: "/razas", desc: "Información genética" },
-    { nombre: "Reproducciones", icono: "🔄", ruta: "/reproducciones", desc: "Control reproductivo" },
-    { nombre: "Montas", icono: "🐷", ruta: "/montas", desc: "Monta natural" },
-    { nombre: "Inseminaciones", icono: "💉", ruta: "/inseminaciones", desc: "Inseminación artificial" },
-    { nombre: "Colectas", icono: "🧪", ruta: "/colectas", desc: "Material genético" },
-    { nombre: "Medicamentos", icono: "💊", ruta: "/medicamentos", desc: "Control sanitario" },
-    { nombre: "Responsables", icono: "👥", ruta: "/responsables", desc: "Equipo de trabajo" }
-  ]
+  const todosLosModulos = [
+  { nombre: "Porcinos", icono: "🐖", ruta: "/porcinos", desc: "Gestiona tu plantel" },
+  { nombre: "Razas", icono: "🧬", ruta: "/razas", desc: "Información genética" },
+  { nombre: "Reproducciones", icono: "🔄", ruta: "/reproducciones", desc: "Control reproductivo" },
+  { nombre: "Montas", icono: "🐷", ruta: "/montas", desc: "Monta natural" },
+  { nombre: "Inseminaciones", icono: "💉", ruta: "/inseminaciones", desc: "Inseminación artificial" },
+  { nombre: "Colectas", icono: "🧪", ruta: "/colectas", desc: "Material genético" },
+  { nombre: "Medicamentos", icono: "💊", ruta: "/medicamentos", desc: "Control sanitario" },
+  { nombre: "Responsables", icono: "👥", ruta: "/responsables", desc: "Equipo de trabajo", soloRoles: ['instructor'] }
+]
 
+const modulos = todosLosModulos.filter(m =>
+  !m.soloRoles || m.soloRoles.includes(usuario?.cargo?.toLowerCase())
+)
   const statCards = [
     { label: "Porcinos", valor: stats.porcinos, icono: "🐖", ruta: "/porcinos" },
     { label: "Reproducciones", valor: stats.reproducciones, icono: "🔄", ruta: "/reproducciones" },
