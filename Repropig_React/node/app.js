@@ -56,6 +56,11 @@ app.use('/api/auth', authRoutes)
 try {
     await db.authenticate()
     console.log('Conexión a la base de datos exitosa')
+
+    await db.sync()
+    console.log('Base de datos sincronizada')
+
+
 } catch (error) {
     console.error('Error al conectar a la base de datos:', error)
     process.exit(1)
