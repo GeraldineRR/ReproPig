@@ -96,11 +96,16 @@ const CrudSegcamada = () => {
     }
 
     const newListSegcamadas = segcamadas.filter(seg => {
-        const text = filterText.toLowerCase()
+
+        const textToSearch = filterText.toLowerCase()
+
+        const medicamento = seg.medicamentos?.Nombre.toLowerCase()
+        const observaciones = seg.Observaciones.toLowerCase()
 
         return (
-            seg.medicamentos?.Nombre?.toLowerCase().includes(text) ||
-            (seg.Observaciones || '').toLowerCase().includes(text)
+            medicamento && medicamento.includes(textToSearch) ||
+            observaciones.includes(textToSearch)
+
         )
     })
 

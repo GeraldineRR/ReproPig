@@ -25,7 +25,7 @@ export const getRaza = async (req, res) => {
 export const createRaza = async (req, res) => {
     try {
         const raza = await RazaService.create(req.body)
-        res.status(201).json({message: 'raza creado', raza})
+        res.status(201).json({message: 'raza creada', raza})
 
     } catch (error) {
         res.status(400).json({ message: error.message })

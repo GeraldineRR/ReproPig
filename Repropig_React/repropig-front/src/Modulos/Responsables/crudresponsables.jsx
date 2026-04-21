@@ -101,14 +101,14 @@ const CrudResponsables = () => {
                             onChange={(e) => setFilterText(e.target.value)} />
                     </div>
                     <div className="col-auto d-flex gap-2">
-                        <button type="button" className="btn btn-primary"
+                        {/* <button type="button" className="btn btn-primary"
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             onClick={() => { setRowToEdit({}); setTextformbutton('Nuevo') }}>
                             Nuevo
-                        </button>
+                        </button> */}
 
                         {/* ✅ Botón crear usuario — solo para instructores */}
-                        {usuario?.cargo === 'Instructor' && (
+                        {usuario?.cargo === 'instructor' && (
                             <button type="button" className="btn btn-success"
                                 data-bs-toggle="modal" data-bs-target="#modalRegister">
                                 👤 Crear usuario
