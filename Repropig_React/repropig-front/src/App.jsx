@@ -18,7 +18,9 @@ import CrudMedicamentos from "./Modulos/Medicamentos/crudMedicamentos"
 import CrudReproducciones from "./Modulos/Reproducciones/crudReproducciones"
 import CrudResponsables from "./Modulos/Responsables/crudresponsables"
 import CrudPartos from "./Modulos/Partos/crudPartos"
-import CrudSeguimiento_Cerda from "./Modulos/Seguimiento_Cerda/CrudSeguimiento_Cerda.jsx"
+import CrudCrias from "./Modulos/Crias/crudCrias"
+import CrudSegcamada from "./Modulos/segcamada/crudCamada"
+import CrudSeguimiento_Cerda from "./Modulos/Seguimiento_Cerda/crudSeguimiento_Cerda"
 
 function App() {
 
@@ -40,8 +42,17 @@ function App() {
         <Route path="/inseminaciones" element={<CrudInseminacion />} />
         <Route path="/medicamentos" element={<CrudMedicamentos />} />
         <Route path="/reproducciones" element={<CrudReproducciones />} />
-        <Route path="/responsables" element={<CrudResponsables />} />
+        <Route
+          path="/responsables"
+          element={
+            <RutaProtegida rolesPermitidos={["instructor"]}>
+              <CrudResponsables />
+            </RutaProtegida>
+          }
+        />
         <Route path="/partos" element={<CrudPartos />} />
+        <Route path="/crias" element={<CrudCrias />} />
+        <Route path="/segcamada" element={<CrudSegcamada />} />
         <Route path="/Seguimiento_Cerda" element={<CrudSeguimiento_Cerda />} />
 
       </Route>

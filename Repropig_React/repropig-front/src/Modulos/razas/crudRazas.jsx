@@ -64,7 +64,7 @@ const CrudRazas = () => {
 
     return (
         <>
-            <div className="container mt-5" style={{ maxWidth: "1000px" }}>
+            <div className="container mt-5" style={{ maxWidth: "10000px" }}>
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
@@ -91,8 +91,8 @@ const CrudRazas = () => {
                     </div>
                 </div>
 
-                <div className="container mt-5 card shadow-sm">
-                            <div className="card-body px-4">
+                
+                            <div className="card-body px-9">
                                 <DataTable
                                     title="Razas"
                                     columns={columnsTable}
@@ -103,7 +103,7 @@ const CrudRazas = () => {
                                     pointerOnHover
                                     striped
                                 />
-                    </div>
+                
                 </div>
 
                 <div

@@ -21,11 +21,11 @@ export const getSeguimiento_Cerda = async (req, res) => {
     }
 }
 
-    
+
 export const createSeguimiento_Cerda = async (req, res) => {
     try {
         const Seguimiento_Cerda = await Seguimiento_CerdaService.create(req.body)
-        res.status(201).json({message: 'Seguimiento de cerda creado', Seguimiento_Cerda})
+        res.status(201).json({ message: 'Seguimiento de cerda creado', Seguimiento_Cerda })
 
     } catch (error) {
         res.status(400).json({ message: error.message })

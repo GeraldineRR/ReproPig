@@ -5,32 +5,34 @@ import Seguimiento_CerdaForm from "./Seguimiento_CerdaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 
-const crudSeguimiento_Cerda = () =>{
+const crudSeguimiento_Cerda = () => {
     const [Seguimiento_Cerda, setSeguimiento_Cerda] = useState([])
     const [Seguimiento_CerdaEdit, setSeguimiento_CerdaEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
     const [modalKey, setModalKey] = useState(0)  // ← AGREGADO
 
     const columnsTable = [
-        { name: 'Id_Seguimiento_Cerda', selector: row => row.Id_Seguimiento_Cerda},
-        { name: 'Fecha', selector: row => row.Fecha},
-        { name: 'Hora', selector: row => row.Hora},
-        { name: 'Observaciones', selector: row => row.Observaciones},
+        { name: 'Id_Seguimiento_Cerda', selector: row => row.Id_Seguimiento_Cerda },
+        { name: 'Fecha', selector: row => row.Fecha },
+        { name: 'Hora', selector: row => row.Hora },
+        { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Porcino', selector: row => row.Id_Porcino },
         { name: 'Responsable', selector: row => row.Id_Responsable },
         { name: 'Medicamento', selector: row => row.Id_Medicamento },
-        { name: 'Acciones', cell: row => (
-            <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
-                <i className="fa-solid fa-pencil"></i>
-            </button>
-        )}
+        {
+            name: 'Acciones', cell: row => (
+                <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
+                    <i className="fa-solid fa-pencil"></i>
+                </button>
+            )
+        }
     ]
 
-    useEffect(()=>{
+    useEffect(() => {
         getAllSeguimiento_Cerda()
     }, [])
 
-    const getAllSeguimiento_Cerda = async () =>{
+    const getAllSeguimiento_Cerda = async () => {
         const response = await apiAxios.get('/Seguimiento_Cerda/')
         setSeguimiento_Cerda(response.data)
     }
@@ -67,12 +69,12 @@ const crudSeguimiento_Cerda = () =>{
         }, 0)
     }
 
-    return(
+    return (
         <>
             <div className="container mt-5">
                 <div className="row d-flex justify-content-between">
                     <div className="col-4">
-                        <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar...."/>
+                        <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar...." />
                     </div>
                     <div className="col-2">
                         <button type="button" className="btn btn-primary" onClick={handleNuevo}>

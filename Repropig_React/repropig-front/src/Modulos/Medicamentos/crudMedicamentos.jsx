@@ -51,6 +51,7 @@ const CrudMedicamentos = () =>{
         )
 
     })
+    .sort((a, b) => b.Id_Medicamento - a.Id_Medicamento)
 
     const hideModal = () => {
         setmedicamentoEdit(null)
