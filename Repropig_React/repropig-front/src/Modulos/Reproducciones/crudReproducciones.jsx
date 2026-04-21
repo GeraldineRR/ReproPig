@@ -45,7 +45,7 @@ const CrudReproducciones = () => {
     const handleDelete = async (row) => {
         const result = await MySwal.fire({
             title: '¿Estás seguro?',
-            text: `Se eliminará la reproducción #${row.Id_Reproduccion} permanentemente.`,
+            text: `Se eliminará la reproducción #${row.Id_Reproduccion} y todas sus montas e inseminaciones.`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -64,14 +64,6 @@ const CrudReproducciones = () => {
         }
     }
 
-    const handleAbrirMonta = (row) => {
-        navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })
-    }
-
-    const handleAbrirInseminacion = (row) => {
-        navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })
-    }
-
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '60px' },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
@@ -79,28 +71,37 @@ const CrudReproducciones = () => {
         { name: 'Activo', selector: row => row.Activo, sortable: true, width: '80px' },
         {
             name: 'Montas',
-            width: '80px',
+            width: '100px',
             cell: row => (
-                <span className="badge bg-warning text-dark">
+                <span
+                    className="badge bg-warning text-dark"
+                    style={{ cursor: 'pointer', fontSize: '13px' }}
+                    title="Ver montas"
+                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })}
+                >
                     🐷 {row.montas?.length || 0}
                 </span>
             )
         },
         {
             name: 'Inseminaciones',
-            width: '110px',
+            width: '120px',
             cell: row => (
-                <span className="badge bg-primary">
+                <span
+                    className="badge bg-primary"
+                    style={{ cursor: 'pointer', fontSize: '13px' }}
+                    title="Ver inseminaciones"
+                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })}
+                >
                     💉 {row.inseminaciones?.length || 0}
                 </span>
             )
         },
         {
             name: 'Acciones',
-            width: '220px',
+            width: '100px',
             cell: row => (
                 <div className="d-flex gap-1 align-items-center">
-                    {/* Editar y eliminar */}
                     <button className="btn btn-sm btn-info" title="Editar"
                         onClick={() => handleEdit(row)}>
                         <i className="fa-solid fa-pencil"></i>
@@ -108,21 +109,6 @@ const CrudReproducciones = () => {
                     <button className="btn btn-sm btn-danger" title="Eliminar"
                         onClick={() => handleDelete(row)}>
                         <i className="fa-solid fa-trash"></i>
-                    </button>
-
-                    {/* Separador */}
-                    <span style={{ borderLeft: '1px solid #dee2e6', height: '24px', margin: '0 2px' }} />
-
-                    {/* Botón Monta — siempre disponible */}
-                    <button className="btn btn-sm btn-warning" title="Registrar Monta"
-                        onClick={() => handleAbrirMonta(row)}>
-                        🐷
-                    </button>
-
-                    {/* Botón Inseminación — siempre disponible */}
-                    <button className="btn btn-sm btn-primary" title="Registrar Inseminación"
-                        onClick={() => handleAbrirInseminacion(row)}>
-                        💉
                     </button>
                 </div>
             )
@@ -211,7 +197,7 @@ const CrudReproducciones = () => {
                 </div>
                 <div className="col-2">
                     <button type="button" className="btn btn-primary" onClick={handleNew}>
-                        Nuevo
+                        Nueva Reproducción
                     </button>
                 </div>
             </div>

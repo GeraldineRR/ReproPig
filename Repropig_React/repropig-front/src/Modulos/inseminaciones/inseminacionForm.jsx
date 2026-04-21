@@ -153,119 +153,168 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const esPrellenado = !!preloaded.Id_Reproduccion
 
     return (
-        <form onSubmit={gestionarForm} className="col-12 col-md-8">
+        <form onSubmit={gestionarForm} className="w-100">
+
+            {/* HEADER */}
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">💉 Registrar Inseminación</h5>
+                <small className="text-muted">Gestión del proceso reproductivo</small>
+            </div>
 
             {esPrellenado && (
-                <div className="alert alert-primary py-2 mb-3">
-                    <i className="fa-solid fa-circle-check me-2"></i>
-                    Cerda y reproducción asignadas automáticamente.
+                <div className="alert alert-primary py-2 mb-3 text-center">
+                    Cerda y reproducción asignadas automáticamente
                 </div>
             )}
 
-            <div className="mb-3">
-                <label className="form-label">Fecha</label>
-                <input type="date" className="form-control" value={Fec_hora}
-                    onChange={e => setFec_hora(e.target.value)} required />
-            </div>
+            <div className="row g-3">
 
-            <div className="mb-3">
-                <label className="form-label">Porcino (Cerda)</label>
-                <select className="form-select" value={Id_Porcino}
-                    onChange={handlePorcinoChange}
-                    disabled={esPrellenado} required>
-                    <option value="">Seleccione</option>
-                    {porcinos.map(p => (
-                        <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
-                    ))}
-                </select>
-                {esPrellenado && <small className="text-muted">Asignado desde la reproducción</small>}
-            </div>
+                {/* FECHA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📅 Fecha</label>
+                    <input
+                        type="date"
+                        className="form-control shadow-sm"
+                        value={Fec_hora}
+                        onChange={e => setFec_hora(e.target.value)}
+                        required
+                    />
+                </div>
 
-            {/* ✅ Select reproducción — solo si no es prellenado */}
-            {!esPrellenado && (
-                <div className="mb-3">
-                    <label className="form-label">Reproducción activa</label>
-                    <select className="form-select" value={Id_Reproduccion}
-                        onChange={e => setId_Reproduccion(e.target.value)} required>
-                        <option value="">
-                            {!Id_Porcino
-                                ? 'Primero seleccione una cerda'
-                                : reproduccionesActivas.length === 0
-                                    ? 'No hay reproducciones de Inseminación activas'
-                                    : 'Seleccione una reproducción'}
-                        </option>
-                        {reproduccionesActivas.map(r => (
-                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                #{r.Id_Reproduccion} — {r.porcino?.Nom_Porcino || `Cerda #${r.Id_Cerda}`}
+                {/* CERDA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🐷 Cerda</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Porcino}
+                        onChange={handlePorcinoChange}
+                        disabled={esPrellenado}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        {porcinos.map(p => (
+                            <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                                {p.Nom_Porcino}
                             </option>
                         ))}
                     </select>
-                    {Id_Porcino && reproduccionesActivas.length === 0 && (
-                        <div className="alert alert-warning py-2 mt-2">
-                            <small className="d-block mb-2">⚠️ Esta cerda no tiene reproducciones de Inseminación activas.</small>
-                            <button type="button" className="btn btn-sm btn-warning fw-semibold"
-                                onClick={() => { hideModal(); navigate('/reproducciones') }}>
-                                ➕ Crear reproducción
-                            </button>
-                        </div>
-                    )}
                 </div>
-            )}
 
-            {/* ✅ Estos campos siempre se muestran */}
-            <div className="mb-3">
-                <label className="form-label">Cantidad de pajillas</label>
-                <input type="number" className="form-control" value={cantidad}
-                    onChange={e => setCantidad(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label fw-semibold">
-                    Responsables <span className="text-danger">*</span>
-                    <small className="text-muted fw-normal ms-2">
-                        ({Id_Responsable.length} seleccionado{Id_Responsable.length !== 1 ? 's' : ''})
-                    </small>
-                </label>
-                <div className="border rounded p-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                    {responsables.map(resp => (
-                        <div key={resp.Id_Responsable} className="form-check">
-                            <input className="form-check-input" type="checkbox"
-                                id={`resp-inse-${resp.Id_Responsable}`}
-                                checked={Id_Responsable.includes(resp.Id_Responsable)}
-                                onChange={() => toggleResponsable(resp.Id_Responsable)} />
-                            <label className="form-check-label" htmlFor={`resp-inse-${resp.Id_Responsable}`}>
-                                {resp.Nombres} {resp.Apellidos}
-                                <span className="badge bg-secondary ms-2" style={{ fontSize: '0.7rem' }}>{resp.Cargo}</span>
-                            </label>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Colecta</label>
-                <select className="form-select" value={Id_colecta}
-                    onChange={e => setId_colecta(e.target.value)}
-                    disabled={!!preloaded.Id_colecta} required>
-                    <option value="">Seleccione una colecta</option>
-                    {colectas.map(c => {
-                        const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
-                        return (
-                            <option key={c.Id_colecta} value={c.Id_colecta} disabled={disponibles <= 0}>
-                                #{c.Id_colecta} — {c.Fecha?.split('T')[0] || c.Fecha} — {c.Tipo || 'Sin tipo'} — {disponibles} pajillas disponibles
+                {/* REPRODUCCION */}
+                {!esPrellenado && (
+                    <div className="col-12">
+                        <label className="form-label fw-semibold">🔁 Reproducción activa</label>
+                        <select
+                            className="form-select shadow-sm"
+                            value={Id_Reproduccion}
+                            onChange={e => setId_Reproduccion(e.target.value)}
+                            required
+                        >
+                            <option value="">
+                                {!Id_Porcino
+                                    ? 'Primero seleccione una cerda'
+                                    : reproduccionesActivas.length === 0
+                                        ? 'No hay reproducciones activas'
+                                        : 'Seleccione una reproducción'}
                             </option>
+
+                            {reproduccionesActivas.map(r => (
+                                <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
+                                    #{r.Id_Reproduccion}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* CANTIDAD */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🧪 Cantidad</label>
+                    <input
+                        type="number"
+                        className="form-control shadow-sm"
+                        value={cantidad}
+                        onChange={e => setCantidad(e.target.value)}
+                        required
+                    />
+                </div>
+
+                {/* COLECTA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📦 Colecta</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_colecta}
+                        onChange={e => setId_colecta(e.target.value)}
+                        disabled={!!preloaded.Id_colecta}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+
+                        {colectas.map(c => {
+                            const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
+                            return (
+                                <option key={c.Id_colecta} value={c.Id_colecta} disabled={disponibles <= 0}>
+                                    #{c.Id_colecta} - {disponibles} disponibles
+                                </option>
+                            )
+                        })}
+                    </select>
+                </div>
+
+            </div>
+
+            {/* RESPONSABLES */}
+            <div className="mt-4">
+                <label className="form-label fw-semibold">
+                    👨‍🌾 Responsables ({Id_Responsable.length})
+                </label>
+
+                <div className="d-flex flex-wrap gap-2">
+
+                    {responsables.map(r => {
+                        const activo = Id_Responsable.includes(r.Id_Responsable)
+
+                        return (
+                            <span
+                                key={r.Id_Responsable}
+                                onClick={() => toggleResponsable(r.Id_Responsable)}
+                                className={`px-3 py-2 rounded-pill ${activo
+                                        ? "bg-primary text-white shadow"
+                                        : "bg-light border"
+                                    }`}
+                                style={{
+                                    cursor: "pointer",
+                                    fontSize: "13px",
+                                    transition: "0.2s"
+                                }}
+                            >
+                                {r.Nombres}
+                            </span>
                         )
                     })}
-                </select>
+
+                </div>
             </div>
 
-            <div className="mb-3">
-                <label className="form-label">Observaciones</label>
-                <textarea className="form-control" value={Observaciones}
-                    onChange={e => setObservaciones(e.target.value)} />
+            {/* OBSERVACIONES */}
+            <div className="mt-4">
+                <label className="form-label fw-semibold">📝 Observaciones</label>
+                <textarea
+                    className="form-control shadow-sm"
+                    rows="2"
+                    value={Observaciones}
+                    onChange={e => setObservaciones(e.target.value)}
+                />
             </div>
 
-            <input type="submit" className="btn btn-primary w-50" value={textFormButton} />
+            {/* BOTÓN */}
+            <div className="d-grid mt-4">
+                <button className="btn btn-primary fw-semibold py-2 shadow-sm">
+                    {textFormButton}
+                </button>
+            </div>
+
         </form>
     );
 };
