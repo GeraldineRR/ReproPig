@@ -52,8 +52,8 @@ app.use('/api/Partos', PartosRoutes)
 app.use('/api/responsables', responsablesRoutes)
 app.use('/api/cria', criaRoutes)
 app.use('/api/segcamada', segcamadaRoutes)
-app.use('/api/auth', authRoutes)
 app.use('/api/Seguimiento_Cerda', Seguimiento_CerdaRoutes)
+app.use('/api/auth', authRoutes)
 
 // ====== Relaciones ======
 PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'razas' })
