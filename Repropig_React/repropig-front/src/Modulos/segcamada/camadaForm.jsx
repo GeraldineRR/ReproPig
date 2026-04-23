@@ -250,10 +250,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         }
     }
 
-    const esEdicion = segcamadaEdit && !modoCorreccion;
-
     return (
         <form onSubmit={gestionarForm} className="col-12">
+
 
             {/* DE PARTO */}
             <div className="mb-3">
@@ -264,7 +263,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     <input
                         type="text"
                         className="form-control"
-                        style={{ backgroundColor: "#E3E3E3" }}
                         value={`Parto # ${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcinos?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin || ''}`}
                         readOnly
                     />
@@ -280,7 +278,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         <option value="">Selecciona...</option>
                         {partos.map((parto) => (
                             <option key={parto.Id_parto} value={parto.Id_parto}>
-                                Parto # {parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}
+                                Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}
                             </option>
                         ))}
                     </select>
@@ -298,7 +296,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             <input
                                 type="text"
                                 className="form-control"
-                                style={{ backgroundColor: "#E3E3E3" }}
                                 value={`Cría # ${numCria}`}
                                 readOnly
                             />
@@ -330,36 +327,25 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         </button>
                     )}
 
-                    {Id_Cria && (
-                        <>
-                            <div className="mb-3">
-                                <label className="form-label">Día Programado</label>
-                                <input
-                                    type="text"
-                                    className="form-control py-2"
-                                    style={{ backgroundColor: "#d1ecf1" }}
-                                    value={`N° ${Dia_Programado}`}
-                                    readOnly
-                                />
-                                <small className="text-muted">
-                                    Este valor corresponde al día de seguimiento basado en la fecha del parto y los registros previos.
-                                </small>
-                            </div>
+                    <div className="mb-3">
+                        <label className="form-label">Día Programado</label>
+                        <input
+                            type="number"
+                            className="form-control"
+                            value={Dia_Programado}
+                            readOnly
+                        />
+                    </div>
 
-                            <div className="mb-3">
-                                <label className="form-label">Fecha Programada</label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    style={{ backgroundColor: "#d1ecf1" }}
-                                    value={Fecha_Programada}
-                                    readOnly
-                                />
-                                <small className="text-muted">
-                                    Este valor corresponde a la fecha programada para el seguimiento según la fecha del parto.
-                                </small>
-                            </div>
-                        </>)}
+                    <div className="mb-3">
+                        <label className="form-label">Fecha Programada</label>
+                        <input
+                            type="date"
+                            className="form-control"
+                            value={Fecha_Programada}
+                            readOnly
+                        />
+                    </div>
 
                     <div className="mb-3">
                         <label className="form-label">Fecha Real</label>
