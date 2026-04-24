@@ -5,7 +5,7 @@ import ResponsablesForm from "./responsablesForm.jsx";
 import RegisterUsuario from "./RegisterUsuario.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 
-const CrudResponsables = () => {    
+const CrudResponsables = () => {
 
     const { usuario } = useAuth()
     const [responsables, setResponsables] = useState([]);
@@ -78,7 +78,8 @@ const CrudResponsables = () => {
         const nombre = responsable.Nombres?.toLowerCase() || '';
         const apellido = responsable.Apellidos?.toLowerCase() || '';
         return nombre.includes(textToSearch) || apellido.includes(textToSearch)
-    });
+    })
+    .sort((a, b) => b.Id_Responsable - a.Id_Responsable) // Desc
 
     const hidemodal = () => {
         document.getElementById('closeModal').click();
@@ -100,14 +101,14 @@ const CrudResponsables = () => {
                             onChange={(e) => setFilterText(e.target.value)} />
                     </div>
                     <div className="col-auto d-flex gap-2">
-                        <button type="button" className="btn btn-primary"
+                        {/* <button type="button" className="btn btn-primary"
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             onClick={() => { setRowToEdit({}); setTextformbutton('Nuevo') }}>
                             Nuevo
-                        </button>
+                        </button> */}
 
                         {/* ✅ Botón crear usuario — solo para instructores */}
-                        {usuario?.cargo === 'Instructor' && (
+                        {usuario?.cargo === 'instructor' && (
                             <button type="button" className="btn btn-success"
                                 data-bs-toggle="modal" data-bs-target="#modalRegister">
                                 👤 Crear usuario

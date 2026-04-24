@@ -40,8 +40,15 @@ class reproduccionesService {
     }
 
     async delete(id) {
-        const deleted = await reproduccionesModel.destroy({ where: { Id_Reproduccion: id } })
-        if (deleted === 0) throw new Error('Reproduccion no encontrada')
+        const reproduccion = await reproduccionesModel.findByPk(id)
+        if (!reproduccion) throw new Error('Reproduccion no encontrada')
+
+        // ✅ Borrar montas e inseminaciones relacionadas primero
+        await MontaModel.destroy({ where: { Id_Reproduccion: id } })
+        await InseminacionModel.destroy({ where: { Id_Reproduccion: id } })
+
+        // ✅ Luego borrar la reproducción
+        await reproduccionesModel.destroy({ where: { Id_Reproduccion: id } })
         return true
     }
 }

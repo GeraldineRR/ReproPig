@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
 
 export default function Sidebar() {
 
@@ -7,6 +8,7 @@ export default function Sidebar() {
   const [reproOpen, setReproOpen] = useState(false)
   const [sanidadOpen, setSanidadOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
+  const { usuario } = useAuth()
 
   const linkClass =
     "flex items-center gap-2 px-4 py-2 rounded-lg text-gray-700 hover:bg-[#E8A0A8] hover:text-white transition"
@@ -74,6 +76,12 @@ export default function Sidebar() {
                 Razas
               </NavLink>
 
+              <NavLink to="/crias" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Crías
+              </NavLink>
+
             </div>
 
           )}
@@ -116,15 +124,6 @@ export default function Sidebar() {
               </NavLink>
 
               <NavLink
-                to="/inseminaciones"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Inseminaciones
-              </NavLink>
-
-              <NavLink
                 to="/colectas"
                 className={({ isActive }) =>
                   `${linkClass} ${isActive ? activeClass : ""}`
@@ -133,16 +132,44 @@ export default function Sidebar() {
                 Colectas
               </NavLink>
 
-            </div>
+              <NavLink
+                to="/inseminaciones"
+                className={({ isActive }) =>
+                  `${linkClass} ${isActive ? activeClass : ""}`
+                }
+              >
+                Inseminaciones
+              </NavLink>
 
-          )}
+              <NavLink to="/partos" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Partos
+              </NavLink>
 
-        </div>
+              <NavLink to="/segcamada" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Seguimiento de Camada
+              </NavLink>
+
+              <NavLink to="/seguimiento_cerda" className={({ isActive }) =>
+                `${linkClass} ${isActive ? activeClass : ""}`
+              }>
+                Seguimiento de Cerda
+              </NavLink>
+
+            </div >
+
+          )
+          }
+
+        </div >
 
 
         {/* Sanidad */}
 
-        <div>
+        < div >
 
           <div
             className={buttonClass}
@@ -152,59 +179,60 @@ export default function Sidebar() {
             <span>{sanidadOpen ? "▼" : "▶"}</span>
           </div>
 
-          {sanidadOpen && (
+          {
+            sanidadOpen && (
 
-            <div className="ml-4 flex flex-col gap-1">
+              <div className="ml-4 flex flex-col gap-1">
 
-              <NavLink
-                to="/medicamentos"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Medicamentos
-              </NavLink>
+                <NavLink
+                  to="/medicamentos"
+                  className={({ isActive }) =>
+                    `${linkClass} ${isActive ? activeClass : ""}`
+                  }
+                >
+                  Medicamentos
+                </NavLink>
 
-            </div>
+              </div>
 
-          )}
+            )
+          }
 
-        </div>
+        </div >
 
 
         {/* Administración */}
+        {usuario?.cargo === "instructor" && (
+          <div>
 
-        <div>
-
-          <div
-            className={buttonClass}
-            onClick={() => setAdminOpen(!adminOpen)}
-          >
-            👨‍🌾 Administración
-            <span>{adminOpen ? "▼" : "▶"}</span>
-          </div>
-
-          {adminOpen && (
-
-            <div className="ml-4 flex flex-col gap-1">
-
-              <NavLink
-                to="/responsables"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Responsables
-              </NavLink>
-
+            <div
+              className={buttonClass}
+              onClick={() => setAdminOpen(!adminOpen)}
+            >
+              👨‍🌾 Administración
+              <span>{adminOpen ? "▼" : "▶"}</span>
             </div>
 
-          )}
+            {adminOpen && (
+              <div className="ml-4 flex flex-col gap-1">
 
-        </div>
+                <NavLink
+                  to="/responsables"
+                  className={({ isActive }) =>
+                    `${linkClass} ${isActive ? activeClass : ""}`
+                  }
+                >
+                  Responsables
+                </NavLink>
 
-      </nav>
+              </div>
+            )}
 
-    </aside>
+          </div>
+        )}
+
+      </nav >
+
+    </aside >
   )
 }

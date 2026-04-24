@@ -14,8 +14,8 @@ import responsablesRoutes from './routes/responsablesRoutes.js'
 import PartosRoutes from './routes/PartosRoutes.js'
 import Seguimiento_CerdaRoutes from './routes/Seguimiento_CerdaRoutes.js'
 import authRoutes from './routes/authRoutes.js'
-//import criaRoutes from './routes/criaRoutes.js'
-//import segcamadaRoutes from './routes/segcamadaRoutes.js'
+import criaRoutes from './routes/criaRoutes.js'
+import segcamadaRoutes from './routes/segcamadaRoutes.js'
 
 // Models
 import reproduccionesModel from './models/reproduccionesModel.js'
@@ -26,8 +26,8 @@ import montaModel from './models/montaModel.js'
 import colectaModel from './models/colectaModel.js'
 import inseminacionModel from './models/inseminacionModel.js'
 import PartosModel from './models/PartosModel.js'
-//import CriaModel from './models/criaModel.js'
-//import SegcamadaModel from './models/segcamadaModel.js'
+import CriaModel from './models/criaModel.js'
+import SegcamadaModel from './models/segcamadaModel.js'
 import responsablesModel from './models/responsablesModel.js'
 import SeguimientoCerda_Model from './models/Seguimiento_CerdaModel.js'
 
@@ -62,11 +62,11 @@ RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
 PartosModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcinos' })
 PorcinoModel.hasMany(PartosModel, { foreignKey: 'Id_Porcino', as: 'partos' })
 
-//CriaModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
-//PartosModel.hasMany(CriaModel, { foreignKey: 'Id_parto', as: 'crias' })
+CriaModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
+PartosModel.hasMany(CriaModel, { foreignKey: 'Id_parto', as: 'crias' })
 
-//SegcamadaModel.belongsTo(CriaModel, { foreignKey: 'Id_Cria', as: 'crias' })
-//CriaModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Cria', as: 'segcamada' })
+SegcamadaModel.belongsTo(CriaModel, { foreignKey: 'Id_Cria', as: 'crias' })
+CriaModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Cria', as: 'segcamada' })
 
 colectaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })

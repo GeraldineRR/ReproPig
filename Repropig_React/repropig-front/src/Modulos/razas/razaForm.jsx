@@ -46,7 +46,7 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
 
             if (textFormButton === 'Guardar') {
 
-                await apiAxios.post('/razas/', {
+                await apiAxios.post('/raza/', {
                     Nom_Raza
                 })
 
@@ -85,14 +85,19 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
             hideModal()
 
         } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "Ha ocurrido un error inesperado";
+
             MySwal.fire({
                 icon: "error",
                 title: "Error",
-                text: "No se pudo guardar la raza."
-            })
+                text: message
+            });
         }
     }
-
+    
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
