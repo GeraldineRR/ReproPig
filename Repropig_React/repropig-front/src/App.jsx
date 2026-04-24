@@ -19,7 +19,7 @@ import CrudReproducciones from "./Modulos/Reproducciones/crudReproducciones"
 import CrudResponsables from "./Modulos/Responsables/crudresponsables"
 import CrudPartos from "./Modulos/Partos/crudPartos"
 import CrudSeguimiento_Cerda from "./Modulos/Seguimiento_Cerda/CrudSeguimiento_Cerda.jsx"
-
+import CrudCalendario from "./Modulos/Calendario/crudCalendario"
 function App() {
 
   return (
@@ -43,6 +43,8 @@ function App() {
         <Route path="/responsables" element={<CrudResponsables />} />
         <Route path="/partos" element={<CrudPartos />} />
         <Route path="/Seguimiento_Cerda" element={<CrudSeguimiento_Cerda />} />
+        <Route path="/Calendario" element={<CrudCalendario />} />
+      
 
       </Route>
 
