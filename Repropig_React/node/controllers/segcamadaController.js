@@ -17,7 +17,7 @@ export const getSegCamadaByCria = async (req, res) => {
     try {
         const registros = await SegCamadaModel.findAll({
             where: { Id_Cria: idCria },
-            order: [['Dia_Programado', 'ASC']] // importante para obtener el último día fácilmente
+            order: [['Dia_Programado', 'ASC']] // Para obtener el último día fácilmente
         });
 
         res.status(200).json(registros);
@@ -42,7 +42,7 @@ export const getSegcamada = async (req, res) => {
 export const createSegcamada = async (req, res) => {
     try {
         const segcamada = await SegcamadaService.create(req.body)
-        res.status(201).json({message: 'Camada creada', segcamada})
+        res.status(201).json({ message: 'Camada creada', segcamada })
 
     } catch (error) {
         res.status(400).json({ message: error.message })

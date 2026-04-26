@@ -71,6 +71,9 @@ PartosModel.hasMany(CriaModel, { foreignKey: 'Id_parto', as: 'crias' })
 SegcamadaModel.belongsTo(CriaModel, { foreignKey: 'Id_Cria', as: 'crias' })
 CriaModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Cria', as: 'segcamada' })
 
+MedicamentosModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Medicamento', as: 'segcamada' })
+SegcamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
+
 colectaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })
 

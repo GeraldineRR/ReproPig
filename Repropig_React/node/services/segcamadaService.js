@@ -1,5 +1,7 @@
 import SegcamadaModel from "../models/segcamadaModel.js"
 import criaModel from "../models/criaModel.js"
+import MedicamentosModel from "../models/MedicamentosModel.js"
+import PartosModel from "../models/PartosModel.js"
 
 class SegcamadaService {
 
@@ -8,19 +10,35 @@ class SegcamadaService {
             include: [
                 {
                     model: criaModel,
-                    as: 'crias'
+                    as: 'crias',
+                    include:
+                    {
+                        model: PartosModel,
+                        as: 'partos'
+                    }
+
                 },
+                {
+                    model: MedicamentosModel,
+                    as: 'medicamentos'
+                }
             ]
         })
     }
 
     async getById(id) {
-        const Segcamada = await SegcamadaModel.findByPk(id,{
-            
-        include: [
-                {model : criaModel, 
-                as: 'crias'
-            }
+        const Segcamada = await SegcamadaModel.findByPk(id, {
+
+            include: [
+                {
+                    model: criaModel,
+                    as: 'crias'
+                },
+                {
+                    model: MedicamentosModel,
+                    as: 'medicamentos'
+                }
+
             ]
         })
         if (!Segcamada) throw new Error('Camada no encontrada')
