@@ -16,7 +16,21 @@ const CrudSegcamada = () => {
             selector: row => `Cría #${row.crias?.Num_Cria ?? '—'} — Día ${row.Dia_Programado}`
         },
 
-        { name: 'Fecha Programada', selector: row => row.Fecha_Programada?.split('T')[0]?.split('-').reverse().join('/') },
+        {
+            name: 'Fecha Programada',
+            selector: row => {
+                const fecFin = row.crias?.partos?.Fec_fin;
+                console.log(row)
+                const dia = row.Dia_Programado;
+
+                if (!fecFin || !dia) return '—';
+
+                const [year, month, day] = fecFin.split('-');
+                const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
+
+                return fecha.toISOString().split('T')[0].split('-').reverse().join('/');
+            }
+        },
 
         {
             name: 'Fecha Real',
@@ -83,12 +97,14 @@ const CrudSegcamada = () => {
 
     const newListSegcamadas = segcamadas.filter(seg => {
 
-        const text = filterText.toLowerCase()
+        const textToSearch = filterText.toLowerCase()
+
+        const medicamento = seg.medicamentos?.Nombre.toLowerCase()
+        const observaciones = seg.Observaciones.toLowerCase()
 
         return (
-            seg.Id_Cria.toString().includes(text) ||
-            seg.Dia_Programado.toString().includes(text) ||
-            (seg.Observaciones || '').toLowerCase().includes(text)
+            medicamento && medicamento.includes(textToSearch) ||
+            observaciones.includes(textToSearch)
         )
     })
 
@@ -149,7 +165,7 @@ const CrudSegcamada = () => {
                     id="exampleModal"
                     tabIndex="-1"
                 >
-                    <div className="modal-dialog">
+                     <div className="modal-dialog" style={{ maxWidth: "585px" }}>
                         <div className="modal-content">
 
                             <div className="modal-header">
