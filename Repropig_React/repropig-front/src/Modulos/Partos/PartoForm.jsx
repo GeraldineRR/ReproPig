@@ -46,7 +46,6 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setTextFormButton("Enviar")
     }
 
-    // 🔹 Obtener porcinos
     useEffect(() => {
         getPorcinos()
     }, [])
@@ -60,7 +59,6 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         }
     }
 
-    // 🔹 Cargar datos en edición
     const loadDataInForm = () => {
         setFec_fin(rowToEdit.Fec_fin || "")
         setFec_inicio(rowToEdit.Fec_inicio || "")
@@ -76,11 +74,9 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setTextFormButton("Actualizar")
     }
 
-    // 🔹 Enviar formulario
     const gestionarForm = async (e) => {
         e.preventDefault()
 
-        // ✅ Validación básica
         if (!Id_Porcino || !Fec_inicio || !Hor_inicial) {
             return MySwal.fire({
                 title: "Campos obligatorios",
@@ -104,7 +100,8 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
 
         try {
 
-            if (textFormButton === "Enviar") {
+            // 🔵 CREATE o UPDATE CORRECTO
+            if (!rowToEdit?.id) {
 
                 await apiAxios.post("/partos/", datos)
 
@@ -143,7 +140,6 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
     return (
         <form onSubmit={gestionarForm} className="col-12 col-md-12">
 
-            {/* Porcino */}
             <div className="mb-3">
                 <label className="form-label">Porcino:</label>
                 <select
@@ -161,112 +157,49 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
                 </select>
             </div>
 
-            {/* Fecha inicio */}
             <div className="mb-3">
                 <label>Fecha inicio</label>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={Fec_inicio}
-                    onChange={(e) => setFec_inicio(e.target.value)}
-                    required
-                />
+                <input type="date" className="form-control" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
             </div>
 
-            {/* Hora inicial */}
             <div className="mb-3">
                 <label className="form-label">Hora inicial:</label>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={Hor_inicial}
-                    onChange={(e) => setHor_inicial(e.target.value)}
-                    required
-                />
+                <input type="time" className="form-control" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
             </div>
 
-            {/* Nacidos vivos */}
             <div className="mb-3">
                 <label className="form-label">Nacidos vivos:</label>
-                <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={Nac_vivos}
-                    onChange={(e) => setNac_vivos(e.target.value)}
-                    required
-                />
+                <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} required />
             </div>
 
-            {/* Nacidos momias */}
             <div className="mb-3">
                 <label className="form-label">Nacidos momias:</label>
-                <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={Nac_momias}
-                    onChange={(e) => setNac_momias(e.target.value)}
-                    required
-                />
+                <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} required />
             </div>
 
-            {/* Nacidos muertos */}
             <div className="mb-3">
                 <label className="form-label">Nacidos muertos:</label>
-                <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={Nac_muertos}
-                    onChange={(e) => setNac_muertos(e.target.value)}
-                    required
-                />
+                <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} required />
             </div>
 
-            {/* Peso camada */}
             <div className="mb-3">
                 <label className="form-label">Peso de camada:</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={Pes_camada}
-                    onChange={(e) => setPes_camada(e.target.value)}
-                    required
-                />
+                <input type="text" className="form-control" value={Pes_camada} onChange={(e) => setPes_camada(e.target.value)} required />
             </div>
 
-            {/* Observaciones */}
             <div className="mb-3">
                 <label className="form-label">Observaciones:</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={Observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                />
+                <input type="text" className="form-control" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
 
-            {/* Fecha fin */}
             <div className="mb-3">
                 <label>Fecha fin</label>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={Fec_fin}
-                    onChange={(e) => setFec_fin(e.target.value)}
-                />
+                <input type="date" className="form-control" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} />
             </div>
 
-            {/* Hora final */}
             <div className="mb-3">
                 <label className="form-label">Hora final:</label>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={Hor_final}
-                    onChange={(e) => setHor_final(e.target.value)}
-                />
+                <input type="time" className="form-control" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} />
             </div>
 
              <div className="mb-3">
@@ -282,11 +215,7 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
 
             {/* Botón */}
             <div className="mb-3">
-                <input
-                    type="submit"
-                    className="btn btn-primary w-50"
-                    value={textFormButton}
-                />
+                <input type="submit" className="btn btn-primary w-50" value={textFormButton} />
             </div>
 
         </form>
