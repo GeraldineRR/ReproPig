@@ -17,7 +17,7 @@ export const getSegCamadaByCria = async (req, res) => {
     try {
         const registros = await SegCamadaModel.findAll({
             where: { Id_Cria: idCria },
-            order: [['Dia_Programado', 'ASC']] // importante para obtener el último día fácilmente
+            order: [['Dia_Programado', 'ASC']] // Para obtener el último día fácilmente
         });
 
         res.status(200).json(registros);

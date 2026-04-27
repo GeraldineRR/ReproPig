@@ -10,7 +10,8 @@ class PorcinoService {
                     model: RazaModel,
                     as: 'razas'
                 },
-            ]
+            ],
+            order: [['Createdat', 'DESC']]
         })
     }
 

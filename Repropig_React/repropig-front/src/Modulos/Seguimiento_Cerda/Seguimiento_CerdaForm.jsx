@@ -201,7 +201,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                         <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
                             {responsable.Nombres} {responsable.Apellidos}
                         </option>
-                    ))}
+                        ))}
                 </select>
             </div>
 

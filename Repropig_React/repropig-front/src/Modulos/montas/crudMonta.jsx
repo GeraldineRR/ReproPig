@@ -88,13 +88,14 @@ const CrudMonta = () => {
     }, []);
 
     const getAllMontas = async () => {
-        const response = await apiAxios.get('/monta');
-        setMontas(response.data);
-    };
+        const response = await apiAxios.get('/monta/')
+        setMontas(response.data)
+        console.log(response.data)
+    }
 
     const getResponsables = async () => {
         try {
-            const response = await apiAxios.get('/responsables')
+            const response = await apiAxios.get('/responsables/')
             setResponsables(response.data)
         } catch (error) {
             console.error('Error al obtener responsables:', error)

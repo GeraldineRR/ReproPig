@@ -91,9 +91,13 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     };
 
     const getResponsables = async () => {
-        const res = await apiAxios.get('/responsables');
-        setResponsables(res.data);
-    };
+        try {
+            const res = await apiAxios.get('/responsables/')
+            setResponsables(res.data)
+        } catch (error) {
+            console.error("Error cargando responsables:", error)
+        }
+    }
 
     const getReproduccionesActivas = async (id) => {
         if (!id) return setReproduccionesActivas([]);
@@ -144,7 +148,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
         try {
             if (textFormButton === 'Agregar Monta') {
-                await apiAxios.post('/monta', data);
+                await apiAxios.post('/monta/', data);
                 MySwal.fire('OK', 'Monta creada', 'success');
             } else {
                 await apiAxios.put('/monta/' + rowToEdit.Id_Monta, data);

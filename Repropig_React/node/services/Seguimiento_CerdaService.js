@@ -43,6 +43,15 @@ class Seguimiento_CerdaService {
             ]
         })
     }
+    async getAll() {
+        return await Seguimiento_CerdaModel.findAll({ 
+            include: [
+                { 
+                model: MedicamentosModel,
+                as: 'medicamentos'},
+            ]
+        })
+    }
 
 
     async getAll() {
