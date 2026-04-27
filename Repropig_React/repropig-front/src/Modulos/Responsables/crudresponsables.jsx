@@ -73,12 +73,14 @@ const CrudResponsables = () => {
         }
     ];
 
-    const newlistResponsables = responsables.filter(responsable => {
-        const textToSearch = filterText.toLowerCase();
-        const nombre = responsable.Nombres?.toLowerCase() || '';
-        const apellido = responsable.Apellidos?.toLowerCase() || '';
-        return nombre.includes(textToSearch) || apellido.includes(textToSearch)
-    })
+    // ✅ Después — también busca por cargo
+const newlistResponsables = responsables.filter(responsable => {
+    const textToSearch = filterText.toLowerCase();
+    const nombre = responsable.Nombres?.toLowerCase() || '';
+    const apellido = responsable.Apellidos?.toLowerCase() || '';
+    const cargo = responsable.Cargo?.toLowerCase() || '';
+    return nombre.includes(textToSearch) || apellido.includes(textToSearch) || cargo.includes(textToSearch)
+})
     .sort((a, b) => b.Id_Responsable - a.Id_Responsable) // Desc
 
     const hidemodal = () => {
