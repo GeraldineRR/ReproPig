@@ -18,18 +18,18 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
     const [Observaciones, setObservaciones] = useState('')
     const [Fec_fin, setFec_fin] = useState('')
     const [Hor_final, setHor_final] = useState('')
+    const [estado, setestado] = useState('')
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     // 🔹 Cargar datos si se edita
-    useEffect(() => {
-        if (rowToEdit?.id) {
-            loadDataInForm()
-        } else {
-            resetForm()
-        }
-    }, [rowToEdit])
-
+   useEffect(() => {
+    if (rowToEdit?.Id_parto) {
+        loadDataInForm()
+    } else {
+        resetForm()
+    }
+}, [rowToEdit])
     // 🔹 Resetear formulario
     const resetForm = () => {
         setFec_fin("")
@@ -42,6 +42,7 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setNac_vivos("")
         setObservaciones("")
         setPes_camada("")
+        setestado("")
         setTextFormButton("Enviar")
     }
 
@@ -71,6 +72,7 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setNac_vivos(rowToEdit.Nac_vivos || "")
         setObservaciones(rowToEdit.Observaciones || "")
         setPes_camada(rowToEdit.Pes_camada || "")
+        setestado(rowToEdit.estado || "")
         setTextFormButton("Actualizar")
     }
 
@@ -114,7 +116,7 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
 
             } else {
 
-                await apiAxios.put(`/partos/${rowToEdit.id}`, datos)
+                await apiAxios.put(`/partos/${rowToEdit.Id_parto}`, datos)
 
                 await MySwal.fire({
                     title: "Actualización exitosa",
@@ -266,6 +268,17 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
                     onChange={(e) => setHor_final(e.target.value)}
                 />
             </div>
+
+             <div className="mb-3">
+                <label className="form-label">estado:</label>
+                <input
+                    type="time"
+                    className="form-control"
+                    value={estado}
+                    onChange={(e) => setestado(e.target.value)}
+                />
+            </div>
+
 
             {/* Botón */}
             <div className="mb-3">
