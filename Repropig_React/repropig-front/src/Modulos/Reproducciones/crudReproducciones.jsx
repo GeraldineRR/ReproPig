@@ -67,7 +67,16 @@ const CrudReproducciones = () => {
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '60px' },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
-        { name: 'Tipo', selector: row => row.TipoReproduccion || '—', sortable: true },
+        {
+            name: 'Tipo', selector: row => {
+                const tieneMontas = row.montas?.length > 0
+                const tieneInseminaciones = row.inseminaciones?.length > 0
+                if (tieneMontas && tieneInseminaciones) return 'Monta Y Inseminación'
+                if (tieneMontas) return 'Monta'
+                if (tieneInseminaciones) return 'Inseminacion'
+                return row.TipoReproduccion // si no tiene ninguna aún, muestra el original
+            }
+        },
         { name: 'Activo', selector: row => row.Activo, sortable: true, width: '80px' },
         {
             name: 'Montas',

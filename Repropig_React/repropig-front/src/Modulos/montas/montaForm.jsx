@@ -1,13 +1,11 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import apiAxios from "../../api/axiosConfig";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
-import { useNavigate } from "react-router-dom";
 
 const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) => {
 
     const MySwal = WithReactContent(Swal);
-    const navigate = useNavigate();
 
     const [Fec_hora, setFec_hora] = useState('');
     const [Id_Porcino, setId_Porcino] = useState('');
@@ -26,20 +24,61 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         getResponsables();
     }, []);
 
-    // ✅ ESTO ES LO QUE FALTABA — carga el preloaded cuando viene desde Reproducciones
+    // ✅ NUEVO — maneja edición desde el CRUD normal
+    useEffect(() => {
+        if (rowToEdit?.Id_Monta) {
+            // Es edición — cargar todos los datos del registro
+            setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
+            setId_Porcino(String(rowToEdit.Id_Porcino))
+            setId_Cerdo(String(rowToEdit.Id_Cerdo || ''))
+            setObservaciones(rowToEdit.Observaciones || '')
+            setId_Reproduccion(String(rowToEdit.Id_Reproduccion))
+            setTextFormButton('Actualizar Monta')
+
+            // parsear responsables
+            try {
+                const raw = rowToEdit.Id_Responsable
+                if (typeof raw === 'string' && raw.startsWith('[')) {
+                    setId_Responsable(JSON.parse(raw).map(Number))
+                } else {
+                    setId_Responsable([Number(raw)])
+                }
+            } catch { setId_Responsable([]) }
+
+            // ✅ cargar las reproducciones de esa cerda para que el select no quede vacío
+            getReproduccionesActivas(rowToEdit.Id_Porcino)
+
+        } else if (!preloaded?.Id_Reproduccion) {
+            // Es nuevo y sin preloaded — limpiar todo
+            setFec_hora('')
+            setId_Porcino('')
+            setId_Cerdo('')
+            setId_Responsable([])
+            setObservaciones('')
+            setId_Reproduccion('')
+            setReproduccionesActivas([])
+            setTextFormButton('Agregar Monta')
+        }
+    }, [rowToEdit]);
+
+    // ✅ Maneja el prellenado cuando viene desde Reproducciones
     useEffect(() => {
         if (!preloaded?.Id_Porcino || !preloaded?.Id_Reproduccion) return;
 
         const cargarPreloaded = async () => {
             setId_Porcino(String(preloaded.Id_Porcino));
+            setId_Reproduccion(String(preloaded.Id_Reproduccion));
+            setFec_hora('')
+            setId_Cerdo('')
+            setId_Responsable([])
+            setObservaciones('')
+            setTextFormButton('Agregar Monta')
 
             const res = await apiAxios.get('/reproducciones');
             const activas = res.data.filter(r =>
                 r.Id_Cerda == preloaded.Id_Porcino && r.Activo === 'Si'
             );
             setReproduccionesActivas(activas);
-
-            setId_Reproduccion(String(preloaded.Id_Reproduccion));
         };
 
         cargarPreloaded();
@@ -63,17 +102,26 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getReproduccionesActivas = async (id) => {
         if (!id) return setReproduccionesActivas([]);
         const res = await apiAxios.get('/reproducciones');
-        const activas = res.data.filter(r =>
-            r.Id_Cerda == id && r.Activo === 'Si'
-        );
-        setReproduccionesActivas(activas);
+        // ✅ Al editar trae TODAS las reproducciones de esa cerda (activas e inactivas)
+        // para que el select pueda mostrar la que ya tiene asignada
+        const todas = res.data.filter(r => r.Id_Cerda == id);
+        setReproduccionesActivas(todas);
     };
 
     const handlePorcinoChange = (e) => {
         const val = e.target.value;
         setId_Porcino(val);
         setId_Reproduccion('');
-        getReproduccionesActivas(val);
+        // Al seleccionar nueva cerda, solo muestra activas
+        getReproduccionesActivasSolo(val);
+    };
+
+    // ✅ Para cuando el usuario cambia la cerda manualmente (solo activas)
+    const getReproduccionesActivasSolo = async (id) => {
+        if (!id) return setReproduccionesActivas([]);
+        const res = await apiAxios.get('/reproducciones');
+        const activas = res.data.filter(r => r.Id_Cerda == id && r.Activo === 'Si');
+        setReproduccionesActivas(activas);
     };
 
     const toggleResponsable = (id) => {
@@ -106,10 +154,8 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                 await apiAxios.put('/monta/' + rowToEdit.Id_Monta, data);
                 MySwal.fire('OK', 'Monta actualizada', 'success');
             }
-
             hideModal();
             refreshTable();
-
         } catch (err) {
             MySwal.fire('Error', err.message, 'error');
         }
@@ -138,7 +184,6 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                     />
                 </div>
 
-                {/* CERDA — bloqueada si viene prellenada */}
                 <div className="col-md-6">
                     <label className="form-label fw-semibold">🐷 Cerda</label>
                     <select
@@ -157,7 +202,6 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                     </select>
                 </div>
 
-                {/* REPRODUCCION — bloqueada si viene prellenada */}
                 <div className="col-md-6">
                     <label className="form-label fw-semibold">🔁 Reproducción</label>
                     <select

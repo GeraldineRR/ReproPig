@@ -50,14 +50,15 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         } catch (error) { console.error('Error al obtener colectas:', error) }
     }
 
+    // ✅ FIX — se quitó el filtro de TipoReproduccion === 'Inseminacion'
+    // Una cerda con reproducción activa de cualquier tipo puede recibir una inseminación
     const getReproduccionesActivas = async (idPorcino) => {
         if (!idPorcino) { setReproduccionesActivas([]); return }
         try {
             const response = await apiAxios.get('/reproducciones/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
-                r.Activo === 'Si' &&
-                r.TipoReproduccion === 'Inseminacion'
+                r.Activo === 'Si'
             )
             setReproduccionesActivas(activas)
         } catch (error) { console.error('Error al obtener reproducciones:', error) }
@@ -80,6 +81,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         return isNaN(num) ? [] : [num]
     }
 
+    // ✅ FIX — ahora llama getReproduccionesActivas al editar para que el select se llene
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
             setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
@@ -89,7 +91,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             setId_colecta(rowToEdit.Id_colecta)
             setObservaciones(rowToEdit.Observaciones)
             setId_Reproduccion(rowToEdit.Id_Reproduccion)
-            getReproduccionesActivas(rowToEdit.Id_Porcino)
+            getReproduccionesActivas(rowToEdit.Id_Porcino) // ✅ carga repros para que el select no quede vacío
             setTextFormButton('Actualizar Inseminacion')
         } else if (!preloaded.Id_Reproduccion) {
             setFec_hora('')
@@ -155,7 +157,6 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     return (
         <form onSubmit={gestionarForm} className="w-100">
 
-            {/* HEADER */}
             <div className="text-center mb-4">
                 <h5 className="fw-bold">💉 Registrar Inseminación</h5>
                 <small className="text-muted">Gestión del proceso reproductivo</small>
@@ -200,32 +201,30 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                     </select>
                 </div>
 
-                {/* REPRODUCCION */}
-                {!esPrellenado && (
-                    <div className="col-12">
-                        <label className="form-label fw-semibold">🔁 Reproducción activa</label>
-                        <select
-                            className="form-select shadow-sm"
-                            value={Id_Reproduccion}
-                            onChange={e => setId_Reproduccion(e.target.value)}
-                            required
-                        >
-                            <option value="">
-                                {!Id_Porcino
-                                    ? 'Primero seleccione una cerda'
-                                    : reproduccionesActivas.length === 0
-                                        ? 'No hay reproducciones activas'
-                                        : 'Seleccione una reproducción'}
+                {/* REPRODUCCION — se muestra siempre, bloqueada si viene prellenada */}
+                <div className="col-12">
+                    <label className="form-label fw-semibold">🔁 Reproducción activa</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Reproduccion}
+                        onChange={e => setId_Reproduccion(e.target.value)}
+                        disabled={esPrellenado}
+                        required
+                    >
+                        <option value="">
+                            {!Id_Porcino
+                                ? 'Primero seleccione una cerda'
+                                : reproduccionesActivas.length === 0
+                                    ? 'No hay reproducciones activas'
+                                    : 'Seleccione una reproducción'}
+                        </option>
+                        {reproduccionesActivas.map(r => (
+                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
+                                #{r.Id_Reproduccion} — {r.TipoReproduccion}
                             </option>
-
-                            {reproduccionesActivas.map(r => (
-                                <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                    #{r.Id_Reproduccion}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
+                        ))}
+                    </select>
+                </div>
 
                 {/* CANTIDAD */}
                 <div className="col-md-6">
@@ -250,7 +249,6 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         required
                     >
                         <option value="">Seleccione</option>
-
                         {colectas.map(c => {
                             const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
                             return (
@@ -269,31 +267,23 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                 <label className="form-label fw-semibold">
                     👨‍🌾 Responsables ({Id_Responsable.length})
                 </label>
-
                 <div className="d-flex flex-wrap gap-2">
-
                     {responsables.map(r => {
                         const activo = Id_Responsable.includes(r.Id_Responsable)
-
                         return (
                             <span
                                 key={r.Id_Responsable}
                                 onClick={() => toggleResponsable(r.Id_Responsable)}
                                 className={`px-3 py-2 rounded-pill ${activo
-                                        ? "bg-primary text-white shadow"
-                                        : "bg-light border"
+                                    ? "bg-primary text-white shadow"
+                                    : "bg-light border"
                                     }`}
-                                style={{
-                                    cursor: "pointer",
-                                    fontSize: "13px",
-                                    transition: "0.2s"
-                                }}
+                                style={{ cursor: "pointer", fontSize: "13px", transition: "0.2s" }}
                             >
                                 {r.Nombres}
                             </span>
                         )
                     })}
-
                 </div>
             </div>
 
