@@ -57,3 +57,23 @@ export const deletePartos= async(req, res) => {
         res.status(400).json({message: error.message})
     }
 }
+
+
+// NUEVA FUNCIÓN PARA ACTIVAR/DESACTIVAR
+export const updateEstadoParto = async (req, res) => {
+    try {
+        const { id } = req.params
+        const { estado } = req.body
+
+        await PartosService.update(id, { estado })
+
+        res.status(200).json({
+            message: "Estado actualizado correctamente"
+        })
+
+    } catch (error) {
+        res.status(400).json({
+            message: error.message
+        })
+    }
+}
