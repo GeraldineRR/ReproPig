@@ -9,6 +9,8 @@ import ColectaForm from "../colectas/colectaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import Swal from "sweetalert2"
 import WithReactContent from "sweetalert2-react-content"
+import CalendarioForm from "../calendario/CalendarioForm.jsx"
+
 
 const CrudReproducciones = () => {
 
@@ -19,7 +21,10 @@ const CrudReproducciones = () => {
     const [filterText, setFilterText] = useState("")
     const [modalEncadenado, setModalEncadenado] = useState(null)
     const [colectaParaInseminacion, setColectaParaInseminacion] = useState(null)
+    const [CalendarioData, setCalendarioData] = useState(null)
 
+    const modalCalendarioRef = useRef(null)
+    const modalCalendarioInstanceRef = useRef(null)
     const modalRef = useRef(null)
     const modalInstanceRef = useRef(null)
     const modalMontaRef = useRef(null)
@@ -98,6 +103,20 @@ const CrudReproducciones = () => {
             )
         },
         {
+            name: 'Calendario',
+            width: '100px',
+            cell: row => (
+                <button
+                    className="btn btn-sm btn-outline-info"
+                    title="Agregar Calendario"
+                    style={{ padding: '2px 6px', fontSize: '12px' }}
+                    onClick={() => handleAgregarCalendario(row)}
+                >
+                    📅
+                </button>
+            )
+        },
+        {
             name: 'Acciones',
             width: '100px',
             cell: row => (
@@ -159,6 +178,26 @@ const CrudReproducciones = () => {
             Id_colecta
         })
         setTimeout(() => abrirModal(modalInseminacionRef, modalInseminacionInstanceRef), 400)
+    }
+
+    const handleAgregarCalendario = (row) => {
+    const fecha =
+    row.inseminaciones?.[0]?.Fec_hora?.split('T')[0] ||
+    row.montas?.[0]?.Fec_hora?.split('T')[0];
+
+
+
+        setCalendarioData({
+            Id_Reproduccion: row.Id_Reproduccion,
+            Fecha_Servicio: fecha || ''
+        })
+        abrirModal(modalCalendarioRef, modalCalendarioInstanceRef)
+    }
+
+    const hideModalCalendario = async () => {
+        setCalendarioData(null)
+        cerrarModal(modalCalendarioInstanceRef)
+        await getAllReproducciones()
     }
 
     const hideModalMonta = async () => {
@@ -233,7 +272,31 @@ const CrudReproducciones = () => {
                     </div>
                 </div>
             </div>
-
+            {/* Modal Calendario */}
+            <div className="modal fade" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content">
+                        <div className="modal-header bg-info bg-opacity-10">
+                            <h5 className="modal-title">📅 Agregar Calendario</h5>
+                            <button type="button" className="btn-close"
+                                onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
+                        </div>
+                        <div className="modal-body">
+                            {CalendarioData && (
+                                <CalendarioForm
+                                    key={CalendarioData.Id_Reproduccion}
+                                    hideModal={hideModalCalendario}
+                                    reload={getAllReproducciones}
+                                    preloaded={{
+                                        Id_Reproduccion: CalendarioData.Id_Reproduccion,
+                                        Fecha_Servicio: CalendarioData.Fecha_Servicio
+                                    }}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
             {/* Modal Colecta encadenado */}
             <div className="modal fade" ref={modalColectaRef} tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-lg">

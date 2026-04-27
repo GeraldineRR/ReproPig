@@ -95,6 +95,9 @@ SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: '
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'Seguimiento Cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
+CalendarioModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+reproduccionesModel.hasOne(CalendarioModel, { foreignKey: 'Id_Reproduccion', as: 'calendario' })
+
 // ====== Conexión DB ======
 try {
   await db.authenticate()

@@ -3,7 +3,7 @@ import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
-const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
+const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
 
     const MySwal = withReactContent(Swal)
 
@@ -23,6 +23,12 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
 
     useEffect(() => {
         getReproducciones()
+        if (preloaded?.Id_Reproduccion) {
+            setId_Reproduccion(preloaded.Id_Reproduccion)
+        }
+        if (preloaded?.Fecha_Servicio) {
+            setFecha_Servicio(preloaded.Fecha_Servicio)
+        }
     }, [])
 
     useEffect(() => {
@@ -45,8 +51,8 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
             setTextFormButton('Actualizar')
         } else {
             setId_Calendario('')
-            setId_Reproduccion('')
-            setFecha_Servicio('')
+            setId_Reproduccion(preloaded?.Id_Reproduccion ?? '')
+            setFecha_Servicio(preloaded?.Fecha_Servicio ?? '')
             setReal1rcl('')
             setReal2rcl('')
             setReal3rcl('')
@@ -81,7 +87,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
 
     const gestionarForm = async (e) => {
         e.preventDefault()
-        
+
         const data = {
             Id_Reproduccion,
             Fecha_Servicio,
@@ -120,7 +126,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
 
     const CICLOS = ['1rcl', '2rcl', '3rcl', '4rcl', '5rcl']
     const realesSetters = [setReal1rcl, setReal2rcl, setReal3rcl, setReal4rcl, setReal5rcl]
-    const realesValues  = [real1rcl, real2rcl, real3rcl, real4rcl, real5rcl]
+    const realesValues = [real1rcl, real2rcl, real3rcl, real4rcl, real5rcl]
 
     return (
         <form onSubmit={gestionarForm} className="col-12">
@@ -133,7 +139,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
                     value={Id_Reproduccion}
                     onChange={(e) => setId_Reproduccion(e.target.value)}
                     required
-                    disabled={!!calendarioEdit}
+                    disabled={!!calendarioEdit || !!preloaded?.Id_Reproduccion}
                 >
                     <option value="">Selecciona...</option>
                     {reproducciones.map((rep) => (
@@ -153,35 +159,46 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload }) => {
                     value={Fecha_Servicio}
                     onChange={(e) => setFecha_Servicio(e.target.value)}
                     required
-                    disabled={!!calendarioEdit}
+                    disabled={!!calendarioEdit || !!preloaded?.Fecha_Servicio}
                 />
             </div>
 
-            <table className="table table-sm table-bordered mt-3">
-                <thead className="table-light">
-                    <tr>
-                        <th>Ciclo</th>
-                        <th>Proyectado (auto)</th>
-                        <th>Real</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {CICLOS.map((ciclo, i) => (
-                        <tr key={ciclo}>
-                            <td className="fw-semibold">{ciclo}</td>
-                            <td className="text-success">{proyectados[i] || '—'}</td>
-                            <td>
-                                <input
-                                    type="date"
-                                    className="form-control form-control-sm"
-                                    value={realesValues[i]}
-                                    onChange={(e) => realesSetters[i](e.target.value)}
-                                />
-                            </td>
+            <div className="table-responsive">
+                <table className="table table-sm table-bordered text-center mt-3">
+                    <thead className="table-light">
+                        <tr>
+                            <th>Tipo</th>
+                            {CICLOS.map(ciclo => (
+                                <th key={ciclo}>{ciclo}</th>
+                            ))}
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td className="fw-semibold">Proyectado</td>
+                            {proyectados.map((fecha, i) => (
+                                <td key={i} className="text-success">
+                                    {fecha || '—'}
+                                </td>
+                            ))}
+                        </tr>
+
+                        <tr>
+                            <td className="fw-semibold">Real</td>
+                            {realesValues.map((valor, i) => (
+                                <td key={i}>
+                                    <input
+                                        type="date"
+                                        className="form-control form-control-sm"
+                                        value={valor}
+                                        onChange={(e) => realesSetters[i](e.target.value)}
+                                    />
+                                </td>
+                            ))}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <div className="mb-3 mt-3">
                 <input
