@@ -5,7 +5,7 @@ import {
     createPartos, 
     updatePartos, 
     deletePartos,
-    updateEstadoParto
+    toggleEstadoParto
 } from '../controllers/PartosController.js'
 
 import multer from 'multer'
@@ -31,7 +31,7 @@ router.get('/:id', getPartos)
 router.post('/', createPartos)
 
 // RUTA PARA ACTIVAR/DESACTIVAR (debe ir ANTES de /:id)
-router.put('/estado/:id', updateEstadoParto)
+router.put('/:id/toggle-estado', toggleEstadoParto);
 
 router.put('/:id', updatePartos)
 router.delete('/:id', deletePartos)

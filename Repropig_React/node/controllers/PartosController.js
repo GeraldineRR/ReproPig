@@ -1,4 +1,5 @@
 import PartosService from "../services/PartosService.js";
+import PartosModel from "../models/PartosModel.js";
 
 
 export const getALLPartos = async (req, res) => {
@@ -60,20 +61,28 @@ export const deletePartos= async(req, res) => {
 
 
 // NUEVA FUNCIÓN PARA ACTIVAR/DESACTIVAR
-export const updateEstadoParto = async (req, res) => {
+export const toggleEstadoParto = async (req, res) => {
     try {
-        const { id } = req.params
-        const { estado } = req.body
+        const { id } = req.params;
 
-        await PartosService.update(id, { estado })
+        const parto = await PartosModel.findByPk(id);
 
-        res.status(200).json({
-            message: "Estado actualizado correctamente"
-        })
+        if (!parto) {
+            return res.status(404).json({ message: "Parto no encontrado" });
+        }
+
+        parto.estado = parto.estado === "Activo"
+            ? "Inactivo"
+            : "Activo";
+
+        await parto.save();
+
+        res.json({
+            message: "Estado actualizado",
+            estado: parto.estado
+        });
 
     } catch (error) {
-        res.status(400).json({
-            message: error.message
-        })
+        res.status(500).json({ message: error.message });
     }
-}
+};
