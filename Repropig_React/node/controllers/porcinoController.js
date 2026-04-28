@@ -1,4 +1,5 @@
 import PorcinoService from "../services/porcinoService.js";
+import PorcinoModel from "../models/porcinoModel.js";
 
 export const getAllPorcinos = async (req, res) => {
     try {
@@ -21,11 +22,37 @@ export const getPorcino = async (req, res) => {
     }
 }
 
+export const toggleEstadoPorcino = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const porcino = await PorcinoModel.findByPk(id);
+
+        if (!porcino) {
+            return res.status(404).json({ message: "Porcino no encontrado" });
+        }
+
+        porcino.Estado = porcino.Estado === "Activo"
+            ? "Inactivo"
+            : "Activo";
+
+        await porcino.save();
+
+        res.json({
+            message: "Estado actualizado",
+            Estado: porcino.Estado
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 export const createPorcino = async (req, res) => {
     try {
         const porcino = await PorcinoService.create(req.body)
-        res.status(201).json({message: 'Porcino creado', porcino})
+        res.status(201).json({ message: 'Porcino creado', porcino })
 
     } catch (error) {
         res.status(400).json({ message: error.message })

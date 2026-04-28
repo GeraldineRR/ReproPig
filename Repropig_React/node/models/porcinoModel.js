@@ -14,6 +14,7 @@ const PorcinoModel = db.define('porcinos', {
     Fec_Nac_Porcino: { type: DataTypes.DATE, allowNull: false },
     Fec_Llegada: { type: DataTypes.DATE, allowNull: true },
     Peso_Llegada: { type: DataTypes.DECIMAL(10,2), allowNull: true },
+    Estado: { type: DataTypes.CHAR(10), defaultValue: "Activo", allowNull: false},
 }, {
     freezeTableName: true,
 });

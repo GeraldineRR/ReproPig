@@ -48,10 +48,9 @@ const PartosModel = db.define("partos", {
     type: DataTypes.TIME,
   },
   estado: {
-    type: DataTypes.CHAR(10),
-    allowNull: false,
-    defaultValue: "Activo",
-  }
+  type: DataTypes.CHAR(10),
+  defaultValue: "Activo"
+  },
 
 }, {
   freezeTableName: true,
