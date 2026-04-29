@@ -26,14 +26,20 @@ class CalendarioService {
     
 
 
-    async getAll() {
-        return await CalendarioModel.findAll()
-    }
+    
 
     async getById(id) {
-        const Calendario = await CalendarioModel.findByPk(id)
+        const Calendario = await CalendarioModel.findByPk(id,{
+            include: [
+                {
+                    model: reproduccionesModel,
+                    as: 'reproducciones'
+                }
+            ]
+        })
         if (!Calendario) throw new Error('Calendario no encontrado')
         return Calendario
+        
     }
 
         async create(data) {

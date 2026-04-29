@@ -10,6 +10,7 @@ import { customTableStyles } from "../../styles/tableStyles.js"
 const CrudPorcinos = () => {
 
     const [porcinos, setPorcinos] = useState([])
+    const [loadingId, setLoadingId] = useState(null);
 
     const calcularEdadLlegada = (fechaNacimiento, fechaLlegada) => {
         if (!fechaNacimiento || !fechaLlegada) return null
@@ -46,6 +47,28 @@ const CrudPorcinos = () => {
 
         return años * 12 + meses
     }
+
+    // Función para alternar el estado del porcino
+    const toggleEstado = async (id) => {
+        setLoadingId(id);
+
+        try {
+            const res = await apiAxios.put(`/porcino/${id}/toggle-estado`);
+
+            setPorcinos(prev =>
+                prev.map(p =>
+                    p.Id_Porcino === id
+                        ? { ...p, Estado: res.data.Estado }
+                        : p
+                )
+            );
+
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingId(null);
+        }
+    };
 
     const [porcinoEdit, setPorcinoEdit] = useState(null)
     const [porcinoQR, setPorcinoQR] = useState(null)
@@ -107,6 +130,20 @@ const CrudPorcinos = () => {
                 const edad = calcularEdadActual(row.Fec_Nac_Porcino)
                 return `${edad} meses`
             },
+        },
+        {
+            name: 'Estado',
+            selector: row => (
+                <button
+                    className={`badge border-0 ${row.Estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
+                    onClick={() => toggleEstado(row.Id_Porcino)}
+                    disabled={loadingId === row.Id_Porcino}
+                >
+                    {loadingId === row.Id_Porcino
+                        ? '...'
+                        : row.Estado}
+                </button>
+            )
         },
         {
             name: 'Acciones', cell: row => (
