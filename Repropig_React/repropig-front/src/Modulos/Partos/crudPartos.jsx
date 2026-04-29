@@ -99,6 +99,13 @@ const CrudPartos = () => {
             selector: row => row.estado
         },
         {
+            name: "Reproducción",
+            selector: row => row.reproduccion
+                ? `#${row.reproduccion.Id_Reproduccion}`
+                : '—',
+            width: '120px'
+        },
+        {
             name: "Acciones",
             cell: (row) => (
                 <div className="d-flex gap-2">

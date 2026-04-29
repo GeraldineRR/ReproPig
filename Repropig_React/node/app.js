@@ -98,6 +98,14 @@ SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: '
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'Seguimiento Cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
+// Reproducción → Seguimiento Cerda
+reproduccionesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Reproduccion', as: 'seguimientos' })
+SeguimientoCerda_Model.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+
+// Reproducción → Partos
+reproduccionesModel.hasMany(PartosModel, { foreignKey: 'Id_Reproduccion', as: 'partos' })
+PartosModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+
 // ====== Conexión DB ======
 try {
   await db.authenticate()

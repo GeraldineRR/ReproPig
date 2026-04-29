@@ -51,6 +51,10 @@ const PartosModel = db.define("partos", {
     type: DataTypes.CHAR(10),
     allowNull: false,
     defaultValue: "Activo",
+  },
+  Id_Reproduccion: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
   }
 
 }, {

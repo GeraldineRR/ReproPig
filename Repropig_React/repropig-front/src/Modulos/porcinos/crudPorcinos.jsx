@@ -3,6 +3,9 @@ import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import PorcinoForm from "./porcinoForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { QRCodeSVG } from 'qrcode.react'
+import { Link } from 'react-router-dom'
+import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudPorcinos = () => {
 
@@ -45,6 +48,7 @@ const CrudPorcinos = () => {
     }
 
     const [porcinoEdit, setPorcinoEdit] = useState(null)
+    const [porcinoQR, setPorcinoQR] = useState(null)
     const [filterText, setFilterText] = useState('')
 
     const columnsTable = [
@@ -106,8 +110,23 @@ const CrudPorcinos = () => {
         },
         {
             name: 'Acciones', cell: row => (
-                <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}><i className="fa-solid fa-pencil"></i></button>
-            )
+                <div className="d-flex gap-2">
+                    <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)} title="Editar">
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                    {row.Gen_Porcino?.trim().toLowerCase() === 'h' && (
+                        <button className="btn btn-sm btn-dark" onClick={() => handleShowQR(row)} title="Ver QR de Cerda">
+                            <i className="fa-solid fa-qrcode"></i>
+                        </button>
+                    )}
+                    {row.Gen_Porcino?.trim().toLowerCase() === 'h' && (
+                        <Link to={`/perfil-cerda/${row.Id_Porcino}`} className="btn btn-sm btn-primary" title="Ver Perfil Completo">
+                            <i className="fa-solid fa-eye"></i>
+                        </Link>
+                    )}
+                </div>
+            ),
+            width: '150px'
         }
     ]
 
@@ -158,6 +177,12 @@ const CrudPorcinos = () => {
         modal.show()
     }
 
+    const handleShowQR = (porcino) => {
+        setPorcinoQR(porcino)
+        const modal = new bootstrap.Modal(document.getElementById('qrModal'))
+        modal.show()
+    }
+
     return (
         <>
 
@@ -176,14 +201,12 @@ const CrudPorcinos = () => {
                 </div>
 
                 <DataTable
-                    title="Porcinos"
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Porcinos</h4>}
                     columns={columnsTable}
                     data={newListPorcinos}
                     keyField="Id_Porcino"
                     pagination
-                    highlightOnHover
-                    pointerOnHover
-                    striped
+                    customStyles={customTableStyles}
                 />
 
 
@@ -196,6 +219,36 @@ const CrudPorcinos = () => {
                             </div>
                             <div className="modal-body">
                                 <PorcinoForm key={porcinoEdit ? porcinoEdit.Id_Porcino : 'new'} hideModal={hideModal} porcinoEdit={porcinoEdit} reload={getAllPorcinos} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Modal para Código QR */}
+                <div className="modal fade" id="qrModal" tabIndex="-1" aria-hidden="true">
+                    <div className="modal-dialog modal-sm modal-dialog-centered">
+                        <div className="modal-content border-0 shadow">
+                            <div className="modal-header border-0 pb-0">
+                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div className="modal-body text-center pt-0 pb-4">
+                                {porcinoQR && (
+                                    <>
+                                        <h5 className="mb-1 text-danger fw-bold">{porcinoQR.Nom_Porcino}</h5>
+                                        <p className="text-muted small mb-3">Chapeta: {porcinoQR.Num_Chapeta}</p>
+                                        
+                                        <div className="p-3 bg-white d-inline-block rounded shadow-sm border">
+                                            {/* Usamos window.location.origin para que el QR apunte al dominio/IP actual */}
+                                            <QRCodeSVG 
+                                                value={`${window.location.origin}/perfil-cerda/${porcinoQR.Id_Porcino}`} 
+                                                size={200} 
+                                            />
+                                        </div>
+                                        <p className="text-muted mt-3 small px-3">
+                                            Escanea este código con tu celular para ver el historial reproductivo completo.
+                                        </p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>

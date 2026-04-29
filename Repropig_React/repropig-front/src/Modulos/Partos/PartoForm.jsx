@@ -19,17 +19,21 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
     const [Fec_fin, setFec_fin] = useState('')
     const [Hor_final, setHor_final] = useState('')
     const [estado, setestado] = useState('')
+    const [Id_Reproduccion, setId_Reproduccion] = useState('')
+
     const [porcinos, setPorcinos] = useState([])
+    const [reproduccionesActivas, setReproduccionesActivas] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     // 🔹 Cargar datos si se edita
-   useEffect(() => {
-    if (rowToEdit?.Id_parto) {
-        loadDataInForm()
-    } else {
-        resetForm()
-    }
-}, [rowToEdit])
+    useEffect(() => {
+        if (rowToEdit?.Id_parto) {
+            loadDataInForm()
+        } else {
+            resetForm()
+        }
+    }, [rowToEdit])
+
     // 🔹 Resetear formulario
     const resetForm = () => {
         setFec_fin("")
@@ -43,6 +47,8 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setObservaciones("")
         setPes_camada("")
         setestado("")
+        setId_Reproduccion("")
+        setReproduccionesActivas([])
         setTextFormButton("Enviar")
     }
 
@@ -53,10 +59,32 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino/')
-            setPorcinos(response.data)
+            // Solo hembras
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
         } catch (error) {
             console.error("Error al obtener porcinos:", error)
         }
+    }
+
+    const getReproduccionesActivas = async (idPorcino) => {
+        if (!idPorcino) { setReproduccionesActivas([]); return }
+        try {
+            const response = await apiAxios.get('/reproducciones/')
+            const activas = response.data.filter(r =>
+                r.Id_Cerda == idPorcino && r.Activo === 'S'
+            )
+            setReproduccionesActivas(activas)
+        } catch (error) {
+            console.error("Error al obtener reproducciones:", error)
+            setReproduccionesActivas([])
+        }
+    }
+
+    const handlePorcinoChange = (e) => {
+        const val = e.target.value
+        setPorcino(val)
+        setId_Reproduccion('')
+        getReproduccionesActivas(val)
     }
 
     const loadDataInForm = () => {
@@ -71,7 +99,13 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setObservaciones(rowToEdit.Observaciones || "")
         setPes_camada(rowToEdit.Pes_camada || "")
         setestado(rowToEdit.estado || "")
+        setId_Reproduccion(rowToEdit.Id_Reproduccion || "")
         setTextFormButton("Actualizar")
+
+        // Cargar reproducciones de esa cerda para edición
+        if (rowToEdit.Id_Porcino) {
+            getReproduccionesActivas(rowToEdit.Id_Porcino)
+        }
     }
 
     const gestionarForm = async (e) => {
@@ -95,19 +129,22 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
             Pes_camada,
             Observaciones,
             Fec_fin,
-            Hor_final
+            Hor_final,
+            Id_Reproduccion: Id_Reproduccion ? Number(Id_Reproduccion) : null
         }
 
         try {
 
-            // 🔵 CREATE o UPDATE CORRECTO
-            if (!rowToEdit?.id) {
+            // 🔵 CREATE o UPDATE
+            if (!rowToEdit?.Id_parto) {
 
                 await apiAxios.post("/partos/", datos)
 
                 await MySwal.fire({
                     title: "Registro exitoso",
-                    text: "Parto creado correctamente",
+                    text: Id_Reproduccion
+                        ? "Parto registrado. La reproducción fue inactivada automáticamente."
+                        : "Parto creado correctamente",
                     icon: "success"
                 })
 
@@ -138,84 +175,122 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
     }
 
     return (
-        <form onSubmit={gestionarForm} className="col-12 col-md-12">
+        <form onSubmit={gestionarForm} className="col-12">
 
-            <div className="mb-3">
-                <label className="form-label">Porcino:</label>
-                <select
-                    className="form-control"
-                    value={Id_Porcino}
-                    onChange={(e) => setPorcino(e.target.value)}
-                    required
-                >
-                    <option value="">Seleccione un porcino...</option>
-                    {porcinos.map((porcino) => (
-                        <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
-                            {porcino.Nom_Porcino}
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">🐣 Registro de Parto</h5>
+                <small className="text-muted">Vinculado al ciclo reproductivo</small>
+            </div>
+
+            <div className="row g-3">
+
+                {/* CERDA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🐷 Cerda</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Porcino}
+                        onChange={handlePorcinoChange}
+                        required
+                    >
+                        <option value="">Seleccione una cerda</option>
+                        {porcinos.map((porcino) => (
+                            <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
+                                {porcino.Nom_Porcino}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* REPRODUCCIÓN */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🔁 Reproducción</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Reproduccion}
+                        onChange={(e) => setId_Reproduccion(e.target.value)}
+                    >
+                        <option value="">
+                            {!Id_Porcino
+                                ? 'Primero seleccione una cerda'
+                                : reproduccionesActivas.length === 0
+                                    ? 'Sin reproducciones activas'
+                                    : 'Seleccione una reproducción'}
                         </option>
-                    ))}
-                </select>
+                        {reproduccionesActivas.map(r => (
+                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
+                                #{r.Id_Reproduccion} — {r.TipoReproduccion}
+                            </option>
+                        ))}
+                    </select>
+                    {Id_Reproduccion && (
+                        <small className="text-warning mt-1 d-block">
+                            ⚠️ Al guardar, esta reproducción se inactivará automáticamente
+                        </small>
+                    )}
+                </div>
+
+                {/* FECHA INICIO */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📅 Fecha inicio</label>
+                    <input type="date" className="form-control shadow-sm" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
+                </div>
+
+                {/* HORA INICIAL */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🕐 Hora inicial</label>
+                    <input type="time" className="form-control shadow-sm" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
+                </div>
+
+                {/* NACIDOS VIVOS */}
+                <div className="col-md-4">
+                    <label className="form-label fw-semibold">✅ Nacidos vivos</label>
+                    <input type="number" min="0" className="form-control shadow-sm" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} required />
+                </div>
+
+                {/* NACIDOS MOMIAS */}
+                <div className="col-md-4">
+                    <label className="form-label fw-semibold">⚠️ Momias</label>
+                    <input type="number" min="0" className="form-control shadow-sm" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} required />
+                </div>
+
+                {/* NACIDOS MUERTOS */}
+                <div className="col-md-4">
+                    <label className="form-label fw-semibold">❌ Muertos</label>
+                    <input type="number" min="0" className="form-control shadow-sm" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} required />
+                </div>
+
+                {/* PESO CAMADA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">⚖️ Peso camada</label>
+                    <input type="text" className="form-control shadow-sm" value={Pes_camada} onChange={(e) => setPes_camada(e.target.value)} required />
+                </div>
+
+                {/* FECHA FIN */}
+                <div className="col-md-3">
+                    <label className="form-label fw-semibold">📅 Fecha fin</label>
+                    <input type="date" className="form-control shadow-sm" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} />
+                </div>
+
+                {/* HORA FINAL */}
+                <div className="col-md-3">
+                    <label className="form-label fw-semibold">🕐 Hora final</label>
+                    <input type="time" className="form-control shadow-sm" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} />
+                </div>
+
+                {/* OBSERVACIONES */}
+                <div className="col-12">
+                    <label className="form-label fw-semibold">📝 Observaciones</label>
+                    <textarea className="form-control shadow-sm" rows="2" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} />
+                </div>
+
             </div>
 
-            <div className="mb-3">
-                <label>Fecha inicio</label>
-                <input type="date" className="form-control" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Hora inicial:</label>
-                <input type="time" className="form-control" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Nacidos vivos:</label>
-                <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Nacidos momias:</label>
-                <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Nacidos muertos:</label>
-                <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Peso de camada:</label>
-                <input type="text" className="form-control" value={Pes_camada} onChange={(e) => setPes_camada(e.target.value)} required />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Observaciones:</label>
-                <input type="text" className="form-control" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} />
-            </div>
-
-            <div className="mb-3">
-                <label>Fecha fin</label>
-                <input type="date" className="form-control" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} />
-            </div>
-
-            <div className="mb-3">
-                <label className="form-label">Hora final:</label>
-                <input type="time" className="form-control" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} />
-            </div>
-
-             <div className="mb-3">
-                <label className="form-label">estado:</label>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={estado}
-                    onChange={(e) => setestado(e.target.value)}
-                />
-            </div>
-
-
-            {/* Botón */}
-            <div className="mb-3">
-                <input type="submit" className="btn btn-primary w-50" value={textFormButton} />
+            {/* BOTÓN */}
+            <div className="d-grid mt-4">
+                <button className="btn btn-primary fw-semibold py-2 shadow-sm">
+                    {textFormButton}
+                </button>
             </div>
 
         </form>

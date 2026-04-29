@@ -76,7 +76,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
             const res = await apiAxios.get('/reproducciones');
             const activas = res.data.filter(r =>
-                r.Id_Cerda == preloaded.Id_Porcino && r.Activo === 'Si'
+                r.Id_Cerda == preloaded.Id_Porcino && r.Activo === 'S'
             );
             setReproduccionesActivas(activas);
         };
@@ -120,7 +120,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getReproduccionesActivasSolo = async (id) => {
         if (!id) return setReproduccionesActivas([]);
         const res = await apiAxios.get('/reproducciones');
-        const activas = res.data.filter(r => r.Id_Cerda == id && r.Activo === 'Si');
+        const activas = res.data.filter(r => r.Id_Cerda == id && r.Activo === 'S');
         setReproduccionesActivas(activas);
     };
 

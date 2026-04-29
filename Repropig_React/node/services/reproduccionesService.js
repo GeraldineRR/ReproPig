@@ -27,9 +27,9 @@ class reproduccionesService {
         return reproduccion
     }
 
-    // ✅ Sin validación de tipo duplicado — el frontend maneja la lógica
     async create(data) {
-        return await reproduccionesModel.create(data)
+        // Siempre se crea activa
+        return await reproduccionesModel.create({ ...data, Activo: 'S' })
     }
 
     async update(id, data) {
@@ -39,15 +39,27 @@ class reproduccionesService {
         return true
     }
 
+    async toggleActivo(id) {
+        const reproduccion = await reproduccionesModel.findByPk(id)
+        if (!reproduccion) throw new Error('Reproduccion no encontrada')
+
+        const nuevoEstado = reproduccion.Activo === 'S' ? 'N' : 'S'
+        await reproduccionesModel.update(
+            { Activo: nuevoEstado },
+            { where: { Id_Reproduccion: id } }
+        )
+        return nuevoEstado
+    }
+
     async delete(id) {
         const reproduccion = await reproduccionesModel.findByPk(id)
         if (!reproduccion) throw new Error('Reproduccion no encontrada')
 
-        // ✅ Borrar montas e inseminaciones relacionadas primero
+        // Borrar montas e inseminaciones relacionadas primero
         await MontaModel.destroy({ where: { Id_Reproduccion: id } })
         await InseminacionModel.destroy({ where: { Id_Reproduccion: id } })
 
-        // ✅ Luego borrar la reproducción
+        // Luego borrar la reproducción
         await reproduccionesModel.destroy({ where: { Id_Reproduccion: id } })
         return true
     }

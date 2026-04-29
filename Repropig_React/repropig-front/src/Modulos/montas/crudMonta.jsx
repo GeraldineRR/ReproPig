@@ -140,11 +140,17 @@ const CrudMonta = () => {
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Monta
-                    </button>
+                    {(!filtroDesdeReproduccion || filtroDesdeReproduccion.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Monta
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="La reproducción está inactiva">
+                            Nueva Monta
+                        </button>
+                    )}
                 </div>
             </div>
 

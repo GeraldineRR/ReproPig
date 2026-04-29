@@ -12,13 +12,20 @@ const crudSeguimiento_Cerda = () => {
     const [modalKey, setModalKey] = useState(0)  // ← AGREGADO
 
     const columnsTable = [
-        { name: 'Id_Seguimiento_Cerda', selector: row => row.Id_Seguimiento_Cerda },
+        { name: 'Id', selector: row => row.Id_Seguimiento_Cerda, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha },
         { name: 'Hora', selector: row => row.Hora },
-        { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Porcino', selector: row => row.Id_Porcino },
+        { name: 'Cerda', selector: row => row.porcinos?.Nom_Porcino || row.Id_Porcino },
+        {
+            name: 'Reproducción',
+            selector: row => row.reproduccion
+                ? `#${row.reproduccion.Id_Reproduccion}`
+                : '—',
+            width: '120px'
+        },
         { name: 'Responsable', selector: row => row.Id_Responsable },
         { name: 'Medicamento', selector: row => row.Id_Medicamento },
+        { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
         {
             name: 'Acciones', cell: row => (
                 <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
