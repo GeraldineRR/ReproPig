@@ -13,7 +13,8 @@ const Dashboard = () => {
     colectas: 0,
     montas: 0,
     inseminaciones: 0,
-    reproducciones: 0
+    reproducciones: 0,
+    partos: 0
   })
 
   const [ultimasReproducciones, setUltimasReproducciones] = useState([])
@@ -31,13 +32,14 @@ const Dashboard = () => {
   const cargarDatos = async () => {
     try {
 
-      const [porcinos, colectas, montas, inseminaciones, reproducciones] =
+      const [porcinos, colectas, montas, inseminaciones, reproducciones, partos] =
         await Promise.all([
           apiAxios.get("/porcino"),
           apiAxios.get("/colectas"),
           apiAxios.get("/monta"),
           apiAxios.get("/inseminacion"),
-          apiAxios.get("/reproducciones/")
+          apiAxios.get("/reproducciones/"),
+          apiAxios.get("/partos")
         ])
 
       setStats({
@@ -45,7 +47,8 @@ const Dashboard = () => {
         colectas: colectas.data.length,
         montas: montas.data.length,
         inseminaciones: inseminaciones.data.length,
-        reproducciones: reproducciones.data.length
+        reproducciones: reproducciones.data.length,
+        partos: partos.data.length
       })
 
       const ultimas = [...reproducciones.data].reverse().slice(0, 5)
@@ -64,14 +67,16 @@ const Dashboard = () => {
     { nombre: "Inseminaciones", icono: "💉", ruta: "/inseminaciones", desc: "Inseminación artificial" },
     { nombre: "Colectas", icono: "🧪", ruta: "/colectas", desc: "Material genético" },
     { nombre: "Medicamentos", icono: "💊", ruta: "/medicamentos", desc: "Control sanitario" },
-    { nombre: "Responsables", icono: "👥", ruta: "/responsables", desc: "Equipo de trabajo" }
+    { nombre: "Responsables", icono: "👥", ruta: "/responsables", desc: "Equipo de trabajo" },
+    { nombre: "Partos", icono: "🐣", ruta: "/partos", desc: "Control de partos" }
   ]
 
   const statCards = [
     { label: "Porcinos", valor: stats.porcinos, icono: "🐖", ruta: "/porcinos" },
     { label: "Reproducciones", valor: stats.reproducciones, icono: "🔄", ruta: "/reproducciones" },
     { label: "Colectas", valor: stats.colectas, icono: "🧪", ruta: "/colectas" },
-    { label: "Inseminaciones", valor: stats.inseminaciones, icono: "💉", ruta: "/inseminaciones" }
+    { label: "Inseminaciones", valor: stats.inseminaciones, icono: "💉", ruta: "/inseminaciones" },
+    { label: "Partos", valor: stats.partos, icono: "🐣", ruta: "/partos" }
   ]
 
   return (

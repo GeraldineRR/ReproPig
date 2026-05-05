@@ -32,24 +32,7 @@ const CrudPartos = () => {
         }
     };
 
-    // Activar / Desactivar
-    const cambiarEstado = async (row) => {
-        try {
-            const nuevoEstado =
-                row.estado === "Activo"
-                    ? "Inactivo"
-                    : "Activo";
 
-            await apiAxios.put(`/partos/estado/${row.Id_parto}`, {
-                estado: nuevoEstado
-            });
-
-            getAllPartos();
-
-        } catch (error) {
-            console.error("Error al cambiar estado:", error);
-        }
-    };
 
     // Columnas de tabla
     const columnsTable = [
@@ -94,10 +77,7 @@ const CrudPartos = () => {
             name: "Hor_final",
             selector: row => row.Hor_final
         },
-        {
-            name: "estado",
-            selector: row => row.estado
-        },
+
         {
             name: "Acciones",
             cell: (row) => (
@@ -111,20 +91,6 @@ const CrudPartos = () => {
                         onClick={() => setRowToEdit(row)}
                     >
                         <i className="fa-solid fa-pencil"></i>
-                    </button>
-
-                    {/* Activar / Desactivar */}
-                    <button
-                        className={`btn btn-sm ${
-                            row.estado === "Activo"
-                                ? "btn-danger"
-                                : "btn-success"
-                        }`}
-                        onClick={() => cambiarEstado(row)}
-                    >
-                        {row.estado === "Activo"
-                            ? "Desactivar"
-                            : "Activar"}
                     </button>
 
                 </div>
