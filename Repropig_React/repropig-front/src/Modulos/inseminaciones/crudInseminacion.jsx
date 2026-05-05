@@ -149,11 +149,17 @@ const CrudInseminacion = () => {
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Inseminación
-                    </button>
+                    {(!filtroDesdeReproduccion || filtroDesdeReproduccion.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Inseminación
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="La reproducción está inactiva">
+                            Nueva Inseminación
+                        </button>
+                    )}
                 </div>
             </div>
 

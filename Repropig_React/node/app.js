@@ -1,24 +1,11 @@
 import express from 'express'
 import cors from 'cors'
+import dotenv from 'dotenv'
+dotenv.config()
+
 import db from './database/db.js'
 
-// Rutas
-import porcinoRoutes from './routes/porcinoRoutes.js'
-import razaRoutes from './routes/razaRoutes.js'
-import MedicamentosRoutes from './routes/MedicamentosRoutes.js'
-import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
-import colectaRoutes from './routes/colectaRoutes.js'
-import montaRoutes from './routes/montaRoutes.js'
-import inseminacionRoutes from './routes/inseminacionRoutes.js'
-import responsablesRoutes from './routes/responsablesRoutes.js'
-import PartosRoutes from './routes/PartosRoutes.js'
-import Seguimiento_CerdaRoutes from './routes/Seguimiento_CerdaRoutes.js'
-import authRoutes from './routes/authRoutes.js'
-import criaRoutes from './routes/criaRoutes.js'
-import segcamadaRoutes from './routes/segcamadaRoutes.js'
-import calendarioRoutes from './routes/calendarioRoutes.js'
-
-// Models
+// ====== Models ======
 import reproduccionesModel from './models/reproduccionesModel.js'
 import MedicamentosModel from './models/MedicamentosModel.js'
 import PorcinoModel from './models/porcinoModel.js'
@@ -33,36 +20,11 @@ import responsablesModel from './models/responsablesModel.js'
 import SeguimientoCerda_Model from './models/Seguimiento_CerdaModel.js'
 import CalendarioModel from './models/CalendarioModel.js'
 
-// 🔥 SOLO para el PORT
-import dotenv from 'dotenv'
-dotenv.config()
-
-const app = express()
-
-app.use(express.json())
-app.use(cors())
-
-// Rutas
-app.use('/api/porcino', porcinoRoutes)
-app.use('/api/raza', razaRoutes)
-app.use('/api/medicamentos', MedicamentosRoutes)
-app.use('/api/reproducciones', reproduccionesRoutes)
-app.use('/api/colectas', colectaRoutes)
-app.use('/api/monta', montaRoutes)
-app.use('/api/inseminacion', inseminacionRoutes)
-app.use('/api/Partos', PartosRoutes)
-app.use('/api/responsables', responsablesRoutes)
-app.use('/api/cria', criaRoutes)
-app.use('/api/segcamada', segcamadaRoutes)
-app.use('/api/Seguimiento_Cerda', Seguimiento_CerdaRoutes)
-app.use('/api/auth', authRoutes)
-app.use('/api/calendario', calendarioRoutes)
-
-// ====== Relaciones ======
-PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'razas' })
+// ====== Relaciones (ANTES de importar rutas) ======
+PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'raza' })
 RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
 
-PartosModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcinos' })
+PartosModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(PartosModel, { foreignKey: 'Id_Porcino', as: 'partos' })
 
 CriaModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
@@ -93,36 +55,83 @@ responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable'
 SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
 
 PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
-SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcinos' })
+SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'Seguimiento Cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
+reproduccionesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Reproduccion', as: 'seguimientos' })
+SeguimientoCerda_Model.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+
+reproduccionesModel.hasMany(PartosModel, { foreignKey: 'Id_Reproduccion', as: 'partos' })
+PartosModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+
 CalendarioModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
 reproduccionesModel.hasOne(CalendarioModel, { foreignKey: 'Id_Reproduccion', as: 'calendario' })
 
-// ====== Conexión DB ======
-try {
-  await db.authenticate()
-  console.log('Conexión a la base de datos exitosa')
+// ====== Rutas (DESPUÉS de las relaciones) ======
+import porcinoRoutes from './routes/porcinoRoutes.js'
+import razaRoutes from './routes/razaRoutes.js'
+import MedicamentosRoutes from './routes/MedicamentosRoutes.js'
+import reproduccionesRoutes from './routes/reproduccionesRoutes.js'
+import colectaRoutes from './routes/colectaRoutes.js'
+import montaRoutes from './routes/montaRoutes.js'
+import inseminacionRoutes from './routes/inseminacionRoutes.js'
+import responsablesRoutes from './routes/responsablesRoutes.js'
+import PartosRoutes from './routes/PartosRoutes.js'
+import Seguimiento_CerdaRoutes from './routes/Seguimiento_CerdaRoutes.js'
+import authRoutes from './routes/authRoutes.js'
+import criaRoutes from './routes/criaRoutes.js'
+import segcamadaRoutes from './routes/segcamadaRoutes.js'
+import calendarioRoutes from './routes/calendarioRoutes.js'
 
-  await db.sync()
-  console.log('Base de datos sincronizada')
-} catch (error) {
-  console.error('Error al conectar a la base de datos:', error)
-  process.exit(1)
-}
+const app = express()
 
-// Ruta base
+app.use(express.json())
+app.use(cors())
+
+app.use('/api/porcino', porcinoRoutes)
+app.use('/api/raza', razaRoutes)
+app.use('/api/medicamentos', MedicamentosRoutes)
+app.use('/api/reproducciones', reproduccionesRoutes)
+app.use('/api/colectas', colectaRoutes)
+app.use('/api/monta', montaRoutes)
+app.use('/api/inseminacion', inseminacionRoutes)
+app.use('/api/partos', PartosRoutes)
+app.use('/api/responsables', responsablesRoutes)
+app.use('/api/cria', criaRoutes)
+app.use('/api/segcamada', segcamadaRoutes)
+app.use('/api/seguimiento_cerda', Seguimiento_CerdaRoutes)
+app.use('/api/auth', authRoutes)
+app.use('/api/calendario', calendarioRoutes)
+
 app.get('/', (req, res) => {
   res.send('Hola mundo ADSO')
 })
 
-// Puerto
+app.use((err, req, res, next) => {
+  console.error('Error no controlado:', err)
+  res.status(500).json({
+    error: 'Error interno del servidor',
+    mensaje: err.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  })
+})
+
+try {
+  await db.authenticate()
+  console.log('✅ Conexión a la base de datos exitosa')
+  await db.sync()
+  console.log('✅ Base de datos sincronizada')
+} catch (error) {
+  console.error('❌ Error al conectar a la base de datos:', error)
+  process.exit(1)
+}
+
 const PORT = process.env.PORT || 8000
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
 })
 
 export default app
