@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig"
 import DataTable from 'react-data-table-component'
+import { customTableStyles } from "../../styles/tableStyles.js"
 import ReproduccionesForm from "./ReproduccionesForm.jsx"
 import MontaForm from "../montas/montaForm.jsx"
 import InseminacionForm from "../inseminaciones/inseminacionForm.jsx"
@@ -151,13 +152,40 @@ const CrudReproducciones = () => {
         await getAllReproducciones()
     }
 
+    const handleToggleActivo = async (row) => {
+        const accion = row.Activo === 'S' ? 'inactivar' : 'activar'
+        const result = await MySwal.fire({
+            title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} reproducción?`,
+            text: `La reproducción #${row.Id_Reproduccion} de la cerda "${row.porcino?.Nom_Porcino}" será ${accion === 'activar' ? 'activada' : 'inactivada'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: accion === 'activar' ? '#28a745' : '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        })
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.patch(`/reproducciones/${row.Id_Reproduccion}/toggle-activo`)
+                MySwal.fire({
+                    icon: 'success',
+                    title: 'Actualizado',
+                    text: `Reproducción ${accion === 'activar' ? 'activada' : 'inactivada'} correctamente`,
+                    timer: 1500,
+                    showConfirmButton: false
+                })
+                getAllReproducciones()
+            } catch (error) {
+                MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
+            }
+        }
+    }
+
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '60px' },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
-
         {
-            name: 'Tipo',
-            selector: row => {
+            name: 'Tipo', selector: row => {
                 const tieneMontas = row.montas?.length > 0
                 const tieneInseminaciones = row.inseminaciones?.length > 0
                 if (tieneMontas && tieneInseminaciones) return 'Monta Y Inseminación'
@@ -166,9 +194,20 @@ const CrudReproducciones = () => {
                 return row.TipoReproduccion
             }
         },
-
-        { name: 'Activo', selector: row => row.Activo, sortable: true, width: '80px' },
-
+        {
+            name: 'Activo',
+            width: '110px',
+            cell: row => (
+                <span
+                    className={`badge ${row.Activo === 'S' ? 'bg-success' : 'bg-secondary'}`}
+                    style={{ cursor: 'pointer', fontSize: '12px' }}
+                    title={row.Activo === 'S' ? 'Clic para inactivar' : 'Clic para activar'}
+                    onClick={() => handleToggleActivo(row)}
+                >
+                    {row.Activo === 'S' ? '✅ Activo' : '⛔ Inactivo'}
+                </span>
+            )
+        },
         {
             name: 'Montas',
             width: '100px',
@@ -176,18 +215,13 @@ const CrudReproducciones = () => {
                 <span
                     className="badge bg-warning text-dark"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
-                    onClick={() => navigate('/montas', {
-                        state: {
-                            Id_Reproduccion: row.Id_Reproduccion,
-                            Id_Porcino: row.Id_Cerda
-                        }
-                    })}
+                    title="Ver montas"
+                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Activo: row.Activo } })}
                 >
                     🐷 {row.montas?.length || 0}
                 </span>
             )
         },
-
         {
             name: 'Inseminaciones',
             width: '120px',
@@ -195,12 +229,8 @@ const CrudReproducciones = () => {
                 <span
                     className="badge bg-primary"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
-                    onClick={() => navigate('/inseminaciones', {
-                        state: {
-                            Id_Reproduccion: row.Id_Reproduccion,
-                            Id_Porcino: row.Id_Cerda
-                        }
-                    })}
+                    title="Ver inseminaciones"
+                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Activo: row.Activo } })}
                 >
                     💉 {row.inseminaciones?.length || 0}
                 </span>
@@ -209,7 +239,7 @@ const CrudReproducciones = () => {
 
         {
             name: 'Acciones',
-            width: '140px',
+            width: '100px',
             cell: row => (
                 <div className="d-flex gap-1 align-items-center">
                     <button
@@ -220,17 +250,12 @@ const CrudReproducciones = () => {
                         📅
                     </button>
 
-                    <button
-                        className="btn btn-sm btn-info"
-                        onClick={() => handleEdit(row)}
-                    >
+                    <button className="btn btn-sm btn-info" title="Editar"
+                        onClick={() => handleEdit(row)}>
                         <i className="fa-solid fa-pencil"></i>
                     </button>
-
-                    <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row)}
-                    >
+                    <button className="btn btn-sm btn-danger" title="Eliminar"
+                        onClick={() => handleDelete(row)}>
                         <i className="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -299,11 +324,12 @@ const CrudReproducciones = () => {
             </div>
 
             <DataTable
-                title="Reproducciones"
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Reproducciones</h4>}
                 columns={columnsTable}
                 data={filteredReproducciones}
                 keyField="Id_Reproduccion"
-                pagination highlightOnHover striped
+                pagination
+                customStyles={customTableStyles}
                 noDataComponent="No hay reproducciones registradas"
             />
 

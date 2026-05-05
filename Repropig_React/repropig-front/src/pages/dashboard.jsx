@@ -243,12 +243,12 @@ const modulos = todosLosModulos.filter(m =>
 
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        r.Activo === "Si"
+                        r.Activo === "S"
                           ? "bg-green-200 text-green-800"
                           : "bg-red-200 text-red-800"
                       }`}
                     >
-                      {r.Activo === "Si" ? "Activa" : "Inactiva"}
+                      {r.Activo === "S" ? "Activa" : "Inactiva"}
                     </span>
 
                   </div>

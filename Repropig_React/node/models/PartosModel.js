@@ -16,6 +16,7 @@ const PartosModel = db.define("partos", {
   Fec_inicio: {
     type: DataTypes.DATE,
   },
+
   Hor_inicial: {
     type: DataTypes.TIME,
   },
@@ -47,12 +48,20 @@ const PartosModel = db.define("partos", {
   Hor_final: {
     type: DataTypes.TIME,
   },
+
   estado: {
-  type: DataTypes.CHAR(10),
-  defaultValue: "Activo"
+    type: DataTypes.CHAR(10),
+    allowNull: false,
+    defaultValue: "Activo",
   },
+
+  Id_Reproduccion: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  }
 
 }, {
   freezeTableName: true,
 })
+
 export default PartosModel

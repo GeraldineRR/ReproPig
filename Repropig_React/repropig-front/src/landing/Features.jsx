@@ -14,23 +14,23 @@ function Features() {
     { nombre: "Porcinos", ruta: "/porcinos", icon: "🐖", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro y seguimiento completo de los porcinos de la granja.", activo: true },
     { nombre: "Razas", ruta: "/razas", icon: "🧬", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro de las razas de porcinos.", activo: true },
     { nombre: "Partos", ruta: "/partos", icon: "🍼", color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.", activo: true },
-    { nombre: "Historial", ruta: null, icon: "📋", color: "#F4F4F0", accent: "#B0B8A0", desc: "Historial completo de eventos y registros del sistema.", activo: false },
+    { nombre: "Historial", ruta: null, icon: "📋", color: "#F4F4F0", accent: "#B0B8A0", desc: "Historial completo de eventos y registros del sistema.", activo: true },
   ]
 
   return (
-    <section id="modulos" className="py-[100px] px-8 bg-[#FFFAF8] font-sans">
+    <section id="modulos" className="py-[100px] px-8 bg-[#fdfbfb] font-sans">
 
-      <div className="max-w-[1100px] mx-auto">
+      <div className="max-w-[1200px] mx-auto">
 
-        <div className="text-center text-[0.72rem] font-bold tracking-[2.5px] uppercase text-[#C97A85] mb-[10px]">
+        <div className="text-center text-[0.8rem] font-bold tracking-[2.5px] uppercase text-[#C97A85] mb-[12px]">
           Plataforma
         </div>
 
-        <h2 className="text-center font-serif text-[clamp(1.8rem,3vw,2.6rem)] font-bold text-[#3D2E30] mb-[10px]">
+        <h2 className="text-center text-[clamp(2rem,4vw,3rem)] font-extrabold text-[#2d1b2e] mb-[16px] tracking-tight">
           Módulos del Sistema
         </h2>
 
-        <p className="text-center text-[#9A7080] text-[0.92rem] font-light max-w-[460px] mx-auto mb-[52px] leading-[1.7]">
+        <p className="text-center text-[#5a4b5c] text-[1.05rem] font-medium max-w-[540px] mx-auto mb-[60px] leading-[1.6]">
           Cada módulo está diseñado para una gestión precisa, con trazabilidad y control total del proceso reproductivo.
         </p>
 
@@ -45,21 +45,21 @@ function Features() {
                 <div
                   key={i}
                   style={{ "--card-bg": mod.color, "--card-accent": mod.accent }}
-                  className="group relative overflow-hidden rounded-[20px] border-[1.5px] border-[#F0DCE0] bg-white pt-[30px] pb-[26px] px-[26px] transition-all duration-300 hover:-translate-y-[8px] hover:rotate-x-[4deg] hover:-rotate-y-[2deg] hover:shadow-[0_20px_50px_rgba(180,80,110,0.14)] hover:border-[var(--card-accent)]"
+                  className="group relative overflow-hidden rounded-[24px] border border-gray-100 bg-white p-[32px] transition-all duration-300 hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(201,122,133,0.12)] hover:border-pink-100"
                 >
 
                   <div
-                    className="w-[56px] h-[56px] rounded-[16px] flex items-center justify-center text-[1.6rem] mb-[20px] shadow-[0_4px_14px_rgba(0,0,0,0.06)] transition-transform duration-300 group-hover:scale-[1.08] group-hover:-translate-y-[4px]"
+                    className="w-[64px] h-[64px] rounded-[20px] flex items-center justify-center text-[1.8rem] mb-[24px] transition-transform duration-300 group-hover:scale-[1.1] group-hover:-translate-y-[4px]"
                     style={{ background: mod.color }}
                   >
                     {mod.icon}
                   </div>
 
-                  <div className="font-serif text-[1.08rem] font-bold text-[#3D2E30] mb-[8px]">
+                  <div className="text-[1.2rem] font-bold text-[#2d1b2e] mb-[10px] tracking-tight">
                     {mod.nombre}
                   </div>
 
-                  <div className="text-[0.83rem] text-[#9A7080] leading-[1.65] font-light">
+                  <div className="text-[0.95rem] text-[#5a4b5c] leading-[1.6] font-normal">
                     {mod.desc}
                   </div>
 
@@ -69,25 +69,25 @@ function Features() {
 
                 <div
                   key={i}
-                  className="relative rounded-[20px] border-[1.5px] border-dashed border-[#E8D8DC] bg-[#FAFAFA] pt-[30px] pb-[26px] px-[26px] opacity-70 cursor-not-allowed"
+                  className="relative rounded-[24px] border-[1.5px] border-dashed border-gray-200 bg-[#fafafa] p-[32px] opacity-60 cursor-not-allowed"
                 >
 
-                  <span className="absolute top-[16px] right-[16px] bg-gradient-to-br from-[#F0DCE0] to-[#E8C8CC] text-[#B07080] text-[0.65rem] font-bold px-[10px] py-[3px] rounded-full uppercase">
+                  <span className="absolute top-[20px] right-[20px] bg-gray-100 text-gray-500 text-[0.7rem] font-bold px-[12px] py-[4px] rounded-full uppercase tracking-wider">
                     Próximamente
                   </span>
 
                   <div
-                    className="w-[56px] h-[56px] rounded-[16px] flex items-center justify-center text-[1.6rem] mb-[20px]"
+                    className="w-[64px] h-[64px] rounded-[20px] flex items-center justify-center text-[1.8rem] mb-[24px] grayscale"
                     style={{ background: mod.color }}
                   >
                     {mod.icon}
                   </div>
 
-                  <div className="font-serif text-[1.08rem] font-bold text-[#9A8088] mb-[8px]">
+                  <div className="text-[1.2rem] font-bold text-[#5a4b5c] mb-[10px] tracking-tight">
                     {mod.nombre}
                   </div>
 
-                  <div className="text-[0.83rem] text-[#9A7080] leading-[1.65] font-light">
+                  <div className="text-[0.95rem] text-[#8a808c] leading-[1.6] font-normal">
                     {mod.desc}
                   </div>
 

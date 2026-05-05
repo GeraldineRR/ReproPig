@@ -2,21 +2,17 @@ import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import responsablesModel from "../models/responsablesModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
+import reproduccionesModel from "../models/reproduccionesModel.js";
 
 class Seguimiento_CerdaService {
 
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [
-                {
-                    model: PorcinoModel,
-                    as: 'porcinos'
-                },
-                {
-                    model: MedicamentosModel,
-                    as: 'medicamentos'
-                },
-                
+                { model: PorcinoModel, as: 'porcinos' },
+                { model: responsablesModel, as: 'Responsables' },
+                { model: MedicamentosModel, as: 'medicamentos' },
+                { model: reproduccionesModel, as: 'reproduccion' },
             ]
         })
     }

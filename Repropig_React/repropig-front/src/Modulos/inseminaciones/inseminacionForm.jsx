@@ -58,7 +58,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             const response = await apiAxios.get('/reproducciones/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
-                r.Activo === 'Si'
+                r.Activo === 'S'
             )
             setReproduccionesActivas(activas)
         } catch (error) { console.error('Error al obtener reproducciones:', error) }
@@ -117,6 +117,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             setId_Responsable([])
             setObservaciones('')
             setTextFormButton('Agregar Inseminacion')
+            getReproduccionesActivas(preloaded.Id_Porcino)
         }
     }, [preloaded.Id_Reproduccion]);
 

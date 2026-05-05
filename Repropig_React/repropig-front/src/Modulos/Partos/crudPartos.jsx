@@ -67,7 +67,7 @@ const CrudPartos = () => {
     const columnsTable = [
         {
             name: "Porcino",
-            selector: row => row.porcinos?.Nom_Porcino || '—'
+            selector: row => row.porcino?.Nom_Porcino || '—'
         },
         {
             name: "Inicio",
@@ -127,6 +127,13 @@ const CrudPartos = () => {
             )
         },
         {
+            name: "Reproducción",
+            selector: row => row.reproduccion
+                ? `#${row.reproduccion.Id_Reproduccion}`
+                : '—',
+            width: '120px'
+        },
+        {
             name: "Acciones",
             cell: row => (
                 <div className="d-flex gap-2">
@@ -161,7 +168,7 @@ const CrudPartos = () => {
     const filtered = partos.filter(row => {
         const text = filterText.toLowerCase().trim();
 
-        const porcino = row.porcinos?.Nom_Porcino?.toLowerCase().trim() || "";
+        const porcino = row.porcino?.Nom_Porcino?.toLowerCase().trim() || "";
         const observaciones = row.Observaciones?.toLowerCase().trim() || "";
         const fechaFin = row.Fec_fin
             ? new Date(row.Fec_fin).toLocaleDateString()

@@ -1,29 +1,29 @@
+import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 
 export default function AppLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-
     <div className="h-screen flex flex-col">
 
-      {/* Navbar */}
-      <Navbar />
+      <Navbar 
+        sidebarOpen={sidebarOpen} 
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+      />
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
 
-        {/* Sidebar */}
-        <Sidebar />
+        <Sidebar isOpen={sidebarOpen} />
 
-        {/* Contenido */}
-        <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
+        <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
 
       </div>
 
     </div>
-
   )
 }

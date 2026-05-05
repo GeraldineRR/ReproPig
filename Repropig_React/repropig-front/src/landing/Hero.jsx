@@ -20,7 +20,7 @@ function PigletModel() {
   })
 
   return (
-    <group ref={group} scale={0.6} position={[0, -1.4, 0]} rotation={[0, 0.4, 0]}>
+    <group ref={group} scale={0.9} position={[0, -1.2, 0]} rotation={[0, 0.4, 0]}>
       <primitive object={scene} />
     </group>
   )
@@ -52,49 +52,53 @@ function WeatherCard() {
 
   return (
     <div style={{
-      marginTop: "28px",
-      background: ctx.bg,
-      border: "1.5px solid rgba(255,255,255,0.7)",
-      backdropFilter: "blur(14px)",
+      marginTop: "0px",
+      background: "rgba(255, 255, 255, 0.85)",
+      border: "1px solid rgba(255,200,210,0.4)",
+      backdropFilter: "blur(16px)",
       borderRadius: "20px",
-      padding: "18px 22px",
+      padding: "16px 20px",
       maxWidth: "460px",
-      boxShadow: "0 4px 24px rgba(180,80,100,0.12)",
-      animation: "rp-fadeUp 0.55s ease 0.4s both",
+      width: "100%",
+      boxShadow: "0 10px 30px rgba(216, 27, 96, 0.08)",
+      animation: "rp-fadeUp 0.6s ease 0.4s both",
     }}>
       {/* Fila superior */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"12px" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
         <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
-          <span style={{ fontSize:"2rem", lineHeight:1 }}>{ctx.icon}</span>
+          <div style={{ fontSize:"2rem", lineHeight:1, filter: "drop-shadow(0 4px 6px rgba(0,0,0,0.1))" }}>{ctx.icon}</div>
           <div>
-            <div style={{ fontFamily:"'Nunito',sans-serif", fontWeight:800, fontSize:"1rem", color:"#fff" }}>{ctx.period}</div>
-            <div style={{ fontSize:"0.8rem", color:"rgba(255,255,255,0.75)", marginTop:"1px" }}>{timeStr}</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontWeight:800, fontSize:"1.05rem", color:"#2d1b2e" }}>{ctx.period}</div>
+            <div style={{ fontSize:"0.8rem", color:"#5a4b5c", marginTop:"2px", fontWeight:500 }}>{timeStr}</div>
           </div>
         </div>
-        <div style={{ fontSize:"0.74rem", color:"rgba(255,255,255,0.65)", textAlign:"right", textTransform:"capitalize", lineHeight:1.4 }}>
+        <div style={{ fontSize:"0.75rem", color:"#8a4f58", textAlign:"right", textTransform:"capitalize", lineHeight:1.4, fontWeight:600 }}>
           {dateStr}
         </div>
       </div>
 
       {/* Divisor */}
-      <div style={{ height:"1px", background:"rgba(255,255,255,0.3)", marginBottom:"12px" }} />
+      <div style={{ height:"1px", background:"linear-gradient(90deg, rgba(216, 27, 96, 0.1), transparent)", margin:"10px 0" }} />
 
       {/* Recomendación */}
-      <div style={{ fontSize:"0.7rem", fontWeight:700, color:"rgba(255,255,255,0.65)", letterSpacing:"0.5px", textTransform:"uppercase", marginBottom:"5px" }}>
-        💡 Recomendación del momento
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom:"8px" }}>
+        <span style={{ fontSize: "1.1rem" }}>💡</span>
+        <div style={{ fontSize:"0.75rem", fontWeight:800, color:"#B05068", letterSpacing:"0.5px", textTransform:"uppercase" }}>
+          Recomendación del momento
+        </div>
       </div>
-      <div style={{ fontSize:"0.95rem", fontWeight:600, color:"#fff", minHeight:"24px" }}>
+      <div style={{ fontSize:"1rem", fontWeight:600, color:"#2d1b2e", minHeight:"24px", paddingLeft: "32px" }}>
         {ctx.recs[recIdx]}
       </div>
 
       {/* Puntitos */}
-      <div style={{ display:"flex", gap:"6px", marginTop:"12px" }}>
+      <div style={{ display:"flex", gap:"8px", marginTop:"16px", paddingLeft: "32px" }}>
         {ctx.recs.map((_, i) => (
           <span key={i} style={{
             width:"6px", height:"6px", borderRadius:"50%",
-            background: i === recIdx ? "#fff" : "rgba(255,255,255,0.3)",
-            transform: i === recIdx ? "scale(1.3)" : "scale(1)",
-            transition: "all 0.3s",
+            background: i === recIdx ? "#ec4899" : "rgba(236, 72, 153, 0.2)",
+            transform: i === recIdx ? "scale(1.4)" : "scale(1)",
+            transition: "all 0.3s ease",
             display: "inline-block"
           }}/>
         ))}
@@ -107,144 +111,179 @@ function Hero() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
         .rp-hero {
           min-height: 100vh;
           background: linear-gradient(120deg, #F7A8B8 0%, #FBBFD0 25%, #FDD5C0 60%, #FDE8D8 100%);
-          display: flex; align-items: center;
+          display: flex; flex-direction: column; justify-content: flex-start;
           position: relative; overflow: hidden;
-          font-family: 'DM Sans', sans-serif;
-          padding-top: 68px;
-        }
-
-        .rp-hero-blob {
-          position: absolute; top: -80px; right: -80px;
-          width: 500px; height: 500px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(255,182,193,0.35) 0%, transparent 70%);
-          pointer-events: none;
-        }
-        .rp-hero-blob2 {
-          position: absolute; bottom: -60px; left: 30%;
-          width: 320px; height: 320px; border-radius: 50%;
-          background: radial-gradient(circle, rgba(253,220,199,0.4) 0%, transparent 70%);
-          pointer-events: none;
+          font-family: 'Inter', sans-serif;
+          padding: 60px 0 40px;
         }
 
         .rp-hero-inner {
-          max-width: 1200px; margin: 0 auto; padding: 0 40px;
-          display: grid; grid-template-columns: 420px 1fr;
+          max-width: 1280px; margin: 0 auto; padding: 0 40px;
+          display: grid; grid-template-columns: 1fr 440px;
           align-items: center; width: 100%;
           position: relative; z-index: 1;
+          gap: 30px;
+        }
+
+        .rp-right-col {
+          display: flex; flex-direction: column; align-items: center;
+          order: 2;
         }
 
         .rp-pig-canvas-wrap {
-          width: 420px; height: 440px; position: relative;
+          width: 100%; height: 340px; position: relative;
         }
 
         .rp-sparkle {
-          position: absolute; font-size: 1.4rem;
+          position: absolute; font-size: 1.6rem;
           animation: rp-twinkle 3s ease-in-out infinite;
           pointer-events: none; z-index: 2;
         }
-        .rp-sparkle.s1 { top: 40px;  left: 20px;  animation-delay: 0s; }
-        .rp-sparkle.s2 { top: 80px;  right: 10px; animation-delay: 1.1s; font-size: 1rem; }
-        .rp-sparkle.s3 { bottom: 60px; left: 10px; animation-delay: 2.2s; font-size: 0.9rem; }
+        .rp-sparkle.s1 { top: 60px;  left: 40px;  animation-delay: 0s; }
+        .rp-sparkle.s2 { top: 120px;  right: 20px; animation-delay: 1.1s; font-size: 1.2rem; }
+        .rp-sparkle.s3 { bottom: 80px; left: 30px; animation-delay: 2.2s; font-size: 1rem; }
 
         @keyframes rp-twinkle {
-          0%,100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
-          50%      { transform: scale(1.4) rotate(20deg); opacity: 0.4; }
+          0%,100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+          50%      { transform: scale(1.3) rotate(15deg); opacity: 0.5; }
         }
 
-        .rp-hero-content { padding-left: 20px; }
+        .rp-hero-content { 
+          padding-right: 20px; 
+          order: 1; 
+        }
 
-        .rp-hero-eyebrow {
+        .rp-badge {
           display: inline-flex; align-items: center; gap: 8px;
           background: rgba(255,255,255,0.55);
           border: 1px solid rgba(255,255,255,0.8);
           backdrop-filter: blur(8px);
           color: #B05068; font-size: 0.78rem; font-weight: 700;
           padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;
+          box-shadow: 0 4px 12px rgba(176, 80, 104, 0.1);
           animation: rp-fadeUp 0.5s ease both;
         }
 
         .rp-hero-h1 {
           font-family: 'Nunito', sans-serif;
           font-size: clamp(2rem, 4vw, 3.2rem);
-          font-weight: 800; color: #fff; line-height: 1.15; margin-bottom: 8px;
-          text-shadow: 0 2px 20px rgba(160,60,80,0.2);
+          font-weight: 800; color: #8a4f58; line-height: 1.15; margin-bottom: 8px;
           animation: rp-fadeUp 0.55s ease 0.1s both;
         }
         .rp-hero-h1 .rp-accent {
           font-size: clamp(2.8rem, 6vw, 5rem);
           font-weight: 900; display: block; color: #fff; line-height: 1;
+          text-shadow: 0 2px 15px rgba(138, 79, 88, 0.3);
         }
 
         .rp-hero-sub {
-          font-size: 1rem; color: rgba(255,255,255,0.88);
-          margin: 16px 0 0; font-weight: 300; max-width: 480px; line-height: 1.65;
+          font-size: 1rem; color: #5A333E;
+          margin: 16px 0 24px 0; font-weight: 500; max-width: 480px; line-height: 1.65;
           animation: rp-fadeUp 0.55s ease 0.2s both;
         }
 
+        .rp-buttons {
+          display: flex; gap: 16px;
+          animation: rp-fadeUp 0.6s ease 0.3s both;
+        }
+
+        .rp-btn-primary {
+          background: #ec4899; /* pink-500 */
+          color: white; padding: 14px 28px; border-radius: 12px;
+          font-weight: 600; font-size: 1.05rem; text-decoration: none;
+          box-shadow: 0 8px 20px rgba(236, 72, 153, 0.25);
+          transition: all 0.3s ease;
+        }
+        .rp-btn-primary:hover {
+          background: #db2777; /* pink-600 */
+          transform: translateY(-3px);
+          box-shadow: 0 12px 25px rgba(236, 72, 153, 0.35);
+        }
+
+        .rp-btn-outline {
+          background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.6);
+          color: white; padding: 14px 28px; border-radius: 12px;
+          font-weight: 600; font-size: 1.05rem; text-decoration: none;
+          backdrop-filter: blur(8px);
+          transition: all 0.3s ease;
+        }
+        .rp-btn-outline:hover {
+          background: rgba(255,255,255,0.3); border-color: white;
+        }
+
         @keyframes rp-fadeUp {
-          from { opacity: 0; transform: translateY(18px); }
+          from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        @media (max-width: 900px) {
-          .rp-hero-inner { grid-template-columns: 1fr; padding: 40px 24px 60px; text-align: center; }
-          .rp-pig-canvas-wrap { width: 100%; height: 300px; margin-bottom: 16px; }
-          .rp-hero-content { padding-left: 0; }
+        @media (max-width: 960px) {
+          .rp-hero-inner { grid-template-columns: 1fr; padding: 40px 24px 60px; text-align: center; gap: 20px; }
+          .rp-right-col { order: 1; width: 100%; }
+          .rp-pig-canvas-wrap { height: 300px; }
+          .rp-hero-content { order: 2; padding-right: 0; display: flex; flex-direction: column; align-items: center; }
+          .rp-hero-h1 .rp-accent { display: inline; }
         }
       `}</style>
 
       <section className="rp-hero">
-        <div className="rp-hero-blob" />
-        <div className="rp-hero-blob2" />
-
         <div className="rp-hero-inner">
-
-          {/* ── CERDITO 3D — sin cambios ── */}
-          <div className="rp-pig-canvas-wrap">
-            <span className="rp-sparkle s1">✨</span>
-            <span className="rp-sparkle s2">💕</span>
-            <span className="rp-sparkle s3">⭐</span>
-
-            <Canvas
-              camera={{ position: [0, 2, 8], fov: 42 }}
-              style={{ width: "100%", height: "100%", background: "transparent" }}
-              gl={{ alpha: true, antialias: true }}
-            >
-              <ambientLight intensity={1.4} />
-              <directionalLight position={[5, 8, 5]}   intensity={1.6} castShadow />
-              <directionalLight position={[-4, 3, -2]} intensity={0.7} color="#FFD0DC" />
-              <pointLight       position={[0, 4, 2]}   intensity={0.9} color="#FFC0CB" />
-              <Environment preset="sunset" />
-              <ContactShadows position={[0, -1.4, 0]} opacity={0.5} scale={3} blur={1.5} color="#C06080"/>
-              <Suspense fallback={null}>
-                <PigletModel />
-              </Suspense>
-              <OrbitControls
-                enableZoom={false}
-                enablePan={false}
-                minPolarAngle={Math.PI / 3.5}
-                maxPolarAngle={Math.PI / 2.2}
-              />
-            </Canvas>
-          </div>
 
           {/* ── CONTENIDO ── */}
           <div className="rp-hero-content">
+            <div className="rp-badge">🚀 Plataforma Líder</div>
             <h1 className="rp-hero-h1">
               ReproPig
-              <span className="rp-accent">Gestión Reproductiva Porcicola Inteligente</span>
+              <span className="rp-accent">Gestión Reproductiva Inteligente</span>
             </h1>
             <p className="rp-hero-sub">
-              Control eficiente de gestión reproductiva de porcinos
-              en un solo sistema moderno y profesional.
+              Control eficiente y avanzado del proceso porcícola. Registra montas, colectas, inseminaciones y partos desde una sola plataforma profesional.
             </p>
-            <WeatherCard />
+            
+            <div className="rp-buttons">
+              <a href="#modulos" className="rp-btn-primary">Explorar Módulos</a>
+            </div>
           </div>
+
+          {/* ── CERDITO 3D Y CLIMA (DERECHA) ── */}
+          <div className="rp-right-col">
+            <div className="rp-pig-canvas-wrap">
+              <span className="rp-sparkle s1">✨</span>
+              <span className="rp-sparkle s2">💕</span>
+              <span className="rp-sparkle s3">⭐</span>
+
+              <Canvas
+                camera={{ position: [0, 1.8, 8], fov: 45 }}
+                style={{ width: "100%", height: "100%", background: "transparent" }}
+                gl={{ alpha: true, antialias: true }}
+              >
+                <ambientLight intensity={1.4} />
+                <directionalLight position={[5, 8, 5]}   intensity={1.6} castShadow />
+                <directionalLight position={[-4, 3, -2]} intensity={0.7} color="#FFD0DC" />
+                <pointLight       position={[0, 4, 2]}   intensity={0.9} color="#FFC0CB" />
+                <Environment preset="sunset" />
+                <ContactShadows position={[0, -1.2, 0]} opacity={0.4} scale={5} blur={2} color="#8a4f58"/>
+                <Suspense fallback={null}>
+                  <PigletModel />
+                </Suspense>
+                <OrbitControls
+                  enableZoom={false}
+                  enablePan={false}
+                  minPolarAngle={Math.PI / 3.5}
+                  maxPolarAngle={Math.PI / 2.2}
+                />
+              </Canvas>
+            </div>
+            
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <WeatherCard />
+            </div>
+          </div>
+
         </div>
       </section>
     </>
