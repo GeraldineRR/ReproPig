@@ -18,7 +18,6 @@ const CrudReproducciones = () => {
     const [reproduccionEdit, setReproduccionEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
     const [modalEncadenado, setModalEncadenado] = useState(null)
-    // ✅ Estado para colecta encadenada antes de inseminación
     const [colectaParaInseminacion, setColectaParaInseminacion] = useState(null)
 
     const modalRef = useRef(null)
@@ -65,34 +64,66 @@ const CrudReproducciones = () => {
         }
     }
 
+    const handleAbrirMonta = (row) => {
+        navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })
+    }
+
+    const handleAbrirInseminacion = (row) => {
+        navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })
+    }
+
     const columnsTable = [
-        { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '70px' },
+        { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '60px' },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
         { name: 'Tipo', selector: row => row.TipoReproduccion || '—', sortable: true },
-        { name: 'Activo', selector: row => row.Activo, sortable: true },
+        { name: 'Activo', selector: row => row.Activo, sortable: true, width: '80px' },
         {
-            name: 'Acciones', cell: row => (
-                <div className="d-flex gap-1 flex-wrap">
-                    <button className="btn btn-sm btn-info"
+            name: 'Montas',
+            width: '80px',
+            cell: row => (
+                <span className="badge bg-warning text-dark">
+                    🐷 {row.montas?.length || 0}
+                </span>
+            )
+        },
+        {
+            name: 'Inseminaciones',
+            width: '110px',
+            cell: row => (
+                <span className="badge bg-primary">
+                    💉 {row.inseminaciones?.length || 0}
+                </span>
+            )
+        },
+        {
+            name: 'Acciones',
+            width: '220px',
+            cell: row => (
+                <div className="d-flex gap-1 align-items-center">
+                    {/* Editar y eliminar */}
+                    <button className="btn btn-sm btn-info" title="Editar"
                         onClick={() => handleEdit(row)}>
                         <i className="fa-solid fa-pencil"></i>
                     </button>
-                    <button className="btn btn-sm btn-danger"
+                    <button className="btn btn-sm btn-danger" title="Eliminar"
                         onClick={() => handleDelete(row)}>
                         <i className="fa-solid fa-trash"></i>
                     </button>
-                    {row.TipoReproduccion === 'Monta' && (
-                        <button className="btn btn-sm btn-warning"
-                            onClick={() => navigate('/montas')}>
-                            🐷 Monta
-                        </button>
-                    )}
-                    {row.TipoReproduccion === 'Inseminacion' && (
-                        <button className="btn btn-sm btn-primary"
-                            onClick={() => navigate('/inseminaciones')}>
-                            💉 Inseminación
-                        </button>
-                    )}
+
+                    {/* Separador */}
+                    <span style={{ borderLeft: '1px solid #dee2e6', height: '24px', margin: '0 2px' }} />
+
+                    {/* Botón Monta — siempre disponible */}
+                    <button className="btn btn-sm btn-warning" title="Registrar Monta"
+                        onClick={() => handleAbrirMonta(row)}>
+                        🐷
+                    </button>
+
+                    {/* Botón Inseminación — siempre disponible */}
+                    <button className="btn btn-sm btn-primary" title="Registrar Inseminación"
+                        onClick={() => handleAbrirInseminacion(row)}>
+                        💉
+                    </button>
                 </div>
             )
         }
@@ -125,8 +156,6 @@ const CrudReproducciones = () => {
         await getAllReproducciones()
     }
 
-    // ✅ Cuando se crea reproducción tipo Monta → abre form Monta
-    // ✅ Cuando se crea reproducción tipo Inseminacion → abre form Colecta primero
     const onReproduccionCreada = ({ tipo, Id_Reproduccion, Id_Porcino }) => {
         setModalEncadenado({ tipo, Id_Reproduccion, Id_Porcino })
         setTimeout(() => {
@@ -135,7 +164,6 @@ const CrudReproducciones = () => {
         }, 400)
     }
 
-    // ✅ Cuando se guarda la colecta → abre form Inseminación con Id_colecta prellenado
     const onColectaCreada = (Id_colecta) => {
         cerrarModal(modalColectaInstanceRef)
         setModalEncadenado({
@@ -220,7 +248,7 @@ const CrudReproducciones = () => {
                 </div>
             </div>
 
-            {/* ✅ Modal Colecta encadenado (antes de inseminación) */}
+            {/* Modal Colecta encadenado */}
             <div className="modal fade" ref={modalColectaRef} tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-lg">
                     <div className="modal-content">
@@ -287,7 +315,7 @@ const CrudReproducciones = () => {
                                     preloaded={{
                                         Id_Reproduccion: modalEncadenado.Id_Reproduccion,
                                         Id_Porcino: modalEncadenado.Id_Porcino,
-                                        Id_colecta: modalEncadenado.Id_colecta // ✅ prellenado
+                                        Id_colecta: modalEncadenado.Id_colecta
                                     }}
                                 />
                             )}

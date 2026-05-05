@@ -16,7 +16,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
     const [Telefono, setTelefono] = useState('');
     const [Email, setEmail] = useState('');
 
-    // 🔥 LIMPIAR FORMULARIO
+
     const limpiarFormulario = () => {
         setId_Responsable('');
         setNombres('');
@@ -27,7 +27,6 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
         setEmail('');
     };
 
-    // 🔥 CARGAR DATOS  EDITAR
     useEffect(() => {
         if (rowToEdit && rowToEdit.Id_Responsable) {
             setId_Responsable(rowToEdit.Id_Responsable || '');
@@ -57,7 +56,6 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
             Email
         };
 
-        // 🔹 CREAR
         if (textformbutton === 'Crear Responsable') {
             try {
 
@@ -78,7 +76,6 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
             }
         }
 
-        // 🔹 ACTUALIZAR
         else if (textformbutton === 'Actualizar Responsable') {
             try {
 

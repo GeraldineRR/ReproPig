@@ -9,108 +9,104 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
 
     const [Id_Reproduccion, setId_Reproduccion] = useState('')
     const [Id_Cerda, setId_Cerda] = useState('')
-    const [Activo, setActivo] = useState('')
+    const [Activo, setActivo] = useState('Si')
     const [TipoReproduccion, setTipoReproduccion] = useState('')
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
-    useEffect(() => {
-        getPorcinos()
-    }, [])
+    const esEdicion = !!reproduccionEdit?.Id_Reproduccion
+
+    useEffect(() => { getPorcinos() }, [])
 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data)
-        } catch (error) {
-            console.error("Error al obtener porcinos:", error)
-        }
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
+        } catch (error) { console.error("Error al obtener porcinos:", error) }
     }
 
     useEffect(() => {
         if (reproduccionEdit?.Id_Reproduccion) {
             setId_Reproduccion(reproduccionEdit.Id_Reproduccion || '')
             setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
-            setActivo(reproduccionEdit.Activo || '')
+            setActivo(reproduccionEdit.Activo || 'Si')
             setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
             setTextFormButton("Actualizar")
         } else {
             setId_Reproduccion('')
             setId_Cerda('')
-            setActivo('')
+            setActivo('Si')
             setTipoReproduccion('')
             setTextFormButton("Enviar")
         }
     }, [reproduccionEdit?.Id_Reproduccion])
 
-    const handleActivoChange = (valor) => {
-        setActivo(valor)
-        if (valor !== 'Si') setTipoReproduccion('')
-    }
-
     const gestionarForm = async (e) => {
         e.preventDefault()
 
-        if (Activo === 'Si' && !TipoReproduccion) {
-            MySwal.fire({
-                icon: 'warning',
-                title: 'Campo requerido',
-                text: 'Debes seleccionar el tipo de reproducción (Monta o Inseminación)'
-            })
+        if (!TipoReproduccion && !esEdicion) {
+            MySwal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Debes seleccionar el tipo de reproducción' })
             return
         }
 
-        const data = {
-            Id_Cerda: Number(Id_Cerda),
-            Activo,
-            ...(Activo === 'Si' && { TipoReproduccion })
-        }
-
         try {
-            if (textFormButton === 'Enviar') {
-                const response = await apiAxios.post('/reproducciones', data)
-                const nuevaReproduccion = response.data?.reproducciones || response.data
+            if (!esEdicion) {
+                const todasReprods = await apiAxios.get('/reproducciones/')
 
-                await MySwal.fire({
-                    icon: 'success',
-                    title: 'Reproducción creada',
-                    text: TipoReproduccion
-                        ? `Ahora completa los datos de ${TipoReproduccion}`
-                        : 'Reproducción registrada correctamente'
-                })
+                // ✅ Buscar reproducción activa de la misma cerda SIN importar el tipo
+                const existente = todasReprods.data.find(r =>
+                    r.Id_Cerda == Id_Cerda &&
+                    r.Activo === 'Si'
+                )
 
-                hideModal()
-
-                // Abrir modal encadenado al crear
-                if (TipoReproduccion && onReproduccionCreada) {
-                    onReproduccionCreada({
-                        tipo: TipoReproduccion,
-                        Id_Reproduccion: nuevaReproduccion.Id_Reproduccion,
-                        Id_Porcino: Number(Id_Cerda)
+                if (existente) {
+                    // ✅ Ya existe — usar la misma reproducción
+                    await MySwal.fire({
+                        icon: 'info',
+                        title: 'Reproducción activa encontrada',
+                        html: `Esta cerda ya tiene una reproducción activa (#${existente.Id_Reproduccion}).<br>Se registrará la nueva <b>${TipoReproduccion}</b> en esa reproducción.`,
+                        confirmButtonColor: '#C97A85',
                     })
+                    hideModal()
+                    if (onReproduccionCreada) {
+                        onReproduccionCreada({
+                            tipo: TipoReproduccion,
+                            Id_Reproduccion: existente.Id_Reproduccion,
+                            Id_Porcino: Number(Id_Cerda)
+                        })
+                    }
+                } else {
+                    // No existe — crear nueva
+                    const response = await apiAxios.post('/reproducciones', {
+                        Id_Cerda: Number(Id_Cerda),
+                        Activo: 'Si',
+                        TipoReproduccion
+                    })
+                    const nuevaReproduccion = response.data?.reproducciones || response.data
+
+                    await MySwal.fire({
+                        icon: 'success',
+                        title: 'Reproducción creada',
+                        text: `Ahora completa los datos de ${TipoReproduccion}`
+                    })
+                    hideModal()
+                    if (onReproduccionCreada) {
+                        onReproduccionCreada({
+                            tipo: TipoReproduccion,
+                            Id_Reproduccion: nuevaReproduccion.Id_Reproduccion,
+                            Id_Porcino: Number(Id_Cerda)
+                        })
+                    }
                 }
 
             } else {
-                await apiAxios.put(`/reproducciones/${Id_Reproduccion}`, data)
-
-                await MySwal.fire({
-                    icon: 'success',
-                    title: 'Éxito',
-                    text: TipoReproduccion
-                        ? `Reproducción actualizada. Ahora completa los datos de ${TipoReproduccion}`
-                        : 'Reproducción actualizada correctamente'
+                await apiAxios.put(`/reproducciones/${Id_Reproduccion}`, {
+                    Id_Cerda: Number(Id_Cerda),
+                    Activo,
+                    TipoReproduccion: reproduccionEdit.TipoReproduccion
                 })
-
+                await MySwal.fire({ icon: 'success', title: 'Éxito', text: 'Reproducción actualizada correctamente' })
                 hideModal()
-
-                // ✅ También abrir modal encadenado al actualizar
-                if (TipoReproduccion && onReproduccionCreada) {
-                    onReproduccionCreada({
-                        tipo: TipoReproduccion,
-                        Id_Reproduccion: Number(Id_Reproduccion),
-                        Id_Porcino: Number(Id_Cerda)
-                    })
-                }
             }
 
         } catch (error) {
@@ -127,25 +123,25 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                 <select className="form-control" value={Id_Cerda}
                     onChange={(e) => setId_Cerda(e.target.value)} required>
                     <option value="">Seleccione...</option>
-                    {porcinos.map(porcino => (
-                        <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
-                            {porcino.Nom_Porcino}
-                        </option>
+                    {porcinos.map(p => (
+                        <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
                     ))}
                 </select>
             </div>
 
-            <div className="mb-3">
-                <label className="form-label">Activo</label>
-                <select className="form-control" value={Activo}
-                    onChange={(e) => handleActivoChange(e.target.value)} required>
-                    <option value="">Seleccione...</option>
-                    <option value="Si">Si</option>
-                    <option value="No">No</option>
-                </select>
-            </div>
+            {esEdicion && (
+                <div className="mb-3">
+                    <label className="form-label">Estado</label>
+                    <select className="form-control" value={Activo}
+                        onChange={(e) => setActivo(e.target.value)} required>
+                        <option value="Si">Activa</option>
+                        <option value="No">Inactiva</option>
+                    </select>
+                    <small className="text-muted">El tipo de reproducción no se puede cambiar una vez creada.</small>
+                </div>
+            )}
 
-            {Activo === 'Si' && (
+            {!esEdicion && (
                 <div className="mb-3">
                     <label className="form-label fw-semibold">
                         Tipo de Reproducción <span className="text-danger">*</span>
@@ -161,9 +157,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                                 transition: 'all 0.2s'
                             }}>
                             <div style={{ fontSize: 28 }}>🐷</div>
-                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Monta' ? '#e75480' : '#555' }}>
-                                Monta
-                            </div>
+                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Monta' ? '#e75480' : '#555' }}>Monta</div>
                             <small className="text-muted">Natural</small>
                         </div>
 
@@ -177,9 +171,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                                 transition: 'all 0.2s'
                             }}>
                             <div style={{ fontSize: 28 }}>💉</div>
-                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#555' }}>
-                                Inseminación
-                            </div>
+                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#555' }}>Inseminación</div>
                             <small className="text-muted">Artificial</small>
                         </div>
                     </div>

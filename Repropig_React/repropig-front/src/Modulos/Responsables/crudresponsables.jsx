@@ -2,9 +2,12 @@ import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
 import DataTable from 'react-data-table-component'
 import ResponsablesForm from "./responsablesForm.jsx";
+import RegisterUsuario from "./RegisterUsuario.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 
-const CrudResponsables = () => {    
+const CrudResponsables = () => {
 
+    const { usuario } = useAuth()
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState(null);
@@ -23,7 +26,6 @@ const CrudResponsables = () => {
         }
     };
 
-    // ✅ Cambiar estado con campo Estado y valores 'Activo'/'Inactivo'
     const cambiarEstado = async (row) => {
         try {
             await apiAxios.put(`/responsables/${row.Id_Responsable}`, {
@@ -55,14 +57,12 @@ const CrudResponsables = () => {
             width: '160px',
             cell: row => (
                 <>
-                    <button
-                        className="btn btn-sm bg-info me-2"
+                    <button className="btn btn-sm bg-info me-2"
                         onClick={() => setRowToEdit(row)}
                         data-bs-toggle='modal'
                         data-bs-target="#exampleModal">
                         <i className="fa-solid fa-pencil"></i>
                     </button>
-                    {/* ✅ Botón activar/desactivar con Estado */}
                     <button
                         className={`btn btn-sm ${row.Estado === 'Activo' ? 'btn-danger' : 'btn-success'}`}
                         onClick={() => cambiarEstado(row)}>
@@ -78,34 +78,42 @@ const CrudResponsables = () => {
         const nombre = responsable.Nombres?.toLowerCase() || '';
         const apellido = responsable.Apellidos?.toLowerCase() || '';
         return nombre.includes(textToSearch) || apellido.includes(textToSearch)
-    });
+    })
+    .sort((a, b) => b.Id_Responsable - a.Id_Responsable) // Desc
 
     const hidemodal = () => {
         document.getElementById('closeModal').click();
         getALLResponsables();
     };
 
+    const hideModalRegister = () => {
+        document.getElementById('closeModalRegister').click();
+        getALLResponsables();
+    }
+
     return (
         <>
             <div className="container mt-5">
                 <div className="row d-flex justify-content-between">
                     <div className="col-4">
-                        <input
-                            className="form-control"
-                            placeholder="Buscar..."
+                        <input className="form-control" placeholder="Buscar..."
                             value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                        />
+                            onChange={(e) => setFilterText(e.target.value)} />
                     </div>
-                    <div className="col-2">
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#exampleModal"
+                    <div className="col-auto d-flex gap-2">
+                       {/* <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
                             onClick={() => { setRowToEdit({}); setTextformbutton('Nuevo') }}>
                             Nuevo
-                        </button>
+                        </button>*/}
+
+                        {/* ✅ Botón crear usuario — solo para instructores */}
+                        {usuario?.cargo === 'instructor' && (
+                            <button type="button" className="btn btn-success"
+                                data-bs-toggle="modal" data-bs-target="#modalRegister">
+                                👤 Crear usuario
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -114,22 +122,17 @@ const CrudResponsables = () => {
                     columns={columnsTable}
                     data={newlistResponsables}
                     keyField="Id_Responsable"
-                    pagination
-                    highlightOnHover
-                    striped
+                    pagination highlightOnHover striped
                 />
 
+                {/* Modal Responsable */}
                 <div className="modal fade" id="exampleModal" tabIndex="-1">
                     <div className="modal-dialog">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h1 className="modal-title fs-5">Responsable</h1>
-                                <button
-                                    type="button"
-                                    className="btn-close"
-                                    data-bs-dismiss="modal"
-                                    id="closeModal">
-                                </button>
+                                <button type="button" className="btn-close"
+                                    data-bs-dismiss="modal" id="closeModal"></button>
                             </div>
                             <div className="modal-body">
                                 <ResponsablesForm
@@ -142,6 +145,26 @@ const CrudResponsables = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* ✅ Modal Crear Usuario — solo instructores */}
+                <div className="modal fade" id="modalRegister" tabIndex="-1">
+                    <div className="modal-dialog">
+                        <div className="modal-content">
+                            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #E8A0A8, #C97A85)' }}>
+                                <h1 className="modal-title fs-5 text-white">👤 Crear nuevo usuario</h1>
+                                <button type="button" className="btn-close btn-close-white"
+                                    data-bs-dismiss="modal" id="closeModalRegister"></button>
+                            </div>
+                            <div className="modal-body">
+                                <RegisterUsuario
+                                    hideModal={hideModalRegister}
+                                    refreshTable={getALLResponsables}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </>
     )
