@@ -4,6 +4,7 @@ import responsablesModel from "../models/responsablesModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
 
 class Seguimiento_CerdaService {
+
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [
@@ -11,51 +12,13 @@ class Seguimiento_CerdaService {
                     model: PorcinoModel,
                     as: 'porcinos'
                 },
-            ]
-        })
-    }
-    async getAll() {
-        return await Seguimiento_CerdaModel.findAll({
-            include: [
-                {
-                    model: responsablesModel,
-                    as: 'responsables'
-                },
-            ]
-        })
-    }
-    async getAll() {
-        return await Seguimiento_CerdaModel.findAll({
-            include: [
                 {
                     model: MedicamentosModel,
                     as: 'medicamentos'
                 },
+                
             ]
         })
-    }
-    async getAll() {
-        return await Seguimiento_CerdaModel.findAll({ 
-            include: [
-                { 
-                model: MedicamentosModel,
-                as: 'medicamentos'},
-            ]
-        })
-    }
-    async getAll() {
-        return await Seguimiento_CerdaModel.findAll({ 
-            include: [
-                { 
-                model: MedicamentosModel,
-                as: 'medicamentos'},
-            ]
-        })
-    }
-
-
-    async getAll() {
-        return await Seguimiento_CerdaModel.findAll()
     }
 
     async getById(id) {

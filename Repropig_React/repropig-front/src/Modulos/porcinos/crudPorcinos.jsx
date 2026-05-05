@@ -201,8 +201,13 @@ const CrudPorcinos = () => {
             <div className="container mt-5">
 
                 <div className="row d-flex mb-3 justify-content-between">
-                    <div className="col-4">
-                        <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar un nombre, chapeta, placa o procedencia..." />
+                    <div className="col-5">
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Buscar un nombre, chapeta, placa o procedencia..." />
+                        </div>
                     </div>
 
                     <div className="col-2">

@@ -10,7 +10,8 @@ class PartosService {
                     model: PorcinoModel,
                     as: 'porcinos'
                 },
-            ]
+            ],
+            order: [['createdAt', 'DESC']]
         })
     }
 

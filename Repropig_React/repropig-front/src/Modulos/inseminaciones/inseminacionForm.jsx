@@ -140,6 +140,21 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         try {
             if (textFormButton === 'Agregar Inseminacion') {
                 await apiAxios.post('/inseminacion', formData)
+
+                // ✅ Auto-crear calendario si es la primera monta/inseminación
+                try {
+                    const calRes = await apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`);
+                    if (!calRes.data) {
+                        // No existe calendario → crearlo automáticamente
+                        await apiAxios.post('/calendario/', {
+                            Id_Reproduccion,
+                            Fecha_Servicio: Fec_hora
+                        });
+                    }
+                } catch (calErr) {
+                    console.error('Error al auto-crear calendario:', calErr);
+                }
+
                 MySwal.fire({ title: "Registro exitoso", text: "Inseminacion creada con éxito", icon: "success" })
             } else {
                 await apiAxios.put('/inseminacion/' + rowToEdit.Id_Inseminacion, formData)

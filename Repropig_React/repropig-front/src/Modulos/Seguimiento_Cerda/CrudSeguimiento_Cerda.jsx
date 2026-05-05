@@ -16,9 +16,9 @@ const crudSeguimiento_Cerda = () => {
         { name: 'Fecha', selector: row => row.Fecha },
         { name: 'Hora', selector: row => row.Hora },
         { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Porcino', selector: row => row.Id_Porcino },
-        { name: 'Responsable', selector: row => row.Id_Responsable },
-        { name: 'Medicamento', selector: row => row.Id_Medicamento },
+        { name: 'Porcino', selector: row => row.porcinos?.Nom_Porcino || '—'},
+        { name: 'Responsable', selector: row => row.responsables?.Nom_Responsable || '—' },
+        { name: 'Medicamento', selector: row => row.medicamentos?.Nombre || '—' },
         {
             name: 'Acciones', cell: row => (
                 <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>

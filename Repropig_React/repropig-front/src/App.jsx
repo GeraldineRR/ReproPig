@@ -53,7 +53,9 @@ function App() {
         />
         <Route path="/partos" element={<CrudPartos />} />
         <Route path="/crias" element={<CrudCrias />} />
+        <Route path="/crias/parto/:id" element={<CrudCrias />} />
         <Route path="/segcamada" element={<CrudSegcamada />} />
+        <Route path="/segcamada/parto/:id" element={<CrudSegcamada />} />
         <Route path="/Seguimiento_Cerda" element={<CrudSeguimiento_Cerda />} />
         <Route path="/Calendario" element={<CrudCalendario />} />
       

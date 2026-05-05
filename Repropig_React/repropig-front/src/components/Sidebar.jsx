@@ -59,15 +59,6 @@ export default function Sidebar() {
             <div className="ml-4 flex flex-col gap-1">
 
               <NavLink
-                to="/porcinos"
-                className={({ isActive }) =>
-                  `${linkClass} ${isActive ? activeClass : ""}`
-                }
-              >
-                Porcinos
-              </NavLink>
-
-              <NavLink
                 to="/razas"
                 className={({ isActive }) =>
                   `${linkClass} ${isActive ? activeClass : ""}`
@@ -76,11 +67,20 @@ export default function Sidebar() {
                 Razas
               </NavLink>
 
-              <NavLink to="/crias" className={({ isActive }) =>
+              <NavLink
+                to="/porcinos"
+                className={({ isActive }) =>
+                  `${linkClass} ${isActive ? activeClass : ""}`
+                }
+              >
+                Porcinos
+              </NavLink>
+
+              {/* <NavLink to="/crias" className={({ isActive }) =>
                 `${linkClass} ${isActive ? activeClass : ""}`
               }>
                 Crías
-              </NavLink>
+              </NavLink> */}
 
             </div>
 
@@ -147,11 +147,11 @@ export default function Sidebar() {
                 Partos
               </NavLink>
 
-              <NavLink to="/segcamada" className={({ isActive }) =>
+              {/* <NavLink to="/segcamada" className={({ isActive }) =>
                 `${linkClass} ${isActive ? activeClass : ""}`
               }>
                 Seguimiento de Camada
-              </NavLink>
+              </NavLink> */}
 
               <NavLink to="/seguimiento_cerda" className={({ isActive }) =>
                 `${linkClass} ${isActive ? activeClass : ""}`
