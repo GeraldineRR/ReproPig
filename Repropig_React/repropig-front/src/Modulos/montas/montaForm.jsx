@@ -162,12 +162,13 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     };
 
     const esPrellenado = !!preloaded.Id_Reproduccion;
+    const esEdicion = !!rowToEdit?.Id_Monta;
 
     return (
         <form onSubmit={gestionarForm} className="w-100">
 
             <div className="text-center mb-4">
-                <h5 className="fw-bold">🐷 Registrar Monta</h5>
+                <h5 className="fw-bold">🐷 {esEdicion ? 'Editar Monta' : 'Registrar Monta'}</h5>
                 <small className="text-muted">Completa la información del proceso</small>
             </div>
 
@@ -180,6 +181,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
                         required
                     />
                 </div>
@@ -190,7 +192,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-select shadow-sm"
                         value={Id_Porcino}
                         onChange={handlePorcinoChange}
-                        disabled={esPrellenado}
+                        disabled={esPrellenado || esEdicion}
                         required
                     >
                         <option value="">Seleccione</option>
@@ -208,7 +210,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-select shadow-sm"
                         value={Id_Reproduccion}
                         onChange={e => setId_Reproduccion(e.target.value)}
-                        disabled={esPrellenado}
+                        disabled={esPrellenado || esEdicion}
                         required
                     >
                         <option value="">Seleccione</option>
