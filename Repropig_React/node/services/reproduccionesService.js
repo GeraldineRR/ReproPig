@@ -16,21 +16,11 @@ class reproduccionesService {
     }
 
     async getById(id) {
-        return await reproduccionesModel.findByPk(id, {
-            include: [
-                { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },           // 👈 agrega Fecha
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] } // 👈 agrega Fecha
-            ]
-        })
-    }
-
-    async getById(id) {
         const reproduccion = await reproduccionesModel.findByPk(id, {
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta'] },
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion'] }
+                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },
+                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] }
             ]
         })
         if (!reproduccion) throw new Error('Reproduccion no encontrada')

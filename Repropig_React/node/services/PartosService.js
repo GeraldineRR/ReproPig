@@ -1,13 +1,20 @@
 import PartosModel from "../models/PartosModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import reproduccionesModel from "../models/reproduccionesModel.js";
+import RazaModel from "../models/razaModel.js";
 
 class PartosService {
 
     async getALL() {
         return await PartosModel.findAll({
             include: [
-                { model: PorcinoModel, as: 'porcinos' },
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',          // ← antes: 'porcinos'
+                    include: [
+                        { model: RazaModel, as: 'raza' }
+                    ]
+                },
                 { model: reproduccionesModel, as: 'reproduccion' },
             ]
         })
@@ -16,7 +23,13 @@ class PartosService {
     async getById(id) {
         const parto = await PartosModel.findByPk(id, {
             include: [
-                { model: PorcinoModel, as: 'porcinos' },
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',          // ← antes: 'porcinos'
+                    include: [
+                        { model: RazaModel, as: 'raza' }
+                    ]
+                },
                 { model: reproduccionesModel, as: 'reproduccion' },
             ]
         })
@@ -27,7 +40,6 @@ class PartosService {
     async create(data) {
         const parto = await PartosModel.create(data)
 
-        // Si viene Id_Reproduccion, inactivar esa reproducción automáticamente
         if (data.Id_Reproduccion) {
             await reproduccionesModel.update(
                 { Activo: 'N' },
@@ -43,7 +55,6 @@ class PartosService {
         const update = result[0]
 
         if (update === 0) throw new Error("Parto no encontrado o sin cambios")
-
         return true
     }
 
