@@ -1,5 +1,6 @@
 import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import PartosForm from "./PartoForm.jsx";
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -10,6 +11,7 @@ const CrudPartos = () => {
     const [filterText, setFilterText] = useState("");
     const [partoEdit, setPartoEdit] = useState(null);
     const [loadingId, setLoadingId] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         getAllPartos();
@@ -134,14 +136,33 @@ const CrudPartos = () => {
         {
             name: "Acciones",
             cell: row => (
-                <button
-                    className="btn btn-sm bg-info"
-                    onClick={() => handleEdit(row)}
-                >
-                    <i className="fa-solid fa-pencil"></i>
-                </button>
+                <div className="d-flex gap-2">
+                    <button
+                        className="btn btn-sm bg-info"
+                        title="Editar Parto"
+                        onClick={() => handleEdit(row)}
+                    >
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                    <button
+                        className="btn btn-sm text-white"
+                        style={{ backgroundColor: '#362D34' }}
+                        title="Ver Crías"
+                        onClick={() => navigate(`/crias/parto/${row.Id_parto}`)}
+                    >
+                        🍼
+                    </button>
+                    <button
+                        className="btn btn-sm text-white"
+                        style={{ backgroundColor: '#975737' }}
+                        title="Ver Seguimiento"
+                        onClick={() => navigate(`/segcamada/parto/${row.Id_parto}`)}
+                    >
+                        📝
+                    </button>
+                </div>
             )
-        }
+        },
     ];
 
     const filtered = partos.filter(row => {
@@ -167,12 +188,17 @@ const CrudPartos = () => {
 
                 <div className="row mb-3 justify-content-between">
                     <div className="col-4">
-                        <input
-                            className="form-control"
-                            placeholder="🔍 Buscar..."
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                        />
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input
+                                className="form-control"
+                                placeholder="Buscar..."
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                            />
+                        </div>
                     </div>
 
                     <div className="col-2">

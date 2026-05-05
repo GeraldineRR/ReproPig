@@ -5,6 +5,7 @@ import MedicamentosModel from "../models/MedicamentosModel.js";
 import reproduccionesModel from "../models/reproduccionesModel.js";
 
 class Seguimiento_CerdaService {
+
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [

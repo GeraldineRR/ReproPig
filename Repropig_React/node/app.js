@@ -51,13 +51,13 @@ PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reprodu
 reproduccionesModel.hasMany(montaModel, { foreignKey: 'Id_Reproduccion', as: 'montas' })
 reproduccionesModel.hasMany(inseminacionModel, { foreignKey: 'Id_Reproduccion', as: 'inseminaciones' })
 
-responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'Seguimiento Cerda' })
+responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
 
 PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
 SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 
-MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'Seguimiento Cerda' })
+MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
 reproduccionesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Reproduccion', as: 'seguimientos' })
@@ -97,7 +97,7 @@ app.use('/api/reproducciones', reproduccionesRoutes)
 app.use('/api/colectas', colectaRoutes)
 app.use('/api/monta', montaRoutes)
 app.use('/api/inseminacion', inseminacionRoutes)
-app.use('/api/partos', PartosRoutes)
+app.use('/api/Partos', PartosRoutes)
 app.use('/api/responsables', responsablesRoutes)
 app.use('/api/cria', criaRoutes)
 app.use('/api/segcamada', segcamadaRoutes)

@@ -16,7 +16,8 @@ class PartosService {
                     ]
                 },
                 { model: reproduccionesModel, as: 'reproduccion' },
-            ]
+            ],
+            order: [['createdAt', 'DESC']]
         })
     }
 
