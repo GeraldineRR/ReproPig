@@ -155,7 +155,7 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
                 <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange (e.target.value)} required disabled={!!partoIdParams && !criaEdit}>
                     <option value="">Selecciona...</option>
                     {partos.map((parto) => (
-                        <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}</option>
+                        <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcino?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}</option>
                     ))}
                 </select>
             </div>
