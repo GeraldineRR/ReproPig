@@ -14,22 +14,18 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Id_Porcino, setId_Porcino] = useState('')
     const [Id_Responsable, setId_Responsable] = useState('')
     const [Id_Medicamento, setId_Medicamento] = useState('')
+    const [Id_Reproduccion, setId_Reproduccion] = useState('')
 
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
+    const [reproduccionesActivas, setReproduccionesActivas] = useState([])
 
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     useEffect(() => {
         getPorcinos()
-    }, [])
-
-    useEffect(() => {
         getResponsables()
-    }, [])
-
-    useEffect(() => {
         getMedicamentos()
     }, [])
 
@@ -42,7 +38,13 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
             setId_Responsable(Seguimiento_CerdaEdit.Id_Responsable ?? '')
             setId_Medicamento(Seguimiento_CerdaEdit.Id_Medicamento ?? '')
+            setId_Reproduccion(Seguimiento_CerdaEdit.Id_Reproduccion ?? '')
             setTextFormButton("Actualizar")
+
+            // Cargar reproducciones de esa cerda para edición
+            if (Seguimiento_CerdaEdit.Id_Porcino) {
+                getReproduccionesActivas(Seguimiento_CerdaEdit.Id_Porcino)
+            }
         } else {
             setId_Seguimiento_Cerda('')
             setFecha('')
@@ -51,15 +53,17 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setId_Porcino('')
             setId_Responsable('')
             setId_Medicamento('')
+            setId_Reproduccion('')
+            setReproduccionesActivas([])
             setTextFormButton("Enviar")
         }
     }, [Seguimiento_CerdaEdit])
 
     const getPorcinos = async () => {
         try {
-            const porcinos = await apiAxios.get('/porcino/')
-            setPorcinos(porcinos.data)
-            console.log(porcinos.data)
+            const response = await apiAxios.get('/porcino/')
+            // Solo hembras
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
         } catch (error) {
             console.error('Error obteniendo porcinos:', error)
             setPorcinos([])
@@ -70,7 +74,6 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         try {
             const responsables = await apiAxios.get('/responsables/')
             setResponsables(responsables.data)
-            console.log('Responsables:', responsables.data)
         } catch (error) {
             console.error('Error obteniendo responsables:', error)
             setResponsables([])
@@ -81,12 +84,33 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         try {
             const medicamentos = await apiAxios.get('/medicamentos/')
             setMedicamentos(medicamentos.data)
-            console.log('Medicamentos:', medicamentos.data)
         } catch (error) {
             console.error('Error obteniendo medicamentos:', error)
             setMedicamentos([])
         }
     }
+
+    const getReproduccionesActivas = async (idPorcino) => {
+        if (!idPorcino) { setReproduccionesActivas([]); return }
+        try {
+            const response = await apiAxios.get('/reproducciones/')
+            const activas = response.data.filter(r =>
+                r.Id_Cerda == idPorcino && r.Activo === 'S'
+            )
+            setReproduccionesActivas(activas)
+        } catch (error) {
+            console.error('Error obteniendo reproducciones:', error)
+            setReproduccionesActivas([])
+        }
+    }
+
+    const handlePorcinoChange = (e) => {
+        const val = e.target.value
+        setId_Porcino(val)
+        setId_Reproduccion('')
+        getReproduccionesActivas(val)
+    }
+
     const gestionarForm = async (e) => {
         e.preventDefault()
 
@@ -96,7 +120,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             Observaciones,
             Id_Porcino,
             Id_Responsable,
-            Id_Medicamento
+            Id_Medicamento,
+            Id_Reproduccion: Id_Reproduccion || null
         }
 
         try {
@@ -131,104 +156,132 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
-
-            <div className="mb-3">
-                <label htmlFor="Fecha" className="form-label">Fecha</label>
-                <input
-                    type="date"
-                    id="Fecha"
-                    className="form-control"
-                    value={Fecha}
-                    onChange={(e) => setFecha(e.target.value)}
-                    required
-                />
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
+                <small className="text-muted">Registro vinculado al ciclo reproductivo</small>
             </div>
 
-            <div className="mb-3">
-                <label htmlFor="Hora" className="form-label">Hora</label>
-                <input
-                    type="time"
-                    id="Hora"
-                    className="form-control"
-                    value={Hora}
-                    onChange={(e) => setHora(e.target.value)}
-                    required
-                />
-            </div>
+            <div className="row g-3">
 
+                {/* FECHA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📅 Fecha</label>
+                    <input
+                        type="date"
+                        className="form-control shadow-sm"
+                        value={Fecha}
+                        onChange={(e) => setFecha(e.target.value)}
+                        required
+                    />
+                </div>
 
-            <div className="mb-3">
-                <label htmlFor="Observaciones" className="form-label">Observaciones</label>
-                <textarea
-                    id="Observaciones"
-                    className="form-control"
-                    value={Observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                    rows="3"
-                />
-            </div>
+                {/* HORA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🕐 Hora</label>
+                    <input
+                        type="time"
+                        className="form-control shadow-sm"
+                        value={Hora}
+                        onChange={(e) => setHora(e.target.value)}
+                        required
+                    />
+                </div>
 
-
-            <div className="mb-3">
-                <label htmlFor="Id_Porcino" className="form-label">Porcino</label>
-                <select
-                    id="Id_Porcino"
-                    className="form-control"
-                    value={Id_Porcino}
-                    onChange={(e) => setId_Porcino(e.target.value)}
-                    required
-                >
-                    <option value="">Selecciona...</option>
-                    {porcinos.map((porcino) => (
-                        <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
-                            {porcino.Nom_Porcino}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            <div className="mb-3">
-                <label htmlFor="Id_Responsable" className="form-label">Responsable</label>
-                <select
-                    id="Id_Responsable"
-                    className="form-control"
-                    value={Id_Responsable}
-                    onChange={(e) => setId_Responsable(e.target.value)}
-                    required
-                >
-                    <option value="">Selecciona...</option>
-                    {responsables.map((responsable) => (
-                        <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
-                            {responsable.Nombres} {responsable.Apellidos}
-                        </option>
+                {/* CERDA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🐷 Cerda</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Porcino}
+                        onChange={handlePorcinoChange}
+                        required
+                    >
+                        <option value="">Seleccione una cerda</option>
+                        {porcinos.map((porcino) => (
+                            <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
+                                {porcino.Nom_Porcino}
+                            </option>
                         ))}
-                </select>
-            </div>
+                    </select>
+                </div>
 
-            <div className="mb-3">
-                <label htmlFor="Id_Medicamento" className="form-label">Medicamento</label>
-                <select
-                    id="Id_Medicamento"
-                    className="form-control"
-                    value={Id_Medicamento}
-                    onChange={(e) => setId_Medicamento(e.target.value)}
-                    required
-                >
-                    <option value="">Selecciona...</option>
-                    {medicamentos.map((medicamento) => (
-                        <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
-                            {medicamento.Nombre}
+                {/* REPRODUCCIÓN ACTIVA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🔁 Reproducción</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Reproduccion}
+                        onChange={(e) => setId_Reproduccion(e.target.value)}
+                    >
+                        <option value="">
+                            {!Id_Porcino
+                                ? 'Primero seleccione una cerda'
+                                : reproduccionesActivas.length === 0
+                                    ? 'Sin reproducciones activas'
+                                    : 'Seleccione una reproducción'}
                         </option>
-                    ))}
-                </select>
+                        {reproduccionesActivas.map(r => (
+                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
+                                #{r.Id_Reproduccion} — {r.TipoReproduccion}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* RESPONSABLE */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">👨‍🌾 Responsable</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Responsable}
+                        onChange={(e) => setId_Responsable(e.target.value)}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        {responsables.map((responsable) => (
+                            <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
+                                {responsable.Nombres} {responsable.Apellidos}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* MEDICAMENTO */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">💊 Medicamento</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Medicamento}
+                        onChange={(e) => setId_Medicamento(e.target.value)}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        {medicamentos.map((medicamento) => (
+                            <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
+                                {medicamento.Nombre}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* OBSERVACIONES */}
+                <div className="col-12">
+                    <label className="form-label fw-semibold">📝 Observaciones</label>
+                    <textarea
+                        className="form-control shadow-sm"
+                        value={Observaciones}
+                        onChange={(e) => setObservaciones(e.target.value)}
+                        rows="2"
+                    />
+                </div>
+
             </div>
 
-            <div className="mb-3">
-                <input
-                    type="submit"
-                    className="btn btn-primary"
-                    value={textFormButton}
-                />
+            {/* BOTÓN */}
+            <div className="d-grid mt-4">
+                <button className="btn btn-primary fw-semibold py-2 shadow-sm">
+                    {textFormButton}
+                </button>
             </div>
 
         </form>

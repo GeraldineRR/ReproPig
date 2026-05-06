@@ -68,7 +68,7 @@ const CrudMedicamentos = () =>{
     return(
         <>
             <div className="container mt-5">
-                <div className="row d-flex justify-content-between">
+                <div className="row d-flex mb-3 justify-content-between">
 
                     <div className="col-4">
                         <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar...."/>

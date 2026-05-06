@@ -16,30 +16,20 @@ class reproduccionesService {
     }
 
     async getById(id) {
-        return await reproduccionesModel.findByPk(id, {
-            include: [
-                { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },           // 👈 agrega Fecha
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] } // 👈 agrega Fecha
-            ]
-        })
-    }
-
-    async getById(id) {
         const reproduccion = await reproduccionesModel.findByPk(id, {
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta'] },
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion'] }
+                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },
+                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] }
             ]
         })
         if (!reproduccion) throw new Error('Reproduccion no encontrada')
         return reproduccion
     }
 
-    // ✅ Sin validación de tipo duplicado — el frontend maneja la lógica
     async create(data) {
-        return await reproduccionesModel.create(data)
+        // Siempre se crea activa
+        return await reproduccionesModel.create({ ...data, Activo: 'S' })
     }
 
     async update(id, data) {
@@ -49,15 +39,27 @@ class reproduccionesService {
         return true
     }
 
+    async toggleActivo(id) {
+        const reproduccion = await reproduccionesModel.findByPk(id)
+        if (!reproduccion) throw new Error('Reproduccion no encontrada')
+
+        const nuevoEstado = reproduccion.Activo === 'S' ? 'N' : 'S'
+        await reproduccionesModel.update(
+            { Activo: nuevoEstado },
+            { where: { Id_Reproduccion: id } }
+        )
+        return nuevoEstado
+    }
+
     async delete(id) {
         const reproduccion = await reproduccionesModel.findByPk(id)
         if (!reproduccion) throw new Error('Reproduccion no encontrada')
 
-        // ✅ Borrar montas e inseminaciones relacionadas primero
+        // Borrar montas e inseminaciones relacionadas primero
         await MontaModel.destroy({ where: { Id_Reproduccion: id } })
         await InseminacionModel.destroy({ where: { Id_Reproduccion: id } })
 
-        // ✅ Luego borrar la reproducción
+        // Luego borrar la reproducción
         await reproduccionesModel.destroy({ where: { Id_Reproduccion: id } })
         return true
     }

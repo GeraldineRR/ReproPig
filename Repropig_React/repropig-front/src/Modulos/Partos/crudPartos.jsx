@@ -1,149 +1,178 @@
 import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import PartosForm from "./PartoForm.jsx";
+import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const CrudPartos = () => {
 
     const [partos, setPartos] = useState([]);
     const [filterText, setFilterText] = useState("");
-    const [rowToEdit, setRowToEdit] = useState({});
+    const [partoEdit, setPartoEdit] = useState(null);
+    const [loadingId, setLoadingId] = useState(null);
+    const navigate = useNavigate();
 
-    // Cerrar modal y refrescar tabla
-    const hideModal = () => {
-        const closeButton = document.getElementById("closeModal");
-        if (closeButton) {
-            closeButton.click();
-        }
-        getAllPartos();
-    };
-
-    // Obtener datos
     useEffect(() => {
         getAllPartos();
     }, []);
 
     const getAllPartos = async () => {
         try {
-            const response = await apiAxios.get("/partos/");
-            setPartos(response.data);
+            const res = await apiAxios.get("/partos/");
+            setPartos(res.data);
         } catch (error) {
-            console.error("Error al obtener partos:", error);
+            console.error(error);
         }
     };
 
-    // Activar / Desactivar
-    const cambiarEstado = async (row) => {
+    // Función para alternar el estado del porcino 
+    const toggleEstado = async (id) => {
+        setLoadingId(id);
+
         try {
-            const nuevoEstado =
-                row.estado === "Activo"
-                    ? "Inactivo"
-                    : "Activo";
+            const res = await apiAxios.put(`/partos/${id}/toggle-estado`);
 
-            await apiAxios.put(`/partos/estado/${row.Id_parto}`, {
-                estado: nuevoEstado
-            });
-
-            getAllPartos();
+            setPartos(prev =>
+                prev.map(p =>
+                    p.Id_parto === id
+                        ? { ...p, estado: res.data.estado }
+                        : p
+                )
+            );
 
         } catch (error) {
-            console.error("Error al cambiar estado:", error);
+            console.error(error);
+        } finally {
+            setLoadingId(null);
         }
     };
 
-    // Columnas de tabla
+    const formatFecha = (fecha) => {
+        if (!fecha) return '—'
+        return new Date(fecha).toLocaleDateString()
+    }
+
+    const handleEdit = (row) => {
+        setPartoEdit(row);
+        const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
+        modal.show();
+    };
+
+    const hideModal = () => {
+        setPartoEdit(null);
+        document.getElementById("closeModal").click();
+    };
+
     const columnsTable = [
         {
-            name: "Id_Porcino",
-            selector: row => row.porcinos?.Nom_Porcino,
-            sortable: true
+            name: "Porcino",
+            selector: row => row.porcino?.Nom_Porcino || '—'
         },
         {
-            name: "Fec_inicio",
-            selector: row => row.Fec_inicio
+            name: "Inicio",
+            cell: row => (
+                <div>
+                    <div>{formatFecha(row.Fec_inicio)}</div>
+                    <small className="text-muted">{row.Hor_inicial}</small>
+                </div>
+            )
         },
         {
-            name: "Hor_inicial",
-            selector: row => row.Hor_inicial
-        },
-        {
-            name: "Nac_vivos",
+            name: "Vivos",
             selector: row => row.Nac_vivos
         },
         {
-            name: "Nac_momias",
-            selector: row => row.Nac_momias
-        },
-        {
-            name: "Nac_muertos",
+            name: "Muertos",
             selector: row => row.Nac_muertos
         },
         {
-            name: "Pes_camada",
-            selector: row => row.Pes_camada
+            name: "Momias",
+            selector: row => row.Nac_momias
+        },
+        {
+            name: "Peso Camada",
+            selector: row =>
+                row.Pes_camada
+                    ? <span className="badge" style={{ backgroundColor: '#587EB2' }}>
+                        {row.Pes_camada} kg
+                    </span>
+                    : '—'
         },
         {
             name: "Observaciones",
             selector: row => row.Observaciones
         },
         {
-            name: "Fec_fin",
-            selector: row => row.Fec_fin
+            name: "Fin",
+            cell: row => (
+                <div>
+                    <div>{formatFecha(row.Fec_fin)}</div>
+                    <small className="text-muted">{row.Hor_final}</small>
+                </div>
+            )
         },
         {
-            name: "Hor_final",
-            selector: row => row.Hor_final
-        },
-        {
-            name: "estado",
-            selector: row => row.estado
+            name: 'Estado',
+            selector: row => (
+                <button
+                    className={`badge border-0 ${row.estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
+                    onClick={() => toggleEstado(row.Id_parto)}
+                    disabled={loadingId === row.Id_parto}
+                >
+                    {loadingId === row.Id_parto
+                        ? '...'
+                        : row.estado}
+                </button>
+            )
         },
         {
             name: "Acciones",
-            cell: (row) => (
-                <div className="d-flex gap-2">
-
-                    {/* Editar */}
+            cell: row => (
+                <div className="d-flex gap-2 flex-nowrap">
+                    <button
+                        className="btn btn-sm text-white"
+                        style={{ backgroundColor: '#362D34' }}
+                        title="Ver Crías"
+                        onClick={() => navigate(`/crias/parto/${row.Id_parto}`)}
+                    >
+                        🍼
+                    </button>
+                    <button
+                        className="btn btn-sm text-white"
+                        style={{ backgroundColor: '#975737' }}
+                        title="Ver Seguimiento"
+                        onClick={() => navigate(`/segcamada/parto/${row.Id_parto}`)}
+                    >
+                        📝
+                    </button>
                     <button
                         className="btn btn-sm bg-info"
-                        data-bs-toggle="modal"
-                        data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit(row)}
+                        title="Editar Parto"
+                        onClick={() => handleEdit(row)}
                     >
                         <i className="fa-solid fa-pencil"></i>
                     </button>
-
-                    {/* Activar / Desactivar */}
-                    <button
-                        className={`btn btn-sm ${
-                            row.estado === "Activo"
-                                ? "btn-danger"
-                                : "btn-success"
-                        }`}
-                        onClick={() => cambiarEstado(row)}
-                    >
-                        {row.estado === "Activo"
-                            ? "Desactivar"
-                            : "Activar"}
-                    </button>
-
                 </div>
             ),
-            ignoreRowClick: true,
-            allowOverflow: true,
-            button: true,
-            minWidth: '200px',
-        }
+            minWidth: "150px"
+        },
     ];
 
-    // Filtro
-    const newListPartos = partos.filter((row) => {
-        const textToSearch = filterText.toLowerCase();
+    const filtered = partos.filter(row => {
+        const text = filterText.toLowerCase().trim();
+
+        const porcino = row.porcinos?.Nom_Porcino?.toLowerCase().trim() || "";
+        const observaciones = row.Observaciones?.toLowerCase().trim() || "";
+        const fechaFin = row.Fec_fin
+            ? new Date(row.Fec_fin).toLocaleDateString()
+            : "";
 
         return (
-            row.Id_parto?.toString().includes(textToSearch) ||
-            row.Id_Porcino?.toString().includes(textToSearch) ||
-            (row.Observaciones?.toLowerCase() || "").includes(textToSearch)
+            row.Id_parto?.toString().includes(text) ||
+            porcino.includes(text) ||
+            observaciones.includes(text) ||
+            fechaFin.includes(text)
         );
     });
 
@@ -151,25 +180,29 @@ const CrudPartos = () => {
         <>
             <div className="container mt-5">
 
-                <div className="row d-flex justify-content-between">
+                <div className="row mb-3 justify-content-between">
                     <div className="col-4">
-                        <input
-                            className="form-control"
-                            placeholder="Buscar..."
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                        />
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input
+                                className="form-control"
+                                placeholder="Buscar..."
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                            />
+                        </div>
                     </div>
 
-                    <div className="col-8 text-end">
+                    <div className="col-2">
                         <button
-                            type="button"
-                            className="btn btn-primary"
+                            className="btn btn-success"
                             data-bs-toggle="modal"
                             data-bs-target="#exampleModal"
-                            onClick={() => setRowToEdit({})}
+                            onClick={() => setPartoEdit(null)}
                         >
-                            Nuevo Registro
+                            + Registrar parto
                         </button>
                     </div>
                 </div>
@@ -177,30 +210,25 @@ const CrudPartos = () => {
                 <DataTable
                     title="Registro de Partos"
                     columns={columnsTable}
-                    data={newListPartos}
+                    data={filtered}
                     keyField="Id_parto"
                     pagination
                     highlightOnHover
                     striped
+                    responsive
                 />
 
                 {/* Modal */}
-                <div
-                    className="modal fade"
-                    id="exampleModal"
-                    tabIndex="-1"
-                    aria-hidden="true"
-                >
+                <div className="modal fade" id="exampleModal">
                     <div className="modal-dialog">
                         <div className="modal-content">
 
                             <div className="modal-header">
-                                <h1 className="modal-title fs-5">
-                                    Partos
-                                </h1>
+                                <h5 className="modal-title">
+                                    {partoEdit ? "Editar Parto" : "Nuevo Parto"}
+                                </h5>
 
                                 <button
-                                    type="button"
                                     className="btn-close"
                                     data-bs-dismiss="modal"
                                     id="closeModal"
@@ -209,8 +237,10 @@ const CrudPartos = () => {
 
                             <div className="modal-body">
                                 <PartosForm
+                                    key={partoEdit ? partoEdit.Id_parto : 'new'}
                                     hideModal={hideModal}
-                                    rowToEdit={rowToEdit}
+                                    rowToEdit={partoEdit}
+                                    reload={getAllPartos}
                                 />
                             </div>
 
@@ -222,5 +252,6 @@ const CrudPartos = () => {
         </>
     );
 };
+
 
 export default CrudPartos;

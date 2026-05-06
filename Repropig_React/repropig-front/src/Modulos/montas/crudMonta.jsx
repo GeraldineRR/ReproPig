@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom"; // ✅ agregar
+import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
@@ -8,8 +8,9 @@ import WithReactContent from "sweetalert2-react-content";
 
 const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
-    const location = useLocation() // ✅ agregar
-    const filtroDesdeReproduccion = location.state || null // ✅ { Id_Reproduccion, Id_Porcino }
+    const navigate = useNavigate()
+    const location = useLocation()
+    const filtroDesdeReproduccion = location.state || null // { Id_Reproduccion, Id_Porcino, Nom_Porcino }
 
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
@@ -62,6 +63,7 @@ const CrudMonta = () => {
         { name: 'Id', selector: row => row.Id_Monta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fec_hora?.split('T')[0] || row.Fec_hora },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
+        { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
@@ -89,8 +91,9 @@ const CrudMonta = () => {
 
     const getAllMontas = async () => {
         const response = await apiAxios.get('/monta/')
-        setMontas(response.data)
-        console.log(response.data)
+        const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
+        setMontas(sortedData)
+        console.log(sortedData)
     }
 
     const getResponsables = async () => {
@@ -119,17 +122,17 @@ const CrudMonta = () => {
     return (
         <div className="container mt-5">
 
-            {/* ✅ Banner de filtro activo */}
+            {/* Banner de filtro activo */}
             {filtroDesdeReproduccion && (
                 <div className="alert alert-warning d-flex justify-content-between align-items-center py-2 mb-3">
                     <span>
-                        🐷 Mostrando montas de la reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                        🐷 Montas de <strong>{filtroDesdeReproduccion.Nom_Porcino || `Cerda #${filtroDesdeReproduccion.Id_Porcino}`}</strong>
+                        {' '}— Reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-dark"
-                        onClick={() => window.history.replaceState({}, '', window.location.pathname)
-                            || window.location.reload()}>
-                        ✖ Ver todas
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Reproducciones
                     </button>
                 </div>
             )}
@@ -140,11 +143,17 @@ const CrudMonta = () => {
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Monta
-                    </button>
+                    {(!filtroDesdeReproduccion || filtroDesdeReproduccion.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Monta
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="La reproducción está inactiva">
+                            Nueva Monta
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -155,7 +164,7 @@ const CrudMonta = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5">Nueva Monta</h1>
+                            <h1 className="modal-title fs-5">{rowToEdit.Id_Monta ? 'Editar Monta' : 'Nueva Monta'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>

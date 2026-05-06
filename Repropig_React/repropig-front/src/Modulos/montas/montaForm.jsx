@@ -76,7 +76,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
             const res = await apiAxios.get('/reproducciones');
             const activas = res.data.filter(r =>
-                r.Id_Cerda == preloaded.Id_Porcino && r.Activo === 'Si'
+                r.Id_Cerda == preloaded.Id_Porcino && r.Activo === 'S'
             );
             setReproduccionesActivas(activas);
         };
@@ -120,7 +120,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getReproduccionesActivasSolo = async (id) => {
         if (!id) return setReproduccionesActivas([]);
         const res = await apiAxios.get('/reproducciones');
-        const activas = res.data.filter(r => r.Id_Cerda == id && r.Activo === 'Si');
+        const activas = res.data.filter(r => r.Id_Cerda == id && r.Activo === 'S');
         setReproduccionesActivas(activas);
     };
 
@@ -149,6 +149,21 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         try {
             if (textFormButton === 'Agregar Monta') {
                 await apiAxios.post('/monta/', data);
+
+                // ✅ Auto-crear calendario si es la primera monta/inseminación
+                try {
+                    const calRes = await apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`);
+                    if (!calRes.data) {
+                        // No existe calendario → crearlo automáticamente
+                        await apiAxios.post('/calendario/', {
+                            Id_Reproduccion,
+                            Fecha_Servicio: Fec_hora
+                        });
+                    }
+                } catch (calErr) {
+                    console.error('Error al auto-crear calendario:', calErr);
+                }
+
                 MySwal.fire('OK', 'Monta creada', 'success');
             } else {
                 await apiAxios.put('/monta/' + rowToEdit.Id_Monta, data);
@@ -162,12 +177,13 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     };
 
     const esPrellenado = !!preloaded.Id_Reproduccion;
+    const esEdicion = !!rowToEdit?.Id_Monta;
 
     return (
         <form onSubmit={gestionarForm} className="w-100">
 
             <div className="text-center mb-4">
-                <h5 className="fw-bold">🐷 Registrar Monta</h5>
+                <h5 className="fw-bold">🐷 {esEdicion ? 'Editar Monta' : 'Registrar Monta'}</h5>
                 <small className="text-muted">Completa la información del proceso</small>
             </div>
 
@@ -180,6 +196,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
                         required
                     />
                 </div>
@@ -190,7 +207,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-select shadow-sm"
                         value={Id_Porcino}
                         onChange={handlePorcinoChange}
-                        disabled={esPrellenado}
+                        disabled={esPrellenado || esEdicion}
                         required
                     >
                         <option value="">Seleccione</option>
@@ -208,7 +225,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-select shadow-sm"
                         value={Id_Reproduccion}
                         onChange={e => setId_Reproduccion(e.target.value)}
-                        disabled={esPrellenado}
+                        disabled={esPrellenado || esEdicion}
                         required
                     >
                         <option value="">Seleccione</option>

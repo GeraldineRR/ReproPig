@@ -5,126 +5,133 @@ import CalendarioForm from "./CalendarioForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const CrudCalendario = () => {
+
     const [calendario, setCalendario] = useState([])
     const [calendarioEdit, setCalendarioEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
-    const [modalKey, setModalKey] = useState(0)
 
-    const columnsTable = [
-        { name: 'Id', selector: row => row.Id_Calendario },
-        { name: 'Reproducción', selector: row => row.Id_Reproduccion },
-        { name: 'Fecha Servicio', selector: row => row.Fecha_Servicio },
-        { name: 'Proy. 1rcl', selector: row => row['proyectado-1rcl'] },
-        { name: 'Proy. 2rcl', selector: row => row['proyectado-2rcl'] },
-        { name: 'Proy. 3rcl', selector: row => row['proyectado-3rcl'] },
-        { name: 'Proy. 4rcl', selector: row => row['proyectado-4rcl'] },
-        { name: 'Proy. 5rcl', selector: row => row['proyectado-5rcl'] },
-        { name: 'Real 1rcl', selector: row => row['real-1rcl'] ?? '—' },
-        { name: 'Real 2rcl', selector: row => row['real-2rcl'] ?? '—' },
-        { name: 'Real 3rcl', selector: row => row['real-3rcl'] ?? '—' },
-        { name: 'Real 4rcl', selector: row => row['real-4rcl'] ?? '—' },
-        { name: 'Real 5rcl', selector: row => row['real-5rcl'] ?? '—' },
-        {
-            name: 'Acciones', cell: row => (
-                <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
-                    <i className="fa-solid fa-pencil"></i>
-                </button>
-            )
-        }
-    ]
+    const getAllCalendario = async () => {
+        const response = await apiAxios.get('/calendario/')
+        setCalendario(response.data)
+    }
 
     useEffect(() => {
         getAllCalendario()
     }, [])
 
-    const getAllCalendario = async () => {
-        const response = await apiAxios.get('/Calendario/')
-        setCalendario(response.data)
-    }
+    const columnsTable = [
+        { name: 'Id', selector: row => row.Id_Calendario, width: '80px' },
+        { name: 'Reproducción', selector: row => row.Id_Reproduccion },
+        { name: 'Fecha Servicio', selector: row => row.Fecha_Servicio },
 
-    const newListCalendario = calendario.filter(item => {
-        const textToSearch = filterText.toLowerCase()
-        const id = item.Id_Calendario.toString().toLowerCase()
-        const fecha = item.Fecha_Servicio?.toLowerCase() ?? ''
+        { name: 'RC1', selector: row => row.rc1 },
+        { name: 'RC2', selector: row => row.rc2 },
+        { name: 'Cambio Alimento', selector: row => row.cambio_alimento },
+        { name: 'Día 107', selector: row => row.dia_107 },
+        { name: 'Parto', selector: row => row.parto },
+
+        { name: 'Real RC1', selector: row => row.real_rc1 ?? '—' },
+        { name: 'Real RC2', selector: row => row.real_rc2 ?? '—' },
+        { name: 'Real Cambio', selector: row => row.real_cambio_alimento ?? '—' },
+        { name: 'Real 107', selector: row => row.real_dia_107 ?? '—' },
+        { name: 'Real Parto', selector: row => row.real_parto ?? '—' },
+    ]
+
+    const filtered = calendario.filter(item => {
+        const text = filterText.toLowerCase()
+
         return (
-            id.includes(textToSearch) ||
-            fecha.includes(textToSearch)
+            item.Id_Calendario?.toString().includes(text) ||
+            item.Fecha_Servicio?.toLowerCase().includes(text)
         )
     })
 
-    const hideModal = () => {
-        setCalendarioEdit(null)
-        setModalKey(prev => prev + 1)
-        document.getElementById('closeModal').click()
-    }
-
     const handleEdit = (item) => {
         setCalendarioEdit(item)
-        setModalKey(prev => prev + 1)
-        const modal = new bootstrap.Modal(document.getElementById('exampleModal'))
+
+        const modal = new bootstrap.Modal(
+            document.getElementById('exampleModal')
+        )
+
         modal.show()
     }
 
     const handleNuevo = () => {
         setCalendarioEdit(null)
-        setModalKey(prev => prev + 1)
-        setTimeout(() => {
-            const modal = new bootstrap.Modal(document.getElementById('exampleModal'))
-            modal.show()
-        }, 0)
+
+        const modal = new bootstrap.Modal(
+            document.getElementById('exampleModal')
+        )
+
+        modal.show()
+    }
+
+    const hideModal = () => {
+        setCalendarioEdit(null)
+        document.getElementById('closeModal').click()
+        getAllCalendario()
     }
 
     return (
-        <>
-            <div className="container mt-5">
-                <div className="row d-flex justify-content-between">
-                    <div className="col-4">
-                        <input
-                            className="form-control"
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            placeholder="🔍 Buscar...."
-                        />
-                    </div>
-                    <div className="col-2">
-                        <button type="button" className="btn btn-primary" onClick={handleNuevo}>
-                            Nuevo
-                        </button>
-                    </div>
+        <div className="container mt-5">
+
+            <div className="row d-flex justify-content-between">
+                <div className="col-4">
+                    <input
+                        className="form-control"
+                        value={filterText}
+                        onChange={(e) => setFilterText(e.target.value)}
+                        placeholder="🔍 Buscar..."
+                    />
                 </div>
 
-                <DataTable
-                    title="Calendario"
-                    columns={columnsTable}
-                    data={newListCalendario}
-                    keyField="Id_Calendario"
-                    pagination
-                    highlightOnHover
-                    striped
-                />
+                <div className="col-2">
+                    <button className="btn btn-primary" onClick={handleNuevo}>
+                        Nuevo
+                    </button>
+                </div>
+            </div>
 
-                <div className="modal fade" id="exampleModal" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            <div className="modal-header">
-                                <h1 className="modal-title fs-5" id="exampleModalLabel">
-                                    {calendarioEdit ? "Editar Calendario" : "Agregar Calendario"}
-                                </h1>
-                                <button id="closeModal" type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div className="modal-body">
-                                <CalendarioForm
-                                    key={modalKey}
-                                    hideModal={hideModal}
-                                    calendarioEdit={calendarioEdit}
-                                    reload={getAllCalendario}
-                                />
-                            </div>
+            <DataTable
+                title="Calendario"
+                columns={columnsTable}
+                data={filtered}
+                pagination
+                highlightOnHover
+                striped
+            />
+
+            <div className="modal fade" id="exampleModal" tabIndex="-1">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+
+                        <div className="modal-header">
+                            <h5 className="modal-title">
+                                {calendarioEdit ? "Editar Calendario" : "Nuevo Calendario"}
+                            </h5>
+
+                            <button
+                                id="closeModal"
+                                type="button"
+                                className="btn-close"
+                                data-bs-dismiss="modal"
+                            />
                         </div>
+
+                        <div className="modal-body">
+                            <CalendarioForm
+                                key={calendarioEdit?.Id_Calendario || "new"}
+                                calendarioEdit={calendarioEdit}
+                                hideModal={hideModal}
+                                reload={getAllCalendario}
+                            />
+                        </div>
+
                     </div>
                 </div>
             </div>
-        </>
+
+        </div>
     )
 }
 

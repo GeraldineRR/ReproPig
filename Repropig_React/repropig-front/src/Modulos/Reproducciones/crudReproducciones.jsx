@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig"
 import DataTable from 'react-data-table-component'
+import { customTableStyles } from "../../styles/tableStyles.js"
 import ReproduccionesForm from "./ReproduccionesForm.jsx"
 import MontaForm from "../montas/montaForm.jsx"
 import InseminacionForm from "../inseminaciones/inseminacionForm.jsx"
@@ -21,16 +22,21 @@ const CrudReproducciones = () => {
     const [filterText, setFilterText] = useState("")
     const [modalEncadenado, setModalEncadenado] = useState(null)
     const [colectaParaInseminacion, setColectaParaInseminacion] = useState(null)
-    const [CalendarioData, setCalendarioData] = useState(null)
+    const [calendarioData, setCalendarioData] = useState(null)
+    const [calendarioEdit, setCalendarioEdit] = useState(null)
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
+
     const modalRef = useRef(null)
     const modalInstanceRef = useRef(null)
+
     const modalMontaRef = useRef(null)
     const modalMontaInstanceRef = useRef(null)
+
     const modalInseminacionRef = useRef(null)
     const modalInseminacionInstanceRef = useRef(null)
+
     const modalColectaRef = useRef(null)
     const modalColectaInstanceRef = useRef(null)
 
@@ -69,80 +75,56 @@ const CrudReproducciones = () => {
         }
     }
 
-    const columnsTable = [
-        { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '60px' },
-        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
-        {
-            name: 'Tipo', selector: row => {
-                const tieneMontas = row.montas?.length > 0
-                const tieneInseminaciones = row.inseminaciones?.length > 0
-                if (tieneMontas && tieneInseminaciones) return 'Monta Y Inseminación'
-                if (tieneMontas) return 'Monta'
-                if (tieneInseminaciones) return 'Inseminacion'
-                return row.TipoReproduccion // si no tiene ninguna aún, muestra el original
-            }
-        },
-        { name: 'Activo', selector: row => row.Activo, sortable: true, width: '80px' },
-        {
-            name: 'Montas',
-            width: '100px',
-            cell: row => (
-                <span
-                    className="badge bg-warning text-dark"
-                    style={{ cursor: 'pointer', fontSize: '13px' }}
-                    title="Ver montas"
-                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })}
-                >
-                    🐷 {row.montas?.length || 0}
-                </span>
-            )
-        },
-        {
-            name: 'Inseminaciones',
-            width: '120px',
-            cell: row => (
-                <span
-                    className="badge bg-primary"
-                    style={{ cursor: 'pointer', fontSize: '13px' }}
-                    title="Ver inseminaciones"
-                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda } })}
-                >
-                    💉 {row.inseminaciones?.length || 0}
-                </span>
-            )
-        },
-        {
-            name: 'Calendario',
-            width: '100px',
-            cell: row => (
-                <button
-                    className="btn btn-sm btn-outline-info"
-                    title="Agregar Calendario"
-                    style={{ padding: '2px 6px', fontSize: '12px' }}
-                    onClick={() => handleAgregarCalendario(row)}
-                >
-                    📅
-                </button>
-            )
-        },
-        {
-            name: 'Acciones',
-            width: '100px',
-            cell: row => (
-                <div className="d-flex gap-1 align-items-center">
-                    <button className="btn btn-sm btn-info" title="Editar"
-                        onClick={() => handleEdit(row)}>
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
-                    <button className="btn btn-sm btn-danger" title="Eliminar"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            )
-        }
-    ]
+    // ========================
+    // CALENDARIO
+    // ========================
+    const handleAgregarCalendario = async (row) => {
 
+        const todasFechas = [
+            ...((row.montas || []).map(m => m.Fec_hora)),
+            ...((row.inseminaciones || []).map(i => i.Fec_hora))
+        ]
+        const fecha = todasFechas.length
+            ? todasFechas.sort()[0].split('T')[0]
+            : ''
+
+        // ✅ Verificar si ya existe un calendario para esta reproducción
+        try {
+            const calRes = await apiAxios.get(`/calendario/reproduccion/${row.Id_Reproduccion}`)
+            if (calRes.data) {
+                // Ya existe → abrir en modo edición para actualizar fechas reales
+                setCalendarioEdit(calRes.data)
+                setCalendarioData(null)
+            } else {
+                // No existe → abrir en modo creación
+                setCalendarioEdit(null)
+                setCalendarioData({
+                    Id_Reproduccion: row.Id_Reproduccion,
+                    Fecha_Servicio: fecha
+                })
+            }
+        } catch (error) {
+            // Si hay error, abrir en modo creación por defecto
+            setCalendarioEdit(null)
+            setCalendarioData({
+                Id_Reproduccion: row.Id_Reproduccion,
+                Fecha_Servicio: fecha
+            })
+        }
+
+        abrirModal(modalCalendarioRef, modalCalendarioInstanceRef)
+    }
+
+    const hideModalCalendario = async () => {
+        setCalendarioData(null)
+        setCalendarioEdit(null)
+        cerrarModal(modalCalendarioInstanceRef)
+        await getAllReproducciones()
+    }
+
+    // ========================
+    // MODALES
+    // ========================
     const abrirModal = (ref, instanceRef) => {
         if (!instanceRef.current) {
             instanceRef.current = new bootstrap.Modal(ref.current)
@@ -170,6 +152,117 @@ const CrudReproducciones = () => {
         await getAllReproducciones()
     }
 
+    const handleToggleActivo = async (row) => {
+        const accion = row.Activo === 'S' ? 'inactivar' : 'activar'
+        const result = await MySwal.fire({
+            title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} reproducción?`,
+            text: `La reproducción #${row.Id_Reproduccion} de la cerda "${row.porcino?.Nom_Porcino}" será ${accion === 'activar' ? 'activada' : 'inactivada'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: accion === 'activar' ? '#28a745' : '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        })
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.patch(`/reproducciones/${row.Id_Reproduccion}/toggle-activo`)
+                MySwal.fire({
+                    icon: 'success',
+                    title: 'Actualizado',
+                    text: `Reproducción ${accion === 'activar' ? 'activada' : 'inactivada'} correctamente`,
+                    timer: 1500,
+                    showConfirmButton: false
+                })
+                getAllReproducciones()
+            } catch (error) {
+                MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
+            }
+        }
+    }
+
+    const columnsTable = [
+        { name: 'Id', selector: row => row.Id_Reproduccion, sortable: true, width: '60px' },
+        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
+        {
+            name: 'Tipo', selector: row => {
+                const tieneMontas = row.montas?.length > 0
+                const tieneInseminaciones = row.inseminaciones?.length > 0
+                if (tieneMontas && tieneInseminaciones) return 'Monta e Inseminación'
+                if (tieneMontas) return 'Monta'
+                if (tieneInseminaciones) return 'Inseminacion'
+                return row.TipoReproduccion
+            }
+        },
+        {
+            name: 'Activo',
+            width: '110px',
+            cell: row => (
+                <span
+                    className={`badge ${row.Activo === 'S' ? 'bg-success' : 'bg-secondary'}`}
+                    style={{ cursor: 'pointer', fontSize: '12px' }}
+                    title={row.Activo === 'S' ? 'Clic para inactivar' : 'Clic para activar'}
+                    onClick={() => handleToggleActivo(row)}
+                >
+                    {row.Activo === 'S' ? '✅ Activo' : '⛔ Inactivo'}
+                </span>
+            )
+        },
+        {
+            name: 'Montas',
+            width: '100px',
+            cell: row => (
+                <span
+                    className="badge bg-warning text-dark"
+                    style={{ cursor: 'pointer', fontSize: '13px' }}
+                    title="Ver montas"
+                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Activo } })}
+                >
+                    🐷 {row.montas?.length || 0}
+                </span>
+            )
+        },
+        {
+            name: 'Inseminaciones',
+            width: '140px',
+            cell: row => (
+                <span
+                    className="badge bg-primary"
+                    style={{ cursor: 'pointer', fontSize: '13px' }}
+                    title="Ver inseminaciones"
+                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Activo } })}
+                >
+                    💉 {row.inseminaciones?.length || 0}
+                </span>
+            )
+        },
+
+        {
+            name: 'Acciones',
+            width: '140px',
+            cell: row => (
+                <div className="d-flex gap-1 align-items-center">
+                    <button
+                        className="btn btn-sm btn-success"
+                        title="Calendario"
+                        onClick={() => handleAgregarCalendario(row)}
+                    >
+                        📅
+                    </button>
+
+                    <button className="btn btn-sm btn-info" title="Editar"
+                        onClick={() => handleEdit(row)}>
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                    <button className="btn btn-sm btn-danger" title="Eliminar"
+                        onClick={() => handleDelete(row)}>
+                        <i className="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            )
+        }
+    ]
+
     const onReproduccionCreada = ({ tipo, Id_Reproduccion, Id_Porcino }) => {
         setModalEncadenado({ tipo, Id_Reproduccion, Id_Porcino })
         setTimeout(() => {
@@ -187,26 +280,6 @@ const CrudReproducciones = () => {
             Id_colecta
         })
         setTimeout(() => abrirModal(modalInseminacionRef, modalInseminacionInstanceRef), 400)
-    }
-
-    const handleAgregarCalendario = (row) => {
-    const fecha =
-    row.inseminaciones?.[0]?.Fec_hora?.split('T')[0] ||
-    row.montas?.[0]?.Fec_hora?.split('T')[0];
-
-
-
-        setCalendarioData({
-            Id_Reproduccion: row.Id_Reproduccion,
-            Fecha_Servicio: fecha || ''
-        })
-        abrirModal(modalCalendarioRef, modalCalendarioInstanceRef)
-    }
-
-    const hideModalCalendario = async () => {
-        setCalendarioData(null)
-        cerrarModal(modalCalendarioInstanceRef)
-        await getAllReproducciones()
     }
 
     const hideModalMonta = async () => {
@@ -251,11 +324,12 @@ const CrudReproducciones = () => {
             </div>
 
             <DataTable
-                title="Reproducciones"
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Reproducciones</h4>}
                 columns={columnsTable}
                 data={filteredReproducciones}
                 keyField="Id_Reproduccion"
-                pagination highlightOnHover striped
+                pagination
+                customStyles={customTableStyles}
                 noDataComponent="No hay reproducciones registradas"
             />
 
@@ -286,19 +360,30 @@ const CrudReproducciones = () => {
                 <div className="modal-dialog modal-lg">
                     <div className="modal-content">
                         <div className="modal-header bg-info bg-opacity-10">
-                            <h5 className="modal-title">📅 Agregar Calendario</h5>
+                            <h5 className="modal-title">
+                                {calendarioEdit ? '📅 Actualizar Calendario' : '📅 Agregar Calendario'}
+                            </h5>
                             <button type="button" className="btn-close"
                                 onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
                         </div>
+
                         <div className="modal-body">
-                            {CalendarioData && (
+                            {calendarioEdit && (
                                 <CalendarioForm
-                                    key={CalendarioData.Id_Reproduccion}
+                                    key={`edit-${calendarioEdit.Id_Calendario}`}
+                                    calendarioEdit={calendarioEdit}
+                                    hideModal={hideModalCalendario}
+                                    reload={getAllReproducciones}
+                                />
+                            )}
+                            {!calendarioEdit && calendarioData && (
+                                <CalendarioForm
+                                    key={`new-${calendarioData.Id_Reproduccion}`}
                                     hideModal={hideModalCalendario}
                                     reload={getAllReproducciones}
                                     preloaded={{
-                                        Id_Reproduccion: CalendarioData.Id_Reproduccion,
-                                        Fecha_Servicio: CalendarioData.Fecha_Servicio
+                                        Id_Reproduccion: calendarioData.Id_Reproduccion,
+                                        Fecha_Servicio: calendarioData.Fecha_Servicio
                                     }}
                                 />
                             )}

@@ -1,9 +1,10 @@
 import express from 'express';
-import { getAllCalendario, getCalendario, createCalendario, updateCalendario, deleteCalendario } from '../controllers/CalendarioController.js';
+import { getAllCalendario, getCalendario, createCalendario, updateCalendario, deleteCalendario, getCalendarioByReproduccion } from '../controllers/CalendarioController.js';
 
 const router = express.Router();
 
 router.get('/', getAllCalendario);
+router.get('/reproduccion/:idReproduccion', getCalendarioByReproduccion);
 router.get('/:id', getCalendario);
 router.post('/', createCalendario);
 router.put('/:id', updateCalendario);
