@@ -224,7 +224,7 @@ const CrudReproducciones = () => {
         },
         {
             name: 'Inseminaciones',
-            width: '120px',
+            width: '140px',
             cell: row => (
                 <span
                     className="badge bg-primary"
@@ -239,7 +239,7 @@ const CrudReproducciones = () => {
 
         {
             name: 'Acciones',
-            width: '100px',
+            width: '140px',
             cell: row => (
                 <div className="d-flex gap-1 align-items-center">
                     <button
