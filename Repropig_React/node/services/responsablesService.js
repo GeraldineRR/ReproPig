@@ -14,6 +14,9 @@ class ResponsablesService {
     }
 
     async create(data) {
+        if (data.Password) {
+            data.Password = await bcrypt.hash(data.Password, 10);
+        }
         return await ResponsablesModel.create(data)
     }
 

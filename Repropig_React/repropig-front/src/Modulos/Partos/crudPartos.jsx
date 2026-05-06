@@ -127,23 +127,9 @@ const CrudPartos = () => {
             )
         },
         {
-            name: "Reproducción",
-            selector: row => row.reproduccion
-                ? `#${row.reproduccion.Id_Reproduccion}`
-                : '—',
-            width: '120px'
-        },
-        {
             name: "Acciones",
             cell: row => (
-                <div className="d-flex gap-2">
-                    <button
-                        className="btn btn-sm bg-info"
-                        title="Editar Parto"
-                        onClick={() => handleEdit(row)}
-                    >
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
+                <div className="d-flex gap-2 flex-nowrap">
                     <button
                         className="btn btn-sm text-white"
                         style={{ backgroundColor: '#362D34' }}
@@ -160,15 +146,23 @@ const CrudPartos = () => {
                     >
                         📝
                     </button>
+                    <button
+                        className="btn btn-sm bg-info"
+                        title="Editar Parto"
+                        onClick={() => handleEdit(row)}
+                    >
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
                 </div>
-            )
+            ),
+            minWidth: "150px"
         },
     ];
 
     const filtered = partos.filter(row => {
         const text = filterText.toLowerCase().trim();
 
-        const porcino = row.porcino?.Nom_Porcino?.toLowerCase().trim() || "";
+        const porcino = row.porcinos?.Nom_Porcino?.toLowerCase().trim() || "";
         const observaciones = row.Observaciones?.toLowerCase().trim() || "";
         const fechaFin = row.Fec_fin
             ? new Date(row.Fec_fin).toLocaleDateString()
@@ -221,6 +215,7 @@ const CrudPartos = () => {
                     pagination
                     highlightOnHover
                     striped
+                    responsive
                 />
 
                 {/* Modal */}
