@@ -9,7 +9,7 @@ class Seguimiento_CerdaService {
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [
-                { model: PorcinoModel, as: 'porcinos' },
+                { model: PorcinoModel, as: 'porcino' },
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
                 { model: reproduccionesModel, as: 'reproduccion' },

@@ -348,7 +348,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                                 type="text"
                                 className="form-control"
                                 style={{ backgroundColor: "#E3E3E3" }}
-                                value={`Parto # ${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcinos?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin.split('T')[0] || ''}`}
+                                value={`Parto # ${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcino?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin.split('T')[0] || ''}`}
                                 readOnly
                             />
                         </div>
@@ -415,7 +415,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         <option value="">Selecciona...</option>
                         {partos.map((parto) => (
                             <option key={parto.Id_parto} value={parto.Id_parto}>
-                                Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}
+                                Parto #{parto.Id_parto} - {parto.porcino?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}
                             </option>
                         ))}
                     </select>

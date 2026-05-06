@@ -38,9 +38,9 @@ export default function Sidebar({ isOpen }) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${animalesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/porcinos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
               <NavLink to="/razas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
-              <NavLink to="/crias" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Crías</NavLink>
+              <NavLink to="/porcinos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
+              {/* <NavLink to="/crias" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Crías</NavLink> */}
             </div>
           </div>
         </div>
@@ -59,9 +59,9 @@ export default function Sidebar({ isOpen }) {
               <NavLink to="/montas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas</NavLink>
               <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas</NavLink>
               <NavLink to="/inseminaciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
-              <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
               <NavLink to="/partos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
-              <NavLink to="/segcamada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seg. Camada</NavLink>
+              <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
+              {/* <NavLink to="/segcamada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seg. Camada</NavLink> */}
             </div>
           </div>
         </div>

@@ -62,7 +62,7 @@ SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: '
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
-reproduccionesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Reproduccion', as: 'seguimientos' })
+reproduccionesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Reproduccion', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
 
 reproduccionesModel.hasMany(PartosModel, { foreignKey: 'Id_Reproduccion', as: 'partos' })
@@ -103,7 +103,7 @@ app.use('/api/Partos', PartosRoutes)
 app.use('/api/responsables', responsablesRoutes)
 app.use('/api/cria', criaRoutes)
 app.use('/api/segcamada', segcamadaRoutes)
-app.use('/api/seguimiento_cerda', Seguimiento_CerdaRoutes)
+app.use('/api/Seguimiento_Cerda', Seguimiento_CerdaRoutes)
 app.use('/api/auth', authRoutes)
 app.use('/api/calendario', calendarioRoutes)
 
@@ -123,6 +123,7 @@ app.use((err, req, res, next) => {
 try {
   await db.authenticate()
   console.log('✅ Conexión a la base de datos exitosa')
+
   await db.sync()
   console.log('✅ Base de datos sincronizada')
 } catch (error) {

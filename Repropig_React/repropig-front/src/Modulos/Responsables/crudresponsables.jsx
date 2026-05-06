@@ -90,13 +90,12 @@ const newlistResponsables = responsables.filter(responsable => {
 
     const hideModalRegister = () => {
         document.getElementById('closeModalRegister').click();
-        getALLResponsables();
     }
 
     return (
         <>
             <div className="container mt-5">
-                <div className="row d-flex justify-content-between">
+                <div className="row d-flex mb-3 justify-content-between">
                     <div className="col-4">
                         <input className="form-control" placeholder="Buscar..."
                             value={filterText}

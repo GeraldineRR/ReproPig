@@ -25,16 +25,23 @@ const CrudSegcamada = () => {
         {
             name: 'Fecha Programada',
             selector: row => {
-                const fecFin = row.crias?.partos?.Fec_fin;
-                console.log(row)
-                const dia = row.Dia_Programado;
+                try {
+                    const fecFin = row.crias?.partos?.Fec_fin;
+                    const dia = row.Dia_Programado;
 
-                if (!fecFin || !dia) return '—';
+                    if (!fecFin || !dia) return '—';
 
-                const [year, month, day] = fecFin.split('-');
-                const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
+                    const [year, month, dayStr] = fecFin.split('-');
+                    const day = parseInt(dayStr, 10);
+                    if (isNaN(day)) return '—';
+                    
+                    const fecha = new Date(year, month - 1, day + (dia - 1));
+                    if (isNaN(fecha.getTime())) return '—';
 
-                return fecha.toISOString().split('T')[0].split('-').reverse().join('/');
+                    return fecha.toISOString().split('T')[0].split('-').reverse().join('/');
+                } catch (e) {
+                    return '—';
+                }
             }
         },
 
@@ -113,7 +120,7 @@ const CrudSegcamada = () => {
 
         let matchesParto = true
         if (partoIdParams) {
-            matchesParto = seg.crias?.Id_parto?.toString() === partoIdParams
+            matchesParto = String(seg.crias?.Id_parto) === String(partoIdParams) || String(seg.crias?.partos?.Id_parto) === String(partoIdParams);
         }
 
         let matchesDia = true

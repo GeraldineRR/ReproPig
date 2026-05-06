@@ -92,7 +92,7 @@ const CrudCrias = () => {
 
         const parto = cria.Id_parto?.toString().toLowerCase() || ''
 
-        const estado = cria.Estado.toLowerCase()
+        const estado = cria.Estado?.toLowerCase() || ''
 
         const sexoBase = cria.Sexo?.trim().toLowerCase()
         let sexo = ''

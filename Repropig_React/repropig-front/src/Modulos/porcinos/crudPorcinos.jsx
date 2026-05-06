@@ -378,7 +378,7 @@ const CrudPorcinos = () => {
         { name: 'Nombre', selector: row => row.Nom_Porcino, },
         { name: 'Chapeta', selector: row => row.Num_Chapeta, },
         { name: 'Placa Sena', selector: row => row.Plac_Sena_Porcino, },
-        { name: 'Raza', selector: row => row.razas?.Nom_Raza || '—', sortable: false, },
+        { name: 'Raza', selector: row => row.raza?.Nom_Raza || '—', sortable: false, },
         {
             name: 'Sexo', selector: row => {
                 const sexo = row.Gen_Porcino?.trim().toLowerCase()

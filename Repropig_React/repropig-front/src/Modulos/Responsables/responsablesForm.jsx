@@ -60,29 +60,8 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
             Password
         };
 
-        // 🔹 CREAR
-        if (textformbutton === 'Crear Responsable') {
-            try {
-
-                await apiAxios.post('/responsables', formData);
-
-                MySwal.fire({
-                    title: 'Creado',
-                    text: 'Responsable creado correctamente',
-                    icon: 'success',
-                });
-
-                limpiarFormulario();
-                hidemodal();
-
-            } catch (error) {
-                console.error('Error al crear:', error);
-                alert(error.message);
-            }
-        }
-
         // 🔹 ACTUALIZAR
-        else if (textformbutton === 'Actualizar Responsable') {
+        if (textformbutton === 'Actualizar Responsable') {
             try {
 
                 await apiAxios.put(
