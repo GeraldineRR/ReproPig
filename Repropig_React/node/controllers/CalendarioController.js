@@ -11,7 +11,6 @@ export const getAllCalendario = async (req, res) => {
     }
 }
 
-
 export const getCalendario = async (req, res) => {
     try {
         const Calendario = await CalendarioService.getById(req.params.id)
@@ -22,17 +21,32 @@ export const getCalendario = async (req, res) => {
     }
 }
 
-
 export const createCalendario = async (req, res) => {
     try {
-        const Calendario = await CalendarioService.create(req.body)
-        res.status(201).json({ message: 'Calendario creado', Calendario })
+        const { Id_Reproduccion } = req.body
+
+        if (!Id_Reproduccion) {
+            return res.status(400).json({
+                message: "Id_Reproduccion es obligatorio"
+            })
+        }
+
+        // const existe = await CalendarioService.findByReproduccion(Id_Reproduccion)
+
+        // if (existe) {
+        //     return res.status(400).json({
+        //         message: "Ya existe calendario para esta reproducción"
+        //     })
+        // }
+
+        const data = await CalendarioService.create(req.body)
+        res.status(201).json(data)
 
     } catch (error) {
-        res.status(400).json({ message: error.message })
+        console.error(error) // 👈 IMPORTANTE
+        res.status(500).json({ message: error.message })
     }
 }
-
 
 export const updateCalendario = async (req, res) => {
     try {
@@ -44,6 +58,15 @@ export const updateCalendario = async (req, res) => {
     }
 }
 
+
+export const getCalendarioByReproduccion = async (req, res) => {
+    try {
+        const calendario = await CalendarioService.findByReproduccion(req.params.idReproduccion)
+        res.status(200).json(calendario) // devuelve null si no existe
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
 
 export const deleteCalendario = async (req, res) => {
     try {

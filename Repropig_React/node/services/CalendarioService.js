@@ -1,16 +1,23 @@
 import CalendarioModel from "../models/CalendarioModel.js";
 import reproduccionesModel from "../models/reproduccionesModel.js";
-const INTERVALOS_RCL = [21, 42, 63, 84, 105];
- 
-function calcularProyectados(fechaServicio) {
+
+function calcularEventos(fechaServicio) {
     const base = new Date(fechaServicio + 'T00:00:00');
-    return INTERVALOS_RCL.map(dias => {
+
+    const sumar = (dias) => {
         const d = new Date(base);
         d.setDate(d.getDate() + dias);
         return d;
-    });
+    };
+
+    return {
+        rc1: sumar(21),
+        rc2: sumar(42),
+        cambio_alimento: sumar(100),
+        dia_107: sumar(107),
+        parto: sumar(114)
+    };
 }
- 
 
 class CalendarioService {
     async getAll() {
@@ -18,60 +25,63 @@ class CalendarioService {
             include: [
                 {
                     model: reproduccionesModel,
-                    as: 'reproducciones'
+                    as: 'reproduccion'
                 },
             ]
         })
     }
-    
-
-
-    
 
     async getById(id) {
-        const Calendario = await CalendarioModel.findByPk(id,{
+        const Calendario = await CalendarioModel.findByPk(id, {
             include: [
                 {
                     model: reproduccionesModel,
-                    as: 'reproducciones'
+                    as: 'reproduccion'
                 }
             ]
         })
         if (!Calendario) throw new Error('Calendario no encontrado')
         return Calendario
-        
+
     }
 
-        async create(data) {
-        const { Id_Reproduccion, Fecha_Servicio } = data
- 
-        const [proy1, proy2, proy3, proy4, proy5] = calcularProyectados(Fecha_Servicio)
- 
+    async create(data) {
+        const { Id_Reproduccion, Fecha_Servicio } = data;
+
+        const eventos = calcularEventos(Fecha_Servicio);
+
         return await CalendarioModel.create({
             Id_Reproduccion,
             Fecha_Servicio,
-            'proyectado-1rcl': proy1,
-            'proyectado-2rcl': proy2,
-            'proyectado-3rcl': proy3,
-            'proyectado-4rcl': proy4,
-            'proyectado-5rcl': proy5,
-        })
+
+            rc1: eventos.rc1,
+            rc2: eventos.rc2,
+            cambio_alimento: eventos.cambio_alimento,
+            dia_107: eventos.dia_107,
+            parto: eventos.parto,
+        });
     }
- 
+
     async update(id, data) {
         const result = await CalendarioModel.update(data, { where: { Id_Calendario: id } })
         const updated = result[0]
- 
+
         if (updated === 0) throw new Error('Calendario no encontrado o sin cambios')
         return true
     }
- 
+
+    async findByReproduccion(Id_Reproduccion) {
+        return await CalendarioModel.findOne({
+            where: { Id_Reproduccion }
+        })
+    }
+
     async delete(id) {
         const deleted = await CalendarioModel.destroy({ where: { Id_Calendario: id } })
- 
+
         if (!deleted) throw new Error('Calendario no encontrado')
         return true
     }
 }
- 
-export default new CalendarioService()
+
+export default new CalendarioService()

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig"
 
 import Swal from 'sweetalert2'
@@ -15,6 +16,7 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
     const [Fecha_Muerte, setFechaMuerte] = useState('')
     const [partos, setPartos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
+    const { id: partoIdParams } = useParams()
 
     const handlePartoChange = async (value) => {
     setIdParto(value)
@@ -60,8 +62,11 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
             setTextFormButton("Actualizar")
         } else {
             resetForm()
+            if (partoIdParams) {
+                handlePartoChange(partoIdParams)
+            }
         }
-    }, [criaEdit])
+    }, [criaEdit, partoIdParams])
 
     const resetForm = () => {
         setIdParto('')
@@ -147,10 +152,10 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
 
             <div className="mb-3">
                 <label htmlFor="Id_parto" className="form-label">Parto</label>
-                <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange (e.target.value)} required>
+                <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange (e.target.value)} required disabled={!!partoIdParams && !criaEdit}>
                     <option value="">Selecciona...</option>
                     {partos.map((parto) => (
-                        <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}</option>
+                        <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}</option>
                     ))}
                 </select>
             </div>

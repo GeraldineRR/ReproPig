@@ -149,6 +149,21 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         try {
             if (textFormButton === 'Agregar Monta') {
                 await apiAxios.post('/monta/', data);
+
+                // ✅ Auto-crear calendario si es la primera monta/inseminación
+                try {
+                    const calRes = await apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`);
+                    if (!calRes.data) {
+                        // No existe calendario → crearlo automáticamente
+                        await apiAxios.post('/calendario/', {
+                            Id_Reproduccion,
+                            Fecha_Servicio: Fec_hora
+                        });
+                    }
+                } catch (calErr) {
+                    console.error('Error al auto-crear calendario:', calErr);
+                }
+
                 MySwal.fire('OK', 'Monta creada', 'success');
             } else {
                 await apiAxios.put('/monta/' + rowToEdit.Id_Monta, data);
