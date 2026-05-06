@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import ColectaForm from "./colectaForm.jsx";
@@ -7,6 +8,9 @@ import WithReactContent from "sweetalert2-react-content";
 
 const CrudColecta = () => {
     const MySwal = WithReactContent(Swal)
+    const navigate = useNavigate()
+    const location = useLocation()
+    const filtroDesdeInseminacion = location.state || null // { Id_colecta }
     const [colecta, setColecta] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
@@ -101,7 +105,8 @@ const CrudColecta = () => {
 
     const getAllColectas = async () => {
         const response = await apiAxios.get('/colectas');
-        setColecta(response.data);
+        const sortedData = response.data.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
+        setColecta(sortedData);
     };
 
     const getResponsables = async () => {
@@ -129,6 +134,20 @@ const CrudColecta = () => {
 
     return (
         <div className="container mt-5">
+
+            {/* Banner de filtro activo */}
+            {filtroDesdeInseminacion && (
+                <div className="alert alert-success d-flex justify-content-between align-items-center py-2 mb-3">
+                    <span>
+                        🧪 Mostrando colecta <strong>#{filtroDesdeInseminacion.Id_colecta}</strong>
+                    </span>
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Inseminaciones
+                    </button>
+                </div>
+            )}
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
                     <input className="form-control" placeholder="🔍 Buscar..."
@@ -143,7 +162,10 @@ const CrudColecta = () => {
                 </div>
             </div>
 
-            <DataTable title="Colectas" columns={columnsTable} data={newListcolecta}
+            <DataTable title="Colectas" columns={columnsTable}
+                data={newListcolecta.filter(c =>
+                    !filtroDesdeInseminacion || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
+                )}
                 keyField="Id_colecta" pagination highlightOnHover striped />
 
             <div className="modal fade" id="exampleModal" tabIndex="-1"

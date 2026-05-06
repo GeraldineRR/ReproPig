@@ -21,7 +21,7 @@ const almacenamiento = multer.diskStorage({
 
 const Upload = multer({ storage: almacenamiento });
 
-router.get('/', verificarToken, getAllResponsables)
+router.get('/', getAllResponsables)
 router.get('/:id', verificarToken, soloInstructor, getResponsables)
 router.post('/', verificarToken, soloInstructor, createResponsables)
 router.put('/:id', verificarToken, soloInstructor, updateResponsables)
