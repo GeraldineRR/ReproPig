@@ -159,7 +159,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
                     value={Fecha_Servicio}
                     onChange={(e) => setFecha_Servicio(e.target.value)}
                     required
-                    disabled={!!calendarioEdit || !!preloaded?.Fecha_Servicio}
+                    disabled={!!calendarioEdit || !!preloaded?.Fecha_Servicio} readOnly
                 />
             </div>
 
