@@ -42,6 +42,8 @@ PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })
 montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(montaModel, { foreignKey: 'Id_Porcino', as: 'montas' })
 
+montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerdo', as: 'cerdo' })
+
 inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
 

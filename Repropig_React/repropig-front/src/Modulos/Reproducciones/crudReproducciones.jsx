@@ -188,7 +188,7 @@ const CrudReproducciones = () => {
             name: 'Tipo', selector: row => {
                 const tieneMontas = row.montas?.length > 0
                 const tieneInseminaciones = row.inseminaciones?.length > 0
-                if (tieneMontas && tieneInseminaciones) return 'Monta Y Inseminación'
+                if (tieneMontas && tieneInseminaciones) return 'Monta e Inseminación'
                 if (tieneMontas) return 'Monta'
                 if (tieneInseminaciones) return 'Inseminacion'
                 return row.TipoReproduccion
@@ -216,7 +216,7 @@ const CrudReproducciones = () => {
                     className="badge bg-warning text-dark"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
                     title="Ver montas"
-                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Activo: row.Activo } })}
+                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Activo } })}
                 >
                     🐷 {row.montas?.length || 0}
                 </span>
@@ -224,13 +224,13 @@ const CrudReproducciones = () => {
         },
         {
             name: 'Inseminaciones',
-            width: '120px',
+            width: '140px',
             cell: row => (
                 <span
                     className="badge bg-primary"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
                     title="Ver inseminaciones"
-                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Activo: row.Activo } })}
+                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Activo } })}
                 >
                     💉 {row.inseminaciones?.length || 0}
                 </span>
@@ -239,7 +239,7 @@ const CrudReproducciones = () => {
 
         {
             name: 'Acciones',
-            width: '100px',
+            width: '140px',
             cell: row => (
                 <div className="d-flex gap-1 align-items-center">
                     <button

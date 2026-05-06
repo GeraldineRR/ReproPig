@@ -9,11 +9,12 @@ import WithReactContent from "sweetalert2-react-content";
 const CrudInseminacion = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
-    const location = useLocation() // ✅ agregar
-    const filtroDesdeReproduccion = location.state || null // ✅ { Id_Reproduccion, Id_Porcino }
+    const location = useLocation()
+    const filtroDesdeReproduccion = location.state || null // { Id_Reproduccion, Id_Porcino, Nom_Porcino }
 
     const [inseminaciones, setInseminaciones] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [colectas, setColectas] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -65,7 +66,14 @@ const CrudInseminacion = () => {
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
         { name: 'Cantidad', selector: row => row.cantidad },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
-        { name: 'Id Colecta', selector: row => row.Id_colecta },
+        { 
+            name: 'Cerdo (Colecta)', 
+            selector: row => {
+                if (!row.Id_colecta) return '—';
+                const col = colectas.find(c => c.Id_colecta == row.Id_colecta);
+                return col ? `${col.porcino?.Nom_Porcino || `Cerdo #${col.Id_Porcino}`} (#${row.Id_colecta})` : `#${row.Id_colecta}`;
+            }
+        },
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
         {
@@ -83,7 +91,7 @@ const CrudInseminacion = () => {
                     {row.Id_colecta && (
                         <button className="btn btn-sm btn-success"
                             title="Ver Colecta"
-                            onClick={() => navigate('/colectas')}>
+                            onClick={() => navigate('/colectas', { state: { Id_colecta: row.Id_colecta } })}>
                             🧪
                         </button>
                     )}
@@ -95,12 +103,23 @@ const CrudInseminacion = () => {
     useEffect(() => {
         getAllInseminaciones();
         getResponsables();
+        getColectas();
     }, []);
 
     const getAllInseminaciones = async () => {
         const response = await apiAxios.get('/inseminacion');
-        setInseminaciones(response.data);
+        const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
+        setInseminaciones(sortedData);
     };
+
+    const getColectas = async () => {
+        try {
+            const response = await apiAxios.get('/colectas')
+            setColectas(response.data)
+        } catch (error) {
+            console.error('Error al obtener colectas:', error)
+        }
+    }
 
     const getResponsables = async () => {
         try {
@@ -128,17 +147,17 @@ const CrudInseminacion = () => {
     return (
         <div className="container mt-5">
 
-            {/* ✅ Banner de filtro activo */}
+            {/* Banner de filtro activo */}
             {filtroDesdeReproduccion && (
                 <div className="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-3">
                     <span>
-                        💉 Mostrando inseminaciones de la reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                        💉 Inseminaciones de <strong>{filtroDesdeReproduccion.Nom_Porcino || `Cerda #${filtroDesdeReproduccion.Id_Porcino}`}</strong>
+                        {' '}— Reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-dark"
-                        onClick={() => window.history.replaceState({}, '', window.location.pathname)
-                            || window.location.reload()}>
-                        ✖ Ver todas
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Reproducciones
                     </button>
                 </div>
             )}
@@ -170,7 +189,7 @@ const CrudInseminacion = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5">Nueva Inseminación</h1>
+                            <h1 className="modal-title fs-5">{rowToEdit.Id_Inseminacion ? 'Editar Inseminación' : 'Nueva Inseminación'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>

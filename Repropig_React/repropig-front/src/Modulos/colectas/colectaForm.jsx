@@ -157,113 +157,113 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                         className="form-control shadow-sm"
                         value={Fecha}
                         onChange={e => setFecha(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
                         required
                     />
                 </div>
 
-                {/* USO */}
+                {/* USO / VIABILIDAD */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">⚙️ Uso</label>
+                    <label className="form-label fw-semibold">⚙️ ¿Muestra Viable para IA?</label>
                     <select
                         className="form-select shadow-sm"
                         value={Uso_colecta}
                         onChange={e => {
                             setUso_colecta(e.target.value)
                             if (e.target.value === 'No') {
-                                setTipo(''); setId_Porcino(''); setId_Responsable([])
-                                setVolumen(''); setColor(''); setOlor('')
-                                setCant_generada(''); setCant_utilizada('')
+                                setCant_generada('0')
+                                setCant_utilizada('0')
                             }
                         }}
                         required
                     >
                         <option value="">Seleccione</option>
-                        <option value="Si">Sí</option>
-                        <option value="No">No</option>
+                        <option value="Si">Sí (Genera pajillas)</option>
+                        <option value="No">No (Muestra descartada)</option>
                     </select>
                 </div>
 
             </div>
 
-            {mostrarTodo && (
-                <>
-                    <div className="row g-3 mt-1">
+            <div className="row g-3 mt-1">
 
-                        {/* TIPO */}
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold">📌 Tipo</label>
-                            <select
-                                className="form-select shadow-sm"
-                                value={Tipo}
-                                onChange={e => { setTipo(e.target.value); setId_Porcino('') }}
-                                required
+                {/* TIPO */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📌 Tipo de Origen</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Tipo}
+                        onChange={e => { setTipo(e.target.value); setId_Porcino('') }}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        <option value="Interno">Interno (En granja)</option>
+                        <option value="Externo">Externo (Comprada)</option>
+                    </select>
+                </div>
+
+                {/* CERDO */}
+                {esInterno && (
+                    <div className="col-md-6">
+                        <label className="form-label fw-semibold">🐗 Cerdo Reproductor</label>
+                        <select
+                            className="form-select shadow-sm"
+                            value={Id_Porcino}
+                            onChange={e => setId_Porcino(e.target.value)}
+                            required
+                        >
+                            <option value="">Seleccione</option>
+                            {porcinos.map(p => (
+                                <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                                    {p.Nom_Porcino}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+            </div>
+
+            {Tipo === 'Externo' && (
+                <div className="alert alert-info mt-3 py-2">
+                    Colecta externa: Dosis seminales adquiridas de otro proveedor.
+                </div>
+            )}
+
+            {/* RESPONSABLES */}
+            <div className="mt-4">
+                <label className="form-label fw-semibold">
+                    👨‍🌾 Responsables ({Id_Responsable.length})
+                </label>
+
+                <div className="d-flex flex-wrap gap-2">
+                    {responsables.map(r => {
+                        const activo = Id_Responsable.includes(r.Id_Responsable)
+
+                        return (
+                            <span
+                                key={r.Id_Responsable}
+                                onClick={() => toggleResponsable(r.Id_Responsable)}
+                                className={`px-3 py-2 rounded-pill ${activo
+                                    ? "bg-primary text-white shadow"
+                                    : "bg-light border"
+                                    }`}
+                                style={{ cursor: "pointer", fontSize: "13px" }}
                             >
-                                <option value="">Seleccione</option>
-                                <option value="Interno">Interno</option>
-                                <option value="Externo">Externo</option>
-                            </select>
-                        </div>
+                                {r.Nombres}
+                            </span>
+                        )
+                    })}
+                </div>
+            </div>
 
-                        {/* CERDO */}
-                        {esInterno && (
-                            <div className="col-md-6">
-                                <label className="form-label fw-semibold">🐗 Cerdo</label>
-                                <select
-                                    className="form-select shadow-sm"
-                                    value={Id_Porcino}
-                                    onChange={e => setId_Porcino(e.target.value)}
-                                    required
-                                >
-                                    <option value="">Seleccione</option>
-                                    {porcinos.map(p => (
-                                        <option key={p.Id_Porcino} value={p.Id_Porcino}>
-                                            {p.Nom_Porcino}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                    </div>
-
-                    {Tipo === 'Externo' && (
-                        <div className="alert alert-info mt-3 py-2">
-                            Colecta externa: proviene de fuera de la granja
-                        </div>
-                    )}
-
-                    {/* RESPONSABLES */}
-                    <div className="mt-4">
-                        <label className="form-label fw-semibold">
-                            👨‍🌾 Responsables ({Id_Responsable.length})
-                        </label>
-
-                        <div className="d-flex flex-wrap gap-2">
-                            {responsables.map(r => {
-                                const activo = Id_Responsable.includes(r.Id_Responsable)
-
-                                return (
-                                    <span
-                                        key={r.Id_Responsable}
-                                        onClick={() => toggleResponsable(r.Id_Responsable)}
-                                        className={`px-3 py-2 rounded-pill ${activo
-                                            ? "bg-primary text-white shadow"
-                                            : "bg-light border"
-                                            }`}
-                                        style={{ cursor: "pointer", fontSize: "13px" }}
-                                    >
-                                        {r.Nombres}
-                                    </span>
-                                )
-                            })}
-                        </div>
-                    </div>
-
-                    {/* DATOS FÍSICOS */}
-                    <div className="row g-3 mt-2">
-
+            {/* DATOS FÍSICOS */}
+            <div className="row g-3 mt-2">
+                {/* Solo tiene sentido evaluar volumen, color, olor si es Interno (se extrajo ahí) */}
+                {esInterno && (
+                    <>
                         <div className="col-md-4">
-                            <label className="form-label fw-semibold">Volumen</label>
+                            <label className="form-label fw-semibold">Volumen (ml)</label>
                             <input
                                 type="number"
                                 className="form-control shadow-sm"
@@ -279,6 +279,7 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                                 className="form-control shadow-sm"
                                 value={color}
                                 onChange={e => setColor(e.target.value)}
+                                placeholder="Ej: Blanco lechoso"
                             />
                         </div>
 
@@ -289,34 +290,33 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                                 className="form-control shadow-sm"
                                 value={olor}
                                 onChange={e => setOlor(e.target.value)}
+                                placeholder="Ej: Sui generis"
                             />
                         </div>
+                    </>
+                )}
 
-                        <div className="col-md-6">
-                            <label className="form-label fw-semibold">
-                                {Tipo === 'Externo' ? 'Pajillas compradas' : 'Pajillas generadas'}
-                            </label>
+                {/* Si es viable, preguntamos por las pajillas */}
+                {Uso_colecta === 'Si' && (
+                    <div className="col-md-6 mt-3">
+                        <label className="form-label fw-semibold text-primary">
+                            {Tipo === 'Externo' ? '📦 Pajillas Compradas' : '🧪 Pajillas Generadas'}
+                        </label>
 
-                            <input
-                                type="number"
-                                className="form-control shadow-sm"
-                                value={cant_generada}
-                                onChange={e => setCant_generada(e.target.value)}
-                                placeholder={Tipo === 'Externo'
-                                    ? 'Ingrese cantidad comprada'
-                                    : 'Ingrese cantidad generada'}
-                            />
-
-                            {Tipo === 'Externo' && (
-                                <small className="text-muted">
-                                    Estas pajillas fueron compradas externamente
-                                </small>
-                            )}
-                        </div>
-
+                        <input
+                            type="number"
+                            className="form-control border-primary shadow-sm"
+                            value={cant_generada}
+                            onChange={e => setCant_generada(e.target.value)}
+                            placeholder="Cantidad total disponible"
+                            required
+                        />
+                        <small className="text-muted">
+                            Esta cantidad se usará en el stock de inseminaciones
+                        </small>
                     </div>
-                </>
-            )}
+                )}
+            </div>
 
             {/* OBSERVACIONES */}
             {Uso_colecta && (
