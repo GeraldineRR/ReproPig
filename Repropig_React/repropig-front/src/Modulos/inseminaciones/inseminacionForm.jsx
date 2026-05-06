@@ -159,6 +159,17 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const esPrellenado = !!preloaded.Id_Reproduccion
     const esEdicion = !!rowToEdit?.Id_Inseminacion
 
+    // Calcular pajillas disponibles en tiempo real para la colecta seleccionada
+    const colectaSeleccionada = colectas.find(c => c.Id_colecta == Id_colecta)
+    let pajillasDisponibles = 0
+    if (colectaSeleccionada) {
+        pajillasDisponibles = (colectaSeleccionada.cant_generada || 0) - (colectaSeleccionada.cant_utilizada || 0)
+        // Si estamos editando y seleccionamos la misma colecta original, sumamos la cantidad que ya tenía para no restarla doble
+        if (esEdicion && colectaSeleccionada.Id_colecta == rowToEdit.Id_colecta) {
+            pajillasDisponibles += Number(rowToEdit.cantidad || 0)
+        }
+    }
+
     return (
         <form onSubmit={gestionarForm} className="w-100">
 
@@ -308,11 +319,28 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                     <label className="form-label fw-semibold">🧪 Cantidad</label>
                     <input
                         type="number"
-                        className="form-control shadow-sm"
+                        className={`form-control shadow-sm ${Id_colecta && cantidad > pajillasDisponibles ? 'is-invalid' : ''}`}
                         value={cantidad}
-                        onChange={e => setCantidad(e.target.value)}
+                        onChange={e => {
+                            let val = e.target.value;
+                            // Automáticamente restringir si se pasa del máximo
+                            if (Id_colecta && val > pajillasDisponibles) val = pajillasDisponibles;
+                            setCantidad(val);
+                        }}
+                        min="1"
+                        max={Id_colecta ? pajillasDisponibles : undefined}
+                        disabled={!Id_colecta}
                         required
                     />
+                    {Id_colecta && (
+                        <small className={cantidad > pajillasDisponibles ? "text-danger fw-bold" : "text-muted"}>
+                            Disponibles: {pajillasDisponibles} pajillas
+                            {cantidad > pajillasDisponibles && " (Excede el límite)"}
+                        </small>
+                    )}
+                    {!Id_colecta && (
+                        <small className="text-muted">Seleccione una colecta primero</small>
+                    )}
                 </div>
 
             </div>
