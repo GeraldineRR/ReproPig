@@ -268,12 +268,23 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
             <div className="mb-3">
                 <label htmlFor="Id_Raza" className="form-label">Raza</label>
-                <select id="Id_Raza" className="form-control" value={Id_Raza} onChange={(e) => setRaza(e.target.value)} required>
-                    <option value="">Selecciona...</option>
-                    {razas.map((raza) => (
-                        <option key={raza.Id_Raza} value={raza.Id_Raza}>{raza.Nom_Raza}</option>
-                    ))}
-                </select>
+
+                {razas.filter((raza) => raza.Estado !== 'Inactivo').length === 0 ? (
+                    <div className="alert alert-danger" role="alert">
+                    <p>
+                        No hay razas disponibles. Registra una raza primero.
+                    </p>
+                    </div>
+                ) : (
+                    <select id="Id_Raza" className="form-control" value={Id_Raza} onChange={(e) => setRaza(e.target.value)} required>
+                        <option value="">Selecciona...</option>
+                        {razas
+                            .filter((raza) => raza.Estado !== 'Inactivo')
+                            .map((raza) => (
+                                <option key={raza.Id_Raza} value={raza.Id_Raza}> {raza.Nom_Raza} </option>
+                            ))}
+                    </select>
+                )}
             </div>
 
             <div className="mb-3">

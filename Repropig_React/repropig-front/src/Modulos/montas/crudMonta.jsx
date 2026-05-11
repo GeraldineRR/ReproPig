@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
@@ -7,6 +8,10 @@ import WithReactContent from "sweetalert2-react-content";
 
 const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
+    const navigate = useNavigate()
+    const location = useLocation()
+    const filtroDesdeReproduccion = location.state || null // { Id_Reproduccion, Id_Porcino, Nom_Porcino }
+
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
@@ -58,6 +63,7 @@ const CrudMonta = () => {
         { name: 'Id', selector: row => row.Id_Monta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fec_hora?.split('T')[0] || row.Fec_hora },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
+        { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
@@ -84,20 +90,28 @@ const CrudMonta = () => {
     }, []);
 
     const getAllMontas = async () => {
-        const response = await apiAxios.get('/monta');
-        setMontas(response.data);
-    };
+        const response = await apiAxios.get('/monta/')
+        const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
+        setMontas(sortedData)
+        console.log(sortedData)
+    }
 
     const getResponsables = async () => {
         try {
-            const response = await apiAxios.get('/responsables')
+            const response = await apiAxios.get('/responsables/')
             setResponsables(response.data)
         } catch (error) {
             console.error('Error al obtener responsables:', error)
         }
     }
 
-    const newListMontas = montas.filter(item => {
+    // ✅ Primero filtra por reproducción si viene desde Reproducciones
+    const montasFiltradas = filtroDesdeReproduccion
+        ? montas.filter(m => m.Id_Reproduccion == filtroDesdeReproduccion.Id_Reproduccion)
+        : montas
+
+    // ✅ Luego aplica el buscador sobre lo ya filtrado
+    const newListMontas = montasFiltradas.filter(item => {
         const text = filterText.toLowerCase().trim();
         const fecha = item.Fec_hora?.toString().toLowerCase() || '';
         const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || '';
@@ -107,17 +121,39 @@ const CrudMonta = () => {
 
     return (
         <div className="container mt-5">
+
+            {/* Banner de filtro activo */}
+            {filtroDesdeReproduccion && (
+                <div className="alert alert-warning d-flex justify-content-between align-items-center py-2 mb-3">
+                    <span>
+                        🐷 Montas de <strong>{filtroDesdeReproduccion.Nom_Porcino || `Cerda #${filtroDesdeReproduccion.Id_Porcino}`}</strong>
+                        {' '}— Reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                    </span>
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Reproducciones
+                    </button>
+                </div>
+            )}
+
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
                     <input className="form-control" placeholder="🔍 Buscar..."
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Monta
-                    </button>
+                    {(!filtroDesdeReproduccion || filtroDesdeReproduccion.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Monta
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="La reproducción está inactiva">
+                            Nueva Monta
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -128,12 +164,18 @@ const CrudMonta = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5">Nueva Monta</h1>
+                            <h1 className="modal-title fs-5">{rowToEdit.Id_Monta ? 'Editar Monta' : 'Nueva Monta'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>
                         <div className="modal-body">
-                            <MontaForm hideModal={hideModal} rowToEdit={rowToEdit} refreshTable={getAllMontas} />
+                            {/* ✅ Si viene filtrado, pasa preloaded al form */}
+                            <MontaForm
+                                hideModal={hideModal}
+                                rowToEdit={rowToEdit}
+                                refreshTable={getAllMontas}
+                                preloaded={filtroDesdeReproduccion || {}}
+                            />
                         </div>
                     </div>
                 </div>

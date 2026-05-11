@@ -8,9 +8,10 @@ class PorcinoService {
             include: [
                 {
                     model: RazaModel,
-                    as: 'razas'
+                    as: 'raza'
                 },
-            ]
+            ],
+            order: [['createdAt', 'DESC']]
         })
     }
 
@@ -18,7 +19,7 @@ class PorcinoService {
         const porcino = await PorcinoModel.findByPk(id,{
             include: [
                 {model : RazaModel, 
-                as: 'razas'
+                as: 'raza'
             }
             ]
         })

@@ -16,7 +16,8 @@ const PartosModel = db.define("partos", {
   Fec_inicio: {
     type: DataTypes.DATE,
   },
-   Hor_inicial: {
+
+  Hor_inicial: {
     type: DataTypes.TIME,
   },
 
@@ -33,7 +34,7 @@ const PartosModel = db.define("partos", {
   },
 
   Pes_camada: {
-    type: DataTypes.DECIMAL(10,0),
+    type: DataTypes.DECIMAL(10, 0),
   },
 
   Observaciones: {
@@ -44,11 +45,23 @@ const PartosModel = db.define("partos", {
     type: DataTypes.DATE,
   },
 
-   Hor_final: {
+  Hor_final: {
     type: DataTypes.TIME,
+  },
+
+  estado: {
+    type: DataTypes.CHAR(10),
+    allowNull: false,
+    defaultValue: "Activo",
+  },
+
+  Id_Reproduccion: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
   }
 
 }, {
   freezeTableName: true,
 })
+
 export default PartosModel

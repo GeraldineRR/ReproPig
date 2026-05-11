@@ -1,6 +1,77 @@
 import express from 'express'
 import cors from 'cors'
+import dotenv from 'dotenv'
+dotenv.config()
+
 import db from './database/db.js'
+
+// ====== Models ======
+import reproduccionesModel from './models/reproduccionesModel.js'
+import MedicamentosModel from './models/MedicamentosModel.js'
+import PorcinoModel from './models/porcinoModel.js'
+import RazaModel from './models/razaModel.js'
+import montaModel from './models/montaModel.js'
+import colectaModel from './models/colectaModel.js'
+import inseminacionModel from './models/inseminacionModel.js'
+import PartosModel from './models/PartosModel.js'
+import CriaModel from './models/criaModel.js'
+import SegcamadaModel from './models/segcamadaModel.js'
+import responsablesModel from './models/responsablesModel.js'
+import SeguimientoCerda_Model from './models/Seguimiento_CerdaModel.js'
+import CalendarioModel from './models/CalendarioModel.js'
+
+// ====== Relaciones (ANTES de importar rutas) ======
+PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'raza' })
+RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
+
+PartosModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(PartosModel, { foreignKey: 'Id_Porcino', as: 'partos' })
+
+CriaModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
+PartosModel.hasMany(CriaModel, { foreignKey: 'Id_parto', as: 'crias' })
+
+SegcamadaModel.belongsTo(CriaModel, { foreignKey: 'Id_Cria', as: 'crias' })
+CriaModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Cria', as: 'segcamada' })
+
+MedicamentosModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Medicamento', as: 'segcamada' })
+SegcamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
+
+colectaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })
+
+montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(montaModel, { foreignKey: 'Id_Porcino', as: 'montas' })
+
+montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerdo', as: 'cerdo' })
+
+inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
+
+reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
+PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
+
+reproduccionesModel.hasMany(montaModel, { foreignKey: 'Id_Reproduccion', as: 'montas' })
+reproduccionesModel.hasMany(inseminacionModel, { foreignKey: 'Id_Reproduccion', as: 'inseminaciones' })
+
+responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'seguimiento_cerda' })
+SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
+
+PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+
+MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
+SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
+
+reproduccionesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Reproduccion', as: 'seguimiento_cerda' })
+SeguimientoCerda_Model.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+
+reproduccionesModel.hasMany(PartosModel, { foreignKey: 'Id_Reproduccion', as: 'partos' })
+PartosModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+
+CalendarioModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
+reproduccionesModel.hasOne(CalendarioModel, { foreignKey: 'Id_Reproduccion', as: 'calendario' })
+
+// ====== Rutas (DESPUÉS de las relaciones) ======
 import porcinoRoutes from './routes/porcinoRoutes.js'
 import razaRoutes from './routes/razaRoutes.js'
 import MedicamentosRoutes from './routes/MedicamentosRoutes.js'
@@ -14,30 +85,13 @@ import Seguimiento_CerdaRoutes from './routes/Seguimiento_CerdaRoutes.js'
 import authRoutes from './routes/authRoutes.js'
 import criaRoutes from './routes/criaRoutes.js'
 import segcamadaRoutes from './routes/segcamadaRoutes.js'
-
-import dotenv from 'dotenv'
-dotenv.config()
-
-import reproduccionesModel from './models/reproduccionesModel.js'
-import MedicamentosModel from './models/MedicamentosModel.js'
-import PorcinoModel from './models/porcinoModel.js'
-import RazaModel from './models/razaModel.js'
-import montaModel from './models/montaModel.js'
-import colectaModel from './models/colectaModel.js'
-import inseminacionModel from './models/inseminacionModel.js'
-import PartosModel from './models/PartosModel.js'
-import CriaModel from './models/criaModel.js'
-import SegcamadaModel from './models/segcamadaModel.js'
-import Seguimiento_CerdaModel from './models/Seguimiento_CerdaModel.js'
-import responsablesModel from './models/responsablesModel.js'
-// ❌ ResponsablesModel ya no se necesita para asociaciones
+import calendarioRoutes from './routes/calendarioRoutes.js'
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
 
-// Rutas
 app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)
 app.use('/api/medicamentos', MedicamentosRoutes)
@@ -51,78 +105,36 @@ app.use('/api/cria', criaRoutes)
 app.use('/api/segcamada', segcamadaRoutes)
 app.use('/api/Seguimiento_Cerda', Seguimiento_CerdaRoutes)
 app.use('/api/auth', authRoutes)
-
-// Conexión DB
-try {
-    await db.authenticate()
-    console.log('Conexión a la base de datos exitosa')
-} catch (error) {
-    console.error('Error al conectar a la base de datos:', error)
-    process.exit(1)
-}
+app.use('/api/calendario', calendarioRoutes)
 
 app.get('/', (req, res) => {
-    res.send('Hola mundo ADSO')
+  res.send('Hola mundo ADSO')
 })
+
+app.use((err, req, res, next) => {
+  console.error('Error no controlado:', err)
+  res.status(500).json({
+    error: 'Error interno del servidor',
+    mensaje: err.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  })
+})
+
+try {
+  await db.authenticate()
+  console.log('✅ Conexión a la base de datos exitosa')
+
+  await db.sync()
+  console.log('✅ Base de datos sincronizada')
+} catch (error) {
+  console.error('❌ Error al conectar a la base de datos:', error)
+  process.exit(1)
+}
 
 const PORT = process.env.PORT || 8000
 
-// ====== Relaciones Porcino ======
-PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'razas' })
-RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
-
-// ====== Relaciones Cria ======
-CriaModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
-PartosModel.hasMany(CriaModel, { foreignKey: 'Id_parto', as: 'crias' })
-
-// ====== Relaciones Segcamada ======
-SegcamadaModel.belongsTo(CriaModel, { foreignKey: 'Id_Cria', as: 'crias' })
-CriaModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Cria', as: 'segcamada' })
-
-SegcamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
-MedicamentosModel.hasMany(SegcamadaModel, { foreignKey: 'Id_Medicamento', as: 'segcamada' })
-
-
-// ====== Relaciones Seguimiento_Cerda ======
-responsablesModel.hasMany(Seguimiento_CerdaModel, { foreignKey: 'Id_Responsable', as : 'seguimiento_cerda' })
-Seguimiento_CerdaModel.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as : 'responsable' })
-
-PorcinoModel.hasMany(Seguimiento_CerdaModel, { foreignKey: 'Id_Porcino', as : 'seguimiento_cerda' })
-Seguimiento_CerdaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as : 'porcinos' })
-
-MedicamentosModel.hasMany(Seguimiento_CerdaModel, { foreignKey: 'Id_Medicamento', as : 'seguimiento_cerda' })
-Seguimiento_CerdaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as : 'medicamentos' })
-
-
-// ====== Relaciones Parto ======
-PartosModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcinos' })
-PorcinoModel.hasMany(PartosModel, { foreignKey: 'Id_Porcino', as: 'partos' })
-
-// ====== Relaciones Colecta ======
-colectaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
-PorcinoModel.hasMany(colectaModel, { foreignKey: 'Id_Porcino', as: 'colectas' })
-// ❌ Quitadas asociaciones colecta → responsable (Id_Responsables es JSON text, no FK)
-
-// ====== Relaciones Monta ======
-montaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
-PorcinoModel.hasMany(montaModel, { foreignKey: 'Id_Porcino', as: 'montas' })
-// ❌ Quitadas asociaciones monta → responsable
-
-// ====== Relaciones Inseminacion ======
-inseminacionModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
-PorcinoModel.hasMany(inseminacionModel, { foreignKey: 'Id_Porcino', as: 'inseminaciones' })
-// ❌ Quitadas asociaciones inseminacion → responsable
-
-// ====== Relaciones Reproduccion ======
-reproduccionesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
-PorcinoModel.hasMany(reproduccionesModel, { foreignKey: 'Id_Cerda', as: 'reproducciones' })
-
-reproduccionesModel.hasMany(montaModel, { foreignKey: 'Id_Reproduccion', as: 'montas' })
-reproduccionesModel.hasMany(inseminacionModel, { foreignKey: 'Id_Reproduccion', as: 'inseminaciones' })
-
-
 app.listen(PORT, () => {
-    console.log(`Server up running in http://localhost:${PORT}`)
+  console.log(`🚀 Server running on http://localhost:${PORT}`)
 })
 
 export default app

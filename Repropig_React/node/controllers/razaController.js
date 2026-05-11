@@ -1,4 +1,5 @@
 import RazaService from "../services/razaService.js";
+import RazaModel from "../models/razaModel.js"
 
 export const getAllRazas = async (req, res) => {
     try {
@@ -22,10 +23,37 @@ export const getRaza = async (req, res) => {
 }
 
 
+export const toggleEstadoRaza = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const raza = await RazaModel.findByPk(id);
+
+        if (!raza) {
+            return res.status(404).json({ message: "Raza no encontrada" });
+        }
+
+        raza.Estado = raza.Estado === "Activo"
+            ? "Inactivo"
+            : "Activo";
+
+        await raza.save();
+
+        res.json({
+            message: "Estado actualizado",
+            Estado: raza.Estado
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 export const createRaza = async (req, res) => {
     try {
         const raza = await RazaService.create(req.body)
-        res.status(201).json({message: 'raza creado', raza})
+        res.status(201).json({message: 'raza creada', raza})
 
     } catch (error) {
         res.status(400).json({ message: error.message })

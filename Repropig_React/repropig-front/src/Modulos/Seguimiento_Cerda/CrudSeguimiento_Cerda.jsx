@@ -12,13 +12,14 @@ const crudSeguimiento_Cerda = () => {
     const [modalKey, setModalKey] = useState(0)  // ← AGREGADO
 
     const columnsTable = [
-        { name: 'Id_Seguimiento_Cerda', selector: row => row.Id_Seguimiento_Cerda },
+        { name: 'Id', selector: row => row.Id_Seguimiento_Cerda, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha },
         { name: 'Hora', selector: row => row.Hora },
-        { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Porcino', selector: row => row.Id_Porcino },
-        { name: 'Responsable', selector: row => row.Id_Responsable },
-        { name: 'Medicamento', selector: row => row.Id_Medicamento },
+        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
+        { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion || '—' },
+        { name: 'Responsable', selector: row => row.Responsables?.Nombres || '—' },
+        { name: 'Medicamento', selector: row => row.medicamentos?.Nombre || '—' },
+        { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
         {
             name: 'Acciones', cell: row => (
                 <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
@@ -72,7 +73,7 @@ const crudSeguimiento_Cerda = () => {
     return (
         <>
             <div className="container mt-5">
-                <div className="row d-flex justify-content-between">
+                <div className="row d-flex mb-3 justify-content-between">
                     <div className="col-4">
                         <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar...." />
                     </div>
@@ -90,6 +91,7 @@ const crudSeguimiento_Cerda = () => {
                     keyField="Id_Seguimiento_Cerda"
                     pagination
                     highlightOnHover
+                    pointerOnHover
                     striped
                 />
 

@@ -3,7 +3,9 @@ import RazaModel from "../models/razaModel.js"
 class RazaService {
 
     async getAll() {
-        return await RazaModel.findAll()
+        return await RazaModel.findAll({
+            order: [['createdAt', 'DESC']]
+        });
     }
 
     async getById(id) {
@@ -13,8 +15,16 @@ class RazaService {
     }
 
     async create(data) {
-        return await RazaModel.create(data)
+    const existe = await RazaModel.findOne({
+        where: { Nom_Raza: data.Nom_Raza }
+    })
+
+    if (existe) {
+        throw new Error('La raza ya existe')
     }
+
+    return await RazaModel.create(data);
+}
 
     async update(id, data) {
         const result = await RazaModel.update(data, { where: { Id_Raza: id } })

@@ -133,130 +133,211 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
     };
 
     return (
-        <form onSubmit={gestionarForm} className="col-12 col-md-8">
+        <form onSubmit={gestionarForm} className="w-100">
 
-            {/* Indicador flujo encadenado */}
+            {/* HEADER */}
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">🧫 Registro de Colecta</h5>
+                <small className="text-muted">Control de muestras reproductivas</small>
+            </div>
+
             {onColectaCreada && (
-                <div className="alert alert-success py-2 mb-3">
-                    <i className="fa-solid fa-circle-info me-2"></i>
-                    Registra la colecta. Al guardar se abrirá el formulario de inseminación.
+                <div className="alert alert-success py-2 text-center">
+                    Guarda la colecta y continuarás con inseminación
                 </div>
             )}
 
-            <div className="mb-3">
-                <label className="form-label">Fecha</label>
-                <input type="date" className="form-control" value={Fecha}
-                    onChange={e => setFecha(e.target.value)} required />
+            <div className="row g-3">
+
+                {/* FECHA */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📅 Fecha</label>
+                    <input
+                        type="date"
+                        className="form-control shadow-sm"
+                        value={Fecha}
+                        onChange={e => setFecha(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        required
+                    />
+                </div>
+
+                {/* USO / VIABILIDAD */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">⚙️ ¿Muestra Viable para IA?</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Uso_colecta}
+                        onChange={e => {
+                            setUso_colecta(e.target.value)
+                            if (e.target.value === 'No') {
+                                setCant_generada('0')
+                                setCant_utilizada('0')
+                            }
+                        }}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        <option value="Si">Sí (Genera pajillas)</option>
+                        <option value="No">No (Muestra descartada)</option>
+                    </select>
+                </div>
+
             </div>
 
-            <div className="mb-3">
-                <label className="form-label">Uso colecta</label>
-                <select className="form-select" value={Uso_colecta}
-                    onChange={e => {
-                        setUso_colecta(e.target.value)
-                        if (e.target.value === 'No') {
-                            setTipo(''); setId_Porcino(''); setId_Responsable([])
-                            setVolumen(''); setColor(''); setOlor('')
-                            setCant_generada(''); setCant_utilizada('')
-                        }
-                    }} required>
-                    <option value="">Seleccione</option>
-                    <option value="Si">Sí</option>
-                    <option value="No">No</option>
-                </select>
-            </div>
+            <div className="row g-3 mt-1">
 
-            {mostrarTodo && (
-                <>
-                    <div className="mb-3">
-                        <label className="form-label">Tipo</label>
-                        <select className="form-select" value={Tipo}
-                            onChange={e => { setTipo(e.target.value); setId_Porcino('') }} required>
+                {/* TIPO */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">📌 Tipo de Origen</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Tipo}
+                        onChange={e => { setTipo(e.target.value); setId_Porcino('') }}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        <option value="Interno">Interno (En granja)</option>
+                        <option value="Externo">Externo (Comprada)</option>
+                    </select>
+                </div>
+
+                {/* CERDO */}
+                {esInterno && (
+                    <div className="col-md-6">
+                        <label className="form-label fw-semibold">🐗 Cerdo Reproductor</label>
+                        <select
+                            className="form-select shadow-sm"
+                            value={Id_Porcino}
+                            onChange={e => setId_Porcino(e.target.value)}
+                            required
+                        >
                             <option value="">Seleccione</option>
-                            <option value="Interno">Interno</option>
-                            <option value="Externo">Externo</option>
+                            {porcinos.map(p => (
+                                <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                                    {p.Nom_Porcino}
+                                </option>
+                            ))}
                         </select>
                     </div>
+                )}
 
-                    {esInterno && (
-                        <div className="mb-3">
-                            <label className="form-label">Cerdo (Macho)</label>
-                            <select className="form-select" value={Id_Porcino}
-                                onChange={e => setId_Porcino(e.target.value)} required>
-                                <option value="">Seleccione un porcino</option>
-                                {porcinos.map(p => (
-                                    <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
+            </div>
 
-                    {Tipo === 'Externo' && (
-                        <div className="alert alert-info py-2 mb-3">
-                            <i className="fa-solid fa-circle-info me-2"></i>
-                            Colecta externa: el porcino proviene de fuera de la granja.
-                        </div>
-                    )}
-
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold">
-                            Responsables <span className="text-danger">*</span>
-                            <small className="text-muted fw-normal ms-2">
-                                ({Id_Responsable.length} seleccionado{Id_Responsable.length !== 1 ? 's' : ''})
-                            </small>
-                        </label>
-                        <div className="border rounded p-2" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                            {responsables.map(resp => (
-                                <div key={resp.Id_Responsable} className="form-check">
-                                    <input className="form-check-input" type="checkbox"
-                                        id={`resp-col-${resp.Id_Responsable}`}
-                                        checked={Id_Responsable.includes(resp.Id_Responsable)}
-                                        onChange={() => toggleResponsable(resp.Id_Responsable)} />
-                                    <label className="form-check-label" htmlFor={`resp-col-${resp.Id_Responsable}`}>
-                                        {resp.Nombres} {resp.Apellidos}
-                                        <span className="badge bg-secondary ms-2" style={{ fontSize: '0.7rem' }}>{resp.Cargo}</span>
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">Volumen</label>
-                        <input type="number" step="0.01" className="form-control" value={volumen}
-                            onChange={e => setVolumen(e.target.value)} />
-                    </div>
-                    <div className="mb-3">
-                        <label className="form-label">Color</label>
-                        <input type="text" className="form-control" value={color}
-                            onChange={e => setColor(e.target.value)} />
-                    </div>
-                    <div className="mb-3">
-                        <label className="form-label">Olor</label>
-                        <input type="text" className="form-control" value={olor}
-                            onChange={e => setOlor(e.target.value)} />
-                    </div>
-                    <div className="mb-3">
-                        <label className="form-label">Cantidad Generada de Pajillas</label>
-                        <input type="number" step="0.01" className="form-control" value={cant_generada}
-                            onChange={e => setCant_generada(e.target.value)} />
-                    </div>
-
-                </>
-            )}
-
-            {Uso_colecta && (
-                <div className="mb-3">
-                    <label className="form-label">Observaciones</label>
-                    {Uso_colecta === 'No' && (
-                        <small className="text-muted d-block mb-1">Esta colecta no será utilizada.</small>
-                    )}
-                    <textarea className="form-control" value={Observaciones}
-                        onChange={e => setObservaciones(e.target.value)} />
+            {Tipo === 'Externo' && (
+                <div className="alert alert-info mt-3 py-2">
+                    Colecta externa: Dosis seminales adquiridas de otro proveedor.
                 </div>
             )}
 
-            <input type="submit" className="btn btn-primary w-50" value={textFormButton} />
+            {/* RESPONSABLES */}
+            <div className="mt-4">
+                <label className="form-label fw-semibold">
+                    👨‍🌾 Responsables ({Id_Responsable.length})
+                </label>
+
+                <div className="d-flex flex-wrap gap-2">
+                    {responsables.map(r => {
+                        const activo = Id_Responsable.includes(r.Id_Responsable)
+
+                        return (
+                            <span
+                                key={r.Id_Responsable}
+                                onClick={() => toggleResponsable(r.Id_Responsable)}
+                                className={`px-3 py-2 rounded-pill ${activo
+                                    ? "bg-primary text-white shadow"
+                                    : "bg-light border"
+                                    }`}
+                                style={{ cursor: "pointer", fontSize: "13px" }}
+                            >
+                                {r.Nombres}
+                            </span>
+                        )
+                    })}
+                </div>
+            </div>
+
+            {/* DATOS FÍSICOS */}
+            <div className="row g-3 mt-2">
+                {/* Solo tiene sentido evaluar volumen, color, olor si es Interno (se extrajo ahí) */}
+                {esInterno && (
+                    <>
+                        <div className="col-md-4">
+                            <label className="form-label fw-semibold">Volumen (ml)</label>
+                            <input
+                                type="number"
+                                className="form-control shadow-sm"
+                                value={volumen}
+                                onChange={e => setVolumen(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="col-md-4">
+                            <label className="form-label fw-semibold">Color</label>
+                            <input
+                                type="text"
+                                className="form-control shadow-sm"
+                                value={color}
+                                onChange={e => setColor(e.target.value)}
+                                placeholder="Ej: Blanco lechoso"
+                            />
+                        </div>
+
+                        <div className="col-md-4">
+                            <label className="form-label fw-semibold">Olor</label>
+                            <input
+                                type="text"
+                                className="form-control shadow-sm"
+                                value={olor}
+                                onChange={e => setOlor(e.target.value)}
+                                placeholder="Ej: Sui generis"
+                            />
+                        </div>
+                    </>
+                )}
+
+                {/* Si es viable, preguntamos por las pajillas */}
+                {Uso_colecta === 'Si' && (
+                    <div className="col-md-6 mt-3">
+                        <label className="form-label fw-semibold text-primary">
+                            {Tipo === 'Externo' ? '📦 Pajillas Compradas' : '🧪 Pajillas Generadas'}
+                        </label>
+
+                        <input
+                            type="number"
+                            className="form-control border-primary shadow-sm"
+                            value={cant_generada}
+                            onChange={e => setCant_generada(e.target.value)}
+                            placeholder="Cantidad total disponible"
+                            required
+                        />
+                        <small className="text-muted">
+                            Esta cantidad se usará en el stock de inseminaciones
+                        </small>
+                    </div>
+                )}
+            </div>
+
+            {/* OBSERVACIONES */}
+            {Uso_colecta && (
+                <div className="mt-4">
+                    <label className="form-label fw-semibold">📝 Observaciones</label>
+                    <textarea
+                        className="form-control shadow-sm"
+                        rows="2"
+                        value={Observaciones}
+                        onChange={e => setObservaciones(e.target.value)}
+                    />
+                </div>
+            )}
+
+            {/* BOTÓN */}
+            <div className="d-grid mt-4">
+                <button className="btn btn-primary py-2 fw-semibold shadow-sm">
+                    {textFormButton}
+                </button>
+            </div>
+
         </form>
     );
 };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom"; // ✅ agregar useLocation
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import InseminacionForm from "./inseminacionForm.jsx";
@@ -9,8 +9,12 @@ import WithReactContent from "sweetalert2-react-content";
 const CrudInseminacion = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
+    const location = useLocation()
+    const filtroDesdeReproduccion = location.state || null // { Id_Reproduccion, Id_Porcino, Nom_Porcino }
+
     const [inseminaciones, setInseminaciones] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [colectas, setColectas] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -62,7 +66,14 @@ const CrudInseminacion = () => {
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
         { name: 'Cantidad', selector: row => row.cantidad },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
-        { name: 'Id Colecta', selector: row => row.Id_colecta },
+        { 
+            name: 'Cerdo (Colecta)', 
+            selector: row => {
+                if (!row.Id_colecta) return '—';
+                const col = colectas.find(c => c.Id_colecta == row.Id_colecta);
+                return col ? `${col.porcino?.Nom_Porcino || `Cerdo #${col.Id_Porcino}`} (#${row.Id_colecta})` : `#${row.Id_colecta}`;
+            }
+        },
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
         {
@@ -77,11 +88,10 @@ const CrudInseminacion = () => {
                         onClick={() => handleDelete(row)}>
                         <i className="fa-solid fa-trash"></i>
                     </button>
-                    {/* ✅ Ver Colecta asociada */}
                     {row.Id_colecta && (
                         <button className="btn btn-sm btn-success"
                             title="Ver Colecta"
-                            onClick={() => navigate('/colectas')}>
+                            onClick={() => navigate('/colectas', { state: { Id_colecta: row.Id_colecta } })}>
                             🧪
                         </button>
                     )}
@@ -93,12 +103,23 @@ const CrudInseminacion = () => {
     useEffect(() => {
         getAllInseminaciones();
         getResponsables();
+        getColectas();
     }, []);
 
     const getAllInseminaciones = async () => {
         const response = await apiAxios.get('/inseminacion');
-        setInseminaciones(response.data);
+        const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
+        setInseminaciones(sortedData);
     };
+
+    const getColectas = async () => {
+        try {
+            const response = await apiAxios.get('/colectas')
+            setColectas(response.data)
+        } catch (error) {
+            console.error('Error al obtener colectas:', error)
+        }
+    }
 
     const getResponsables = async () => {
         try {
@@ -109,7 +130,13 @@ const CrudInseminacion = () => {
         }
     }
 
-    const newListInseminaciones = inseminaciones.filter(item => {
+    // ✅ Primero filtra por reproducción si viene desde Reproducciones
+    const inseminacionesFiltradas = filtroDesdeReproduccion
+        ? inseminaciones.filter(i => i.Id_Reproduccion == filtroDesdeReproduccion.Id_Reproduccion)
+        : inseminaciones
+
+    // ✅ Luego aplica el buscador sobre lo ya filtrado
+    const newListInseminaciones = inseminacionesFiltradas.filter(item => {
         const text = filterText.toLowerCase().trim();
         const fecha = item.Fec_hora?.toString().toLowerCase() || '';
         const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || '';
@@ -119,17 +146,39 @@ const CrudInseminacion = () => {
 
     return (
         <div className="container mt-5">
+
+            {/* Banner de filtro activo */}
+            {filtroDesdeReproduccion && (
+                <div className="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-3">
+                    <span>
+                        💉 Inseminaciones de <strong>{filtroDesdeReproduccion.Nom_Porcino || `Cerda #${filtroDesdeReproduccion.Id_Porcino}`}</strong>
+                        {' '}— Reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                    </span>
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Reproducciones
+                    </button>
+                </div>
+            )}
+
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
                     <input className="form-control" placeholder="🔍 Buscar..."
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Inseminación
-                    </button>
+                    {(!filtroDesdeReproduccion || filtroDesdeReproduccion.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Inseminación
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="La reproducción está inactiva">
+                            Nueva Inseminación
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -140,12 +189,18 @@ const CrudInseminacion = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5">Nueva Inseminación</h1>
+                            <h1 className="modal-title fs-5">{rowToEdit.Id_Inseminacion ? 'Editar Inseminación' : 'Nueva Inseminación'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>
                         <div className="modal-body">
-                            <InseminacionForm hideModal={hideModal} rowToEdit={rowToEdit} refreshTable={getAllInseminaciones} />
+                            {/* ✅ Si viene filtrado, pasa preloaded al form */}
+                            <InseminacionForm
+                                hideModal={hideModal}
+                                rowToEdit={rowToEdit}
+                                refreshTable={getAllInseminaciones}
+                                preloaded={filtroDesdeReproduccion || {}}
+                            />
                         </div>
                     </div>
                 </div>

@@ -9,12 +9,17 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
 
     const [Id_Reproduccion, setId_Reproduccion] = useState('')
     const [Id_Cerda, setId_Cerda] = useState('')
-    const [Activo, setActivo] = useState('Si')
+    const [Activo, setActivo] = useState('S')
     const [TipoReproduccion, setTipoReproduccion] = useState('')
+    const [accionEdicion, setAccionEdicion] = useState('') // 'agregar_monta' | 'agregar_inseminacion' | ''
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     const esEdicion = !!reproduccionEdit?.Id_Reproduccion
+
+    // Qué tipos ya tiene esta reproducción
+    const tieneMontas = reproduccionEdit?.montas?.length > 0
+    const tieneInseminaciones = reproduccionEdit?.inseminaciones?.length > 0
 
     useEffect(() => { getPorcinos() }, [])
 
@@ -29,14 +34,16 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
         if (reproduccionEdit?.Id_Reproduccion) {
             setId_Reproduccion(reproduccionEdit.Id_Reproduccion || '')
             setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
-            setActivo(reproduccionEdit.Activo || 'Si')
+            setActivo(reproduccionEdit.Activo || 'S')
             setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
+            setAccionEdicion('')
             setTextFormButton("Actualizar")
         } else {
             setId_Reproduccion('')
             setId_Cerda('')
-            setActivo('Si')
+            setActivo('S')
             setTipoReproduccion('')
+            setAccionEdicion('')
             setTextFormButton("Enviar")
         }
     }, [reproduccionEdit?.Id_Reproduccion])
@@ -44,23 +51,22 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
     const gestionarForm = async (e) => {
         e.preventDefault()
 
-        if (!TipoReproduccion && !esEdicion) {
-            MySwal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Debes seleccionar el tipo de reproducción' })
-            return
-        }
-
         try {
             if (!esEdicion) {
+                // ── CREAR NUEVA REPRODUCCIÓN ──────────────────────────────
+                if (!TipoReproduccion) {
+                    MySwal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Debes seleccionar el tipo de reproducción' })
+                    return
+                }
+
                 const todasReprods = await apiAxios.get('/reproducciones/')
 
-                // ✅ Buscar reproducción activa de la misma cerda SIN importar el tipo
+                // Buscar reproducción activa de la misma cerda
                 const existente = todasReprods.data.find(r =>
-                    r.Id_Cerda == Id_Cerda &&
-                    r.Activo === 'Si'
+                    r.Id_Cerda == Id_Cerda && r.Activo === 'S'
                 )
 
                 if (existente) {
-                    // ✅ Ya existe — usar la misma reproducción
                     await MySwal.fire({
                         icon: 'info',
                         title: 'Reproducción activa encontrada',
@@ -76,10 +82,9 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                         })
                     }
                 } else {
-                    // No existe — crear nueva
                     const response = await apiAxios.post('/reproducciones', {
                         Id_Cerda: Number(Id_Cerda),
-                        Activo: 'Si',
+                        Activo: 'S',
                         TipoReproduccion
                     })
                     const nuevaReproduccion = response.data?.reproducciones || response.data
@@ -100,6 +105,23 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                 }
 
             } else {
+                // ── EDITAR REPRODUCCIÓN EXISTENTE ─────────────────────────
+
+                // Si eligió agregar monta o inseminación, abrir el modal encadenado
+                if (accionEdicion === 'agregar_monta' || accionEdicion === 'agregar_inseminacion') {
+                    const tipo = accionEdicion === 'agregar_monta' ? 'Monta' : 'Inseminacion'
+                    hideModal()
+                    if (onReproduccionCreada) {
+                        onReproduccionCreada({
+                            tipo,
+                            Id_Reproduccion: Number(Id_Reproduccion),
+                            Id_Porcino: Number(Id_Cerda)
+                        })
+                    }
+                    return
+                }
+
+                // Solo actualizar estado
                 await apiAxios.put(`/reproducciones/${Id_Reproduccion}`, {
                     Id_Cerda: Number(Id_Cerda),
                     Activo,
@@ -118,29 +140,96 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
+            {/* Cerda — solo lectura en edición */}
             <div className="mb-3">
                 <label className="form-label">Cerda</label>
-                <select className="form-control" value={Id_Cerda}
-                    onChange={(e) => setId_Cerda(e.target.value)} required>
-                    <option value="">Seleccione...</option>
-                    {porcinos.map(p => (
-                        <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
-                    ))}
-                </select>
+                {esEdicion ? (
+                    <input
+                        type="text"
+                        className="form-control"
+                        value={reproduccionEdit?.porcino?.Nom_Porcino || ''}
+                        disabled
+                    />
+                ) : (
+                    <select className="form-control" value={Id_Cerda}
+                        onChange={(e) => setId_Cerda(e.target.value)} required>
+                        <option value="">Seleccione...</option>
+                        {porcinos.map(p => (
+                            <option key={p.Id_Porcino} value={p.Id_Porcino}>{p.Nom_Porcino}</option>
+                        ))}
+                    </select>
+                )}
             </div>
 
+            {/* ── MODO EDICIÓN ─────────────────────────────── */}
             {esEdicion && (
-                <div className="mb-3">
-                    <label className="form-label">Estado</label>
-                    <select className="form-control" value={Activo}
-                        onChange={(e) => setActivo(e.target.value)} required>
-                        <option value="Si">Activa</option>
-                        <option value="No">Inactiva</option>
-                    </select>
-                    <small className="text-muted">El tipo de reproducción no se puede cambiar una vez creada.</small>
-                </div>
+                <>
+                    {/* Estado activo/inactivo */}
+                    <div className="mb-3">
+                        <label className="form-label">Estado</label>
+                        <select className="form-control" value={Activo}
+                            onChange={(e) => { setActivo(e.target.value); setAccionEdicion('') }}>
+                            <option value="S">Activa</option>
+                            <option value="N">Inactiva</option>
+                        </select>
+                    </div>
+
+                    {/* Agregar monta o inseminación */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold">Agregar registro</label>
+                        <div className="d-flex gap-3">
+
+                            {/* Siempre puede agregar montas */}
+                            <div
+                                onClick={() => setAccionEdicion(accionEdicion === 'agregar_monta' ? '' : 'agregar_monta')}
+                                className="border rounded p-3 text-center flex-fill"
+                                style={{
+                                    cursor: 'pointer',
+                                    borderWidth: accionEdicion === 'agregar_monta' ? '2px' : '1px',
+                                    borderColor: accionEdicion === 'agregar_monta' ? '#e75480' : '#dee2e6',
+                                    backgroundColor: accionEdicion === 'agregar_monta' ? '#fff0f5' : '#fff',
+                                    transition: 'all 0.2s'
+                                }}>
+                                <div style={{ fontSize: 28 }}>🐷</div>
+                                <div className="fw-bold mt-1" style={{ color: accionEdicion === 'agregar_monta' ? '#e75480' : '#555' }}>
+                                    Monta
+                                </div>
+                                <small className="text-muted">
+                                    {tieneMontas ? `Ya tiene ${reproduccionEdit.montas.length}` : 'Sin montas aún'}
+                                </small>
+                            </div>
+
+                            {/* Siempre puede agregar inseminaciones */}
+                            <div
+                                onClick={() => setAccionEdicion(accionEdicion === 'agregar_inseminacion' ? '' : 'agregar_inseminacion')}
+                                className="border rounded p-3 text-center flex-fill"
+                                style={{
+                                    cursor: 'pointer',
+                                    borderWidth: accionEdicion === 'agregar_inseminacion' ? '2px' : '1px',
+                                    borderColor: accionEdicion === 'agregar_inseminacion' ? '#1e90ff' : '#dee2e6',
+                                    backgroundColor: accionEdicion === 'agregar_inseminacion' ? '#f0f6ff' : '#fff',
+                                    transition: 'all 0.2s'
+                                }}>
+                                <div style={{ fontSize: 28 }}>💉</div>
+                                <div className="fw-bold mt-1" style={{ color: accionEdicion === 'agregar_inseminacion' ? '#1e90ff' : '#555' }}>
+                                    Inseminación
+                                </div>
+                                <small className="text-muted">
+                                    {tieneInseminaciones ? `Ya tiene ${reproduccionEdit.inseminaciones.length}` : 'Sin inseminaciones aún'}
+                                </small>
+                            </div>
+                        </div>
+
+                        {accionEdicion && (
+                            <small className="text-success mt-2 d-block">
+                                ✅ Se abrirá el formulario para agregar una {accionEdicion === 'agregar_monta' ? 'Monta' : 'Inseminación'} al guardar.
+                            </small>
+                        )}
+                    </div>
+                </>
             )}
 
+            {/* ── MODO CREACIÓN ────────────────────────────── */}
             {!esEdicion && (
                 <div className="mb-3">
                     <label className="form-label fw-semibold">

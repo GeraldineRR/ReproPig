@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import SegcamadaForm from "./camadaForm.jsx"
@@ -9,6 +10,11 @@ const CrudSegcamada = () => {
     const [segcamadas, setSegcamadas] = useState([])
     const [segcamadaEdit, setSegcamadaEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
+    const [diaFiltro, setDiaFiltro] = useState(null)
+    const { id: partoIdParams } = useParams()
+    const navigate = useNavigate()
+
+    const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
     const columnsTable = [
         {
@@ -19,16 +25,23 @@ const CrudSegcamada = () => {
         {
             name: 'Fecha Programada',
             selector: row => {
-                const fecFin = row.crias?.partos?.Fec_fin;
-                console.log(row)
-                const dia = row.Dia_Programado;
+                try {
+                    const fecFin = row.crias?.partos?.Fec_fin;
+                    const dia = row.Dia_Programado;
 
-                if (!fecFin || !dia) return '—';
+                    if (!fecFin || !dia) return '—';
 
-                const [year, month, day] = fecFin.split('-');
-                const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
+                    const [year, month, dayStr] = fecFin.split('-');
+                    const day = parseInt(dayStr, 10);
+                    if (isNaN(day)) return '—';
+                    
+                    const fecha = new Date(year, month - 1, day + (dia - 1));
+                    if (isNaN(fecha.getTime())) return '—';
 
-                return fecha.toISOString().split('T')[0].split('-').reverse().join('/');
+                    return fecha.toISOString().split('T')[0].split('-').reverse().join('/');
+                } catch (e) {
+                    return '—';
+                }
             }
         },
 
@@ -96,12 +109,26 @@ const CrudSegcamada = () => {
     }
 
     const newListSegcamadas = segcamadas.filter(seg => {
-        const text = filterText.toLowerCase()
 
-        return (
-            seg.medicamentos?.Nombre?.toLowerCase().includes(text) ||
-            (seg.Observaciones || '').toLowerCase().includes(text)
-        )
+        const textToSearch = filterText.toLowerCase()
+
+        const medicamento = seg.medicamentos?.Nombre?.toLowerCase() || ''
+        const observaciones = seg.Observaciones?.toLowerCase() || ''
+        const numCria = seg.crias?.Num_Cria?.toString() || ''
+
+        const matchesText = medicamento.includes(textToSearch) || observaciones.includes(textToSearch) || numCria.includes(textToSearch)
+
+        let matchesParto = true
+        if (partoIdParams) {
+            matchesParto = String(seg.crias?.Id_parto) === String(partoIdParams) || String(seg.crias?.partos?.Id_parto) === String(partoIdParams);
+        }
+
+        let matchesDia = true
+        if (diaFiltro !== null) {
+            matchesDia = Number(seg.Dia_Programado) === diaFiltro
+        }
+
+        return matchesText && matchesParto && matchesDia
     })
 
     const hideModal = () => {
@@ -122,17 +149,48 @@ const CrudSegcamada = () => {
         <>
             <div className="container mt-5">
 
-                <div className="row d-flex mb-3 justify-content-between">
-                    <div className="col-4">
-                        <input
-                            className="form-control"
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            placeholder="🔍 Buscar por "
-                        />
+                <div className="row d-flex mb-3 justify-content-between align-items-center">
+                    <div className="col-4 d-flex gap-2">
+                        {partoIdParams && (
+                            <button className="btn btn-secondary" onClick={() => navigate('/partos')} title="Volver a Partos">
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </button>
+                        )}
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input
+                                className="form-control"
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                placeholder="Buscar por N° Cría, medicamento, observaciones..."
+                            />
+                        </div>
                     </div>
 
-                    <div className="col-3">
+                    <div className="col-5">
+                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                            <span className="fw-bold">Filtrar Día:</span>
+                            <button
+                                className={`btn btn-sm ${diaFiltro === null ? 'btn-primary' : 'btn-outline-primary'}`}
+                                onClick={() => setDiaFiltro(null)}
+                            >
+                                Todos
+                            </button>
+                            {diasSeguimiento.map(dia => (
+                                <button
+                                    key={dia}
+                                    className={`btn btn-sm ${diaFiltro === dia ? 'btn-primary' : 'btn-outline-primary'}`}
+                                    onClick={() => setDiaFiltro(dia)}
+                                >
+                                    {dia}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="col-3 text-end">
                         <button
                             type="button"
                             className="btn btn-success"
@@ -162,7 +220,6 @@ const CrudSegcamada = () => {
                     tabIndex="-1"
                 >
                     <div className="modal-dialog" style={{ maxWidth: "585px" }}>
-
                         <div className="modal-content">
 
                             <div className="modal-header">

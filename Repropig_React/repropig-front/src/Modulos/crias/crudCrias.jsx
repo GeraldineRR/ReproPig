@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import CriaForm from "./CriaForm.jsx"
@@ -9,6 +10,8 @@ const CrudCrias = () => {
     const [crias, setCrias] = useState([])
     const [criaEdit, setCriaEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
+    const { id: partoIdParams } = useParams()
+    const navigate = useNavigate()
 
     const columnsTable = [
         { name: 'ID Parto', selector: row => row.Id_parto },
@@ -89,18 +92,20 @@ const CrudCrias = () => {
 
         const parto = cria.Id_parto?.toString().toLowerCase() || ''
 
-        const estado = cria.Estado.toLowerCase()
+        const estado = cria.Estado?.toLowerCase() || ''
 
         const sexoBase = cria.Sexo?.trim().toLowerCase()
         let sexo = ''
         if (sexoBase === 'm') sexo = 'macho'
         else if (sexoBase === 'h') sexo = 'hembra'
 
-        return (
-            estado.includes(text) ||
-            parto.includes(text) ||
-            sexo.includes(text)
-        )
+        const matchesText = estado.includes(text) || parto.includes(text) || sexo.includes(text)
+
+        if (partoIdParams) {
+            return cria.Id_parto?.toString() === partoIdParams && matchesText
+        }
+
+        return matchesText
     })
 
     const hideModal = () => {
@@ -121,8 +126,18 @@ const CrudCrias = () => {
 
                 <div className="row d-flex mb-3 justify-content-between">
 
-                    <div className="col-4">
-                        <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar por parto, sexo o estado..."/>
+                    <div className="col-4 d-flex gap-2">
+                        {partoIdParams && (
+                            <button className="btn btn-secondary" onClick={() => navigate('/partos')} title="Volver a Partos">
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </button>
+                        )}
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="Buscar por parto, sexo o estado..." />
+                        </div>
                     </div>
 
                     <div className="col-2">

@@ -11,10 +11,12 @@ class SegcamadaService {
                 {
                     model: criaModel,
                     as: 'crias',
-                    include: {
+                    include:
+                    {
                         model: PartosModel,
                         as: 'partos'
-                    },
+                    }
+
                 },
                 {
                     model: MedicamentosModel,
@@ -36,6 +38,7 @@ class SegcamadaService {
                     model: MedicamentosModel,
                     as: 'medicamentos'
                 }
+
             ]
         })
         if (!Segcamada) throw new Error('Camada no encontrada')
