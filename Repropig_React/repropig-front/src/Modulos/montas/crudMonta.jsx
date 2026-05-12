@@ -93,7 +93,6 @@ const CrudMonta = () => {
         const response = await apiAxios.get('/monta/')
         const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
         setMontas(sortedData)
-        console.log(sortedData)
     }
 
     const getResponsables = async () => {
