@@ -14,6 +14,7 @@ const CrudMonta = () => {
 
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [reproducciones, setReproducciones] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -68,25 +69,42 @@ const CrudMonta = () => {
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
         {
-            name: 'Acciones', cell: row => (
-                <div className="d-flex gap-1">
-                    <button className="btn btn-sm btn-info"
-                        onClick={() => setRowToEdit(row)}
-                        data-bs-toggle="modal" data-bs-target="#exampleModal">
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
-                    <button className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            )
+            name: 'Acciones', cell: row => {
+                let isInactive = false;
+                if (filtroDesdeReproduccion) {
+                    isInactive = (filtroDesdeReproduccion.Activo || filtroDesdeReproduccion.activo || '').toUpperCase() === 'N';
+                } else {
+                    const rep = reproducciones.find(r => String(r.Id_Reproduccion) === String(row.Id_Reproduccion));
+                    if (rep) {
+                        isInactive = (rep.activo || '').toUpperCase() === 'N';
+                    }
+                }
+
+                return (
+                    <div className="d-flex gap-1">
+                        <button className="btn btn-sm btn-info"
+                            onClick={() => setRowToEdit(row)}
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            disabled={isInactive}
+                            title={isInactive ? "La reproducción está inactiva" : "Editar"}>
+                            <i className="fa-solid fa-pencil"></i>
+                        </button>
+                        <button className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(row)}
+                            disabled={isInactive}
+                            title={isInactive ? "La reproducción está inactiva" : "Eliminar"}>
+                            <i className="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                );
+            }
         }
     ];
 
     useEffect(() => {
         getAllMontas();
         getResponsables();
+        getReproducciones();
     }, []);
 
     const getAllMontas = async () => {
@@ -102,6 +120,15 @@ const CrudMonta = () => {
             setResponsables(response.data)
         } catch (error) {
             console.error('Error al obtener responsables:', error)
+        }
+    }
+
+    const getReproducciones = async () => {
+        try {
+            const response = await apiAxios.get('/reproducciones');
+            setReproducciones(response.data);
+        } catch (error) {
+            console.error('Error al obtener reproducciones:', error);
         }
     }
 
