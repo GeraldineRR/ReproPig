@@ -19,7 +19,7 @@ const CrudPartos = () => {
 
     const getAllPartos = async () => {
         try {
-            const res = await apiAxios.get("/partos/");
+            const res = await apiAxios.get("/Partos/");
             setPartos(res.data);
         } catch (error) {
             console.error(error);
@@ -31,7 +31,7 @@ const CrudPartos = () => {
         setLoadingId(id);
 
         try {
-            const res = await apiAxios.put(`/partos/${id}/toggle-estado`);
+            const res = await apiAxios.put(`/Partos/${id}/toggle-estado`);
 
             setPartos(prev =>
                 prev.map(p =>
@@ -162,7 +162,7 @@ const CrudPartos = () => {
     const filtered = partos.filter(row => {
         const text = filterText.toLowerCase().trim();
 
-        const porcino = row.porcinos?.Nom_Porcino?.toLowerCase().trim() || "";
+        const porcino = row.porcino?.Nom_Porcino?.toLowerCase().trim() || "";
         const observaciones = row.Observaciones?.toLowerCase().trim() || "";
         const fechaFin = row.Fec_fin
             ? new Date(row.Fec_fin).toLocaleDateString()

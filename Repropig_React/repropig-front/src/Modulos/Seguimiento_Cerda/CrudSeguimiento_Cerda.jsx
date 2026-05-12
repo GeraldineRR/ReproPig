@@ -5,7 +5,7 @@ import Seguimiento_CerdaForm from "./Seguimiento_CerdaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 
-const crudSeguimiento_Cerda = () => {
+const CrudSeguimiento_Cerda = () => {
     const [Seguimiento_Cerda, setSeguimiento_Cerda] = useState([])
     const [Seguimiento_CerdaEdit, setSeguimiento_CerdaEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
@@ -41,7 +41,7 @@ const crudSeguimiento_Cerda = () => {
     const newListSeguimiento_Cerda = Seguimiento_Cerda.filter(Seguimiento_Cerda => {
         const textToSearch = filterText.toLowerCase()
         const Id = Seguimiento_Cerda.Id_Seguimiento_Cerda.toString().toLowerCase()
-        const Fecha = Seguimiento_Cerda.Fecha.toLowerCase()
+        const Fecha = (Seguimiento_Cerda.Fecha || '').toLowerCase()
         return (
             Id.includes(textToSearch) ||
             Fecha.includes(textToSearch)
@@ -120,4 +120,4 @@ const crudSeguimiento_Cerda = () => {
     )
 }
 
-export default crudSeguimiento_Cerda
+export default CrudSeguimiento_Cerda

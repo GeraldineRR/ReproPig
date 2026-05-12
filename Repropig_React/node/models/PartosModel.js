@@ -64,4 +64,5 @@ const PartosModel = db.define("partos", {
   freezeTableName: true,
 })
 
+
 export default PartosModel
