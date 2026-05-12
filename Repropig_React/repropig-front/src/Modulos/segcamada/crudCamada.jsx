@@ -34,7 +34,7 @@ const CrudSegcamada = () => {
                     const [year, month, dayStr] = fecFin.split('-');
                     const day = parseInt(dayStr, 10);
                     if (isNaN(day)) return '—';
-                    
+
                     const fecha = new Date(year, month - 1, day + (dia - 1));
                     if (isNaN(fecha.getTime())) return '—';
 
@@ -88,14 +88,24 @@ const CrudSegcamada = () => {
 
         {
             name: 'Acciones',
-            cell: row => (
-                <button
-                    className="btn btn-sm bg-info"
-                    onClick={() => handleEdit(row)}
-                >
-                    <i className="fa-solid fa-pencil"></i>
-                </button>
-            )
+            cell: row => {
+                const hasNewer = segcamadas.some(item =>
+                    item.Id_Cria === row.Id_Cria &&
+                    item.Dia_Programado > row.Dia_Programado
+                );
+
+                return (
+                    <span title={hasNewer ? "No se puede editar, existe un seguimiento posterior para esta cría" : "Editar"}>
+                        <button
+                            className={`btn btn-sm ${hasNewer ? 'btn-secondary' : 'bg-info'}`}
+                            onClick={() => !hasNewer && handleEdit(row)}
+                            disabled={hasNewer}
+                        >
+                            <i className={`fa-solid ${hasNewer ? 'fa-lock' : 'fa-pencil'}`}></i>
+                        </button>
+                    </span>
+                );
+            }
         }
     ]
 

@@ -34,7 +34,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
         if (reproduccionEdit?.Id_Reproduccion) {
             setId_Reproduccion(reproduccionEdit.Id_Reproduccion || '')
             setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
-            setActivo(reproduccionEdit.Activo || 'S')
+            setActivo((reproduccionEdit.activo || 'S').toUpperCase())
             setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
             setAccionEdicion('')
             setTextFormButton("Actualizar")
@@ -63,7 +63,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
 
                 // Buscar reproducción activa de la misma cerda
                 const existente = todasReprods.data.find(r =>
-                    r.Id_Cerda == Id_Cerda && r.Activo === 'S'
+                    String(r.Id_Cerda) === String(Id_Cerda) && (r.activo || '').toUpperCase() === 'S'
                 )
 
                 if (existente) {

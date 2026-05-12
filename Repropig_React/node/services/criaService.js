@@ -1,5 +1,6 @@
 import CriaModel from "../models/criaModel.js"
 import PartosModel from "../models/PartosModel.js"
+import PorcinoModel from "../models/porcinoModel.js"
 
 class CriaService {
 
@@ -8,8 +9,14 @@ class CriaService {
             include: [
                 {
                     model: PartosModel,
-                    as: 'partos'
-                },
+                    as: 'partos',
+                    include: [
+                        {
+                            model: PorcinoModel,
+                            as: 'porcino'
+                        }
+                    ]
+                }
             ]
         })
     }
@@ -19,7 +26,13 @@ class CriaService {
             include: [
                 {
                     model: PartosModel,
-                    as: 'partos'
+                    as: 'partos',
+                    include: [
+                        {
+                            model: PorcinoModel,
+                            as: 'porcino'
+                        }
+                    ]
                 }
             ]
         })
