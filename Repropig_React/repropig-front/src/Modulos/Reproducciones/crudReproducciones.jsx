@@ -24,6 +24,7 @@ const CrudReproducciones = () => {
     const [colectaParaInseminacion, setColectaParaInseminacion] = useState(null)
     const [calendarioData, setCalendarioData] = useState(null)
     const [calendarioEdit, setCalendarioEdit] = useState(null)
+    const [calendarioIsInactive, setCalendarioIsInactive] = useState(false)
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
@@ -79,6 +80,8 @@ const CrudReproducciones = () => {
     // CALENDARIO
     // ========================
     const handleAgregarCalendario = async (row) => {
+        const isActivo = (row.activo || '').toUpperCase() === 'S';
+        setCalendarioIsInactive(!isActivo)
 
         const todasFechas = [
             ...((row.montas || []).map(m => m.Fec_hora)),
@@ -153,7 +156,8 @@ const CrudReproducciones = () => {
     }
 
     const handleToggleActivo = async (row) => {
-        const accion = row.Activo === 'S' ? 'inactivar' : 'activar'
+        const isActivo = (row.activo || '').toUpperCase() === 'S';
+        const accion = isActivo ? 'inactivar' : 'activar'
         const result = await MySwal.fire({
             title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} reproducción?`,
             text: `La reproducción #${row.Id_Reproduccion} de la cerda "${row.porcino?.Nom_Porcino}" será ${accion === 'activar' ? 'activada' : 'inactivada'}.`,
@@ -197,16 +201,19 @@ const CrudReproducciones = () => {
         {
             name: 'Activo',
             width: '110px',
-            cell: row => (
-                <span
-                    className={`badge ${row.Activo === 'S' ? 'bg-success' : 'bg-secondary'}`}
-                    style={{ cursor: 'pointer', fontSize: '12px' }}
-                    title={row.Activo === 'S' ? 'Clic para inactivar' : 'Clic para activar'}
-                    onClick={() => handleToggleActivo(row)}
-                >
-                    {row.Activo === 'S' ? '✅ Activo' : '⛔ Inactivo'}
-                </span>
-            )
+            cell: row => {
+                const isActivo = (row.activo || '').toUpperCase() === 'S';
+                return (
+                    <span
+                        className={`badge ${isActivo ? 'bg-success' : 'bg-secondary'}`}
+                        style={{ cursor: 'pointer', fontSize: '12px' }}
+                        title={isActivo ? 'Clic para inactivar' : 'Clic para activar'}
+                        onClick={() => handleToggleActivo(row)}
+                    >
+                        {isActivo ? '✅ Activo' : '⛔ Inactivo'}
+                    </span>
+                );
+            }
         },
         {
             name: 'Montas',
@@ -216,7 +223,7 @@ const CrudReproducciones = () => {
                     className="badge bg-warning text-dark"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
                     title="Ver montas"
-                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Activo } })}
+                    onClick={() => navigate('/montas', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.activo || row.Activo } })}
                 >
                     🐷 {row.montas?.length || 0}
                 </span>
@@ -230,7 +237,7 @@ const CrudReproducciones = () => {
                     className="badge bg-primary"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
                     title="Ver inseminaciones"
-                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Activo } })}
+                    onClick={() => navigate('/inseminaciones', { state: { Id_Reproduccion: row.Id_Reproduccion, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.activo || row.Activo } })}
                 >
                     💉 {row.inseminaciones?.length || 0}
                 </span>
@@ -254,10 +261,10 @@ const CrudReproducciones = () => {
                         onClick={() => handleEdit(row)}>
                         <i className="fa-solid fa-pencil"></i>
                     </button>
-                    <button className="btn btn-sm btn-danger" title="Eliminar"
+                    {/* <button className="btn btn-sm btn-danger" title="Eliminar"
                         onClick={() => handleDelete(row)}>
                         <i className="fa-solid fa-trash"></i>
-                    </button>
+                    </button> */}
                 </div>
             )
         }
@@ -374,6 +381,7 @@ const CrudReproducciones = () => {
                                     calendarioEdit={calendarioEdit}
                                     hideModal={hideModalCalendario}
                                     reload={getAllReproducciones}
+                                    isInactive={calendarioIsInactive}
                                 />
                             )}
                             {!calendarioEdit && calendarioData && (
@@ -385,6 +393,7 @@ const CrudReproducciones = () => {
                                         Id_Reproduccion: calendarioData.Id_Reproduccion,
                                         Fecha_Servicio: calendarioData.Fecha_Servicio
                                     }}
+                                    isInactive={calendarioIsInactive}
                                 />
                             )}
                         </div>

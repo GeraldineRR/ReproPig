@@ -2,6 +2,8 @@ import SegcamadaModel from "../models/segcamadaModel.js"
 import criaModel from "../models/criaModel.js"
 import MedicamentosModel from "../models/MedicamentosModel.js"
 import PartosModel from "../models/PartosModel.js"
+import db from "../database/db.js"
+import { Op } from "sequelize"
 
 class SegcamadaService {
 
@@ -50,6 +52,23 @@ class SegcamadaService {
     }
 
     async update(id, data) {
+        const currentRecord = await SegcamadaModel.findByPk(id);
+        if (!currentRecord) throw new Error('Camada no encontrada');
+
+        // Verificar si existe un seguimiento posterior para la misma cría
+        const newerRecord = await SegcamadaModel.findOne({
+            where: {
+                Id_Cria: currentRecord.Id_Cria,
+                Dia_Programado: {
+                    [Op.gt]: currentRecord.Dia_Programado
+                }
+            }
+        });
+
+        if (newerRecord) {
+            throw new Error('No se puede editar: Existe un seguimiento posterior para esta cría');
+        }
+
         const result = await SegcamadaModel.update(data, { where: { Id_SegCamada: id } })
         const update = result[0]
 

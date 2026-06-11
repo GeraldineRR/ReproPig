@@ -31,13 +31,13 @@ export const createCalendario = async (req, res) => {
             })
         }
 
-        // const existe = await CalendarioService.findByReproduccion(Id_Reproduccion)
+        const existe = await CalendarioService.findByReproduccion(Id_Reproduccion)
 
-        // if (existe) {
-        //     return res.status(400).json({
-        //         message: "Ya existe calendario para esta reproducción"
-        //     })
-        // }
+        if (existe) {
+            return res.status(400).json({
+                message: "Ya existe calendario para esta reproducción"
+            })
+        }
 
         const data = await CalendarioService.create(req.body)
         res.status(201).json(data)

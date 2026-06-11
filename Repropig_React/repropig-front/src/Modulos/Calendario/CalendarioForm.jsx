@@ -3,7 +3,7 @@ import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
-const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
+const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInactive }) => {
 
     const MySwal = withReactContent(Swal)
 
@@ -81,6 +81,37 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
         ])
     }, [Fecha_Servicio])
 
+    const getMinDate = (fecha) => {
+        if (!fecha) return undefined
+        const d = new Date(fecha + 'T00:00:00')
+        d.setDate(d.getDate() - 5)
+        return d.toISOString().split('T')[0]
+    }
+
+    const EVENTOS = [
+        '1RC',
+        '2RC',
+        'Cambio Alimento',
+        'Traslado a lactancia',
+        'Parto'
+    ]
+
+    const reales = [
+        real_rc1,
+        real_rc2,
+        real_cambio,
+        real_107,
+        real_parto
+    ]
+
+    const setters = [
+        setRealRC1,
+        setRealRC2,
+        setRealCambio,
+        setReal107,
+        setRealParto
+    ]
+
     const getReproducciones = async () => {
         try {
             const response = await apiAxios.get('/reproducciones/')
@@ -100,6 +131,20 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
                 text: 'No se puede guardar el calendario sin una fecha de servicio. Registre primero una monta o inseminación.'
             })
             return
+        }
+
+        for (let i = 0; i < reales.length; i++) {
+            if (reales[i] && proyectados[i]) {
+                const min = getMinDate(proyectados[i])
+                if (reales[i] < min) {
+                    MySwal.fire({
+                        icon: 'warning',
+                        title: 'Fecha inválida',
+                        text: `La fecha real de ${EVENTOS[i]} no puede ser menor al ${min.split('-').reverse().join('/')} (5 días antes de la programada).`
+                    })
+                    return
+                }
+            }
         }
 
         const data = {
@@ -138,32 +183,26 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
         }
     }
 
-    const EVENTOS = [
-        '1RC',
-        '2RC',
-        'Cambio Alimento',
-        'Traslado a lactancia',
-        'Parto'
-    ]
+    const currentRep = reproducciones.find(r => String(r.Id_Reproduccion) === String(Id_Reproduccion));
 
-    const reales = [
-        real_rc1,
-        real_rc2,
-        real_cambio,
-        real_107,
-        real_parto
-    ]
+    let tipoServicio = '';
+    if (currentRep && Fecha_Servicio) {
+        const isMonta = currentRep.montas?.some(m => m.Fec_hora?.startsWith(Fecha_Servicio));
+        const isInsem = currentRep.inseminaciones?.some(i => i.Fec_hora?.startsWith(Fecha_Servicio));
 
-    const setters = [
-        setRealRC1,
-        setRealRC2,
-        setRealCambio,
-        setReal107,
-        setRealParto
-    ]
+        if (isMonta && isInsem) tipoServicio = '— (Monta e Inseminación)';
+        else if (isMonta) tipoServicio = '— (Monta)';
+        else if (isInsem) tipoServicio = '— (Inseminación)';
+    }
 
     return (
         <form onSubmit={gestionarForm}>
+
+            {isInactive && (
+                <div className="alert alert-warning py-2 mb-3 text-center fw-bold">
+                    ⚠️ Esta reproducción está inactiva. El calendario es de solo lectura.
+                </div>
+            )}
 
             <div className="mb-3">
                 <label>Reproducción</label>
@@ -175,14 +214,14 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
                     <option value="">Seleccione</option>
                     {reproducciones.map(rep => (
                         <option key={rep.Id_Reproduccion} value={rep.Id_Reproduccion}>
-                            #{rep.Id_Reproduccion}
+                            #{rep.Id_Reproduccion} — {rep.porcino?.Nom_Porcino || `Cerda ${rep.Id_Cerda}`}
                         </option>
                     ))}
                 </select>
             </div>
 
             <div className="mb-3">
-                <label>Fecha Servicio</label>
+                <label>Fecha Servicio {tipoServicio}</label>
                 <input type="date"
                     className="form-control"
                     value={Fecha_Servicio}
@@ -204,14 +243,16 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
                         <tr key={evento}>
                             <td>{evento}</td>
 
-                            <td>{proyectados[i] || '—'}</td>
+                            <td>{proyectados[i] ? proyectados[i].split('-').reverse().join('/') : '—'}</td>
 
                             <td>
                                 <input
                                     type="date"
                                     className="form-control"
                                     value={reales[i]}
+                                    min={getMinDate(proyectados[i])}
                                     onChange={(e) => setters[i](e.target.value)}
+                                    disabled={isInactive}
                                 />
                             </td>
                         </tr>
@@ -219,9 +260,11 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded }) => {
                 </tbody>
             </table>
 
-            <button className="btn btn-primary">
-                {textFormButton}
-            </button>
+            {!isInactive && (
+                <button className="btn btn-primary">
+                    {textFormButton}
+                </button>
+            )}
 
         </form>
     )

@@ -11,7 +11,8 @@ class reproduccionesService {
                 { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
                 { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },           // 👈 agrega Fecha
                 { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] } // 👈 agrega Fecha
-            ]
+            ],
+            order: [['Createdat', 'DESC']]
         })
     }
 
@@ -28,14 +29,44 @@ class reproduccionesService {
     }
 
     async create(data) {
-        // Siempre se crea activa
-        return await reproduccionesModel.create({ ...data, Activo: 'S' })
+        try {
+            console.log("📥 Datos recibidos:", data);
+
+            // Verificar si ya tiene una reproducción activa
+            const existeActiva = await reproduccionesModel.findOne({
+                where: {
+                    Id_Cerda: data.Id_Cerda,
+                    activo: 'S'
+                }
+            });
+
+            if (existeActiva) {
+                throw new Error('Esta cerda ya tiene una reproducción activa. Debes inactivarla antes de registrar una nueva.');
+            }
+
+            const nueva = await reproduccionesModel.create({
+                Id_Cerda: data.Id_Cerda,
+                TipoReproduccion: data.TipoReproduccion,
+                activo: 'S'
+            });
+            console.log("✅ Guardado con ID:", nueva.Id_Reproduccion);
+            return nueva;
+        } catch (error) {
+            console.error("❌ Error al guardar:", error.message);
+            throw error;
+        }
     }
 
     async update(id, data) {
         const reproduccion = await reproduccionesModel.findByPk(id)
         if (!reproduccion) throw new Error('Reproduccion no encontrada')
-        await reproduccionesModel.update(data, { where: { Id_Reproduccion: id } })
+
+        // Actualizar campos manualmente para asegurar que activo se asigne
+        reproduccion.Id_Cerda = data.Id_Cerda || reproduccion.Id_Cerda
+        reproduccion.activo = data.activo || data.Activo || reproduccion.activo
+        reproduccion.TipoReproduccion = data.TipoReproduccion || reproduccion.TipoReproduccion
+
+        await reproduccion.save()
         return true
     }
 
@@ -43,11 +74,27 @@ class reproduccionesService {
         const reproduccion = await reproduccionesModel.findByPk(id)
         if (!reproduccion) throw new Error('Reproduccion no encontrada')
 
-        const nuevoEstado = reproduccion.Activo === 'S' ? 'N' : 'S'
-        await reproduccionesModel.update(
-            { Activo: nuevoEstado },
-            { where: { Id_Reproduccion: id } }
-        )
+        // Normalizar comparación a Mayúscula por si acaso
+        const estadoActual = (reproduccion.activo || 'N').toUpperCase()
+        const nuevoEstado = estadoActual === 'S' ? 'N' : 'S'
+
+        // Si se va a activar, verificar que no tenga ya una activa
+        if (nuevoEstado === 'S') {
+            const existeActiva = await reproduccionesModel.findOne({
+                where: {
+                    Id_Cerda: reproduccion.Id_Cerda,
+                    activo: 'S'
+                }
+            });
+
+            if (existeActiva) {
+                throw new Error('Esta cerda ya tiene una reproducción activa. Debes inactivarla antes de reactivar esta.');
+            }
+        }
+
+        reproduccion.activo = nuevoEstado
+        await reproduccion.save()
+
         return nuevoEstado
     }
 

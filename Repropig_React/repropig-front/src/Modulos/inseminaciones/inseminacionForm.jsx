@@ -61,7 +61,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             const response = await apiAxios.get('/reproducciones/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
-                r.Activo === 'S'
+                (r.activo || r.Activo || '').toUpperCase() === 'S'
             )
             setReproduccionesActivas(activas)
         } catch (error) { console.error('Error al obtener reproducciones:', error) }
@@ -144,26 +144,39 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         try {
             if (textFormButton === 'Agregar Inseminacion') {
                 await apiAxios.post('/inseminacion', formData)
-
-                // ✅ Auto-crear calendario si es la primera monta/inseminación
-                try {
-                    const calRes = await apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`);
-                    if (!calRes.data) {
-                        // No existe calendario → crearlo automáticamente
-                        await apiAxios.post('/calendario/', {
-                            Id_Reproduccion,
-                            Fecha_Servicio: Fec_hora
-                        });
-                    }
-                } catch (calErr) {
-                    console.error('Error al auto-crear calendario:', calErr);
-                }
-
                 MySwal.fire({ title: "Registro exitoso", text: "Inseminacion creada con éxito", icon: "success" })
             } else {
                 await apiAxios.put('/inseminacion/' + rowToEdit.Id_Inseminacion, formData)
                 MySwal.fire({ title: "Actualización exitosa", text: "Inseminacion actualizada con éxito", icon: "success" })
             }
+
+            // ✅ Auto-crear o actualizar calendario con la primera fecha
+            try {
+                const [calRes, montasRes, insemRes] = await Promise.all([
+                    apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`).catch(() => ({ data: null })),
+                    apiAxios.get('/monta').catch(() => ({ data: [] })),
+                    apiAxios.get('/inseminacion').catch(() => ({ data: [] }))
+                ]);
+
+                const misMontas = montasRes.data.filter(m => m.Id_Reproduccion == Id_Reproduccion);
+                const misInsem = insemRes.data.filter(i => i.Id_Reproduccion == Id_Reproduccion);
+
+                const allDates = [
+                    ...misMontas.map(m => m.Fec_hora?.split('T')[0]).filter(Boolean),
+                    ...misInsem.map(i => i.Fec_hora?.split('T')[0]).filter(Boolean)
+                ];
+                
+                const minDate = allDates.length > 0 ? allDates.sort()[0] : Fec_hora;
+                
+                if (!calRes.data) {
+                    await apiAxios.post('/calendario/', { Id_Reproduccion, Fecha_Servicio: minDate });
+                } else if (calRes.data.Fecha_Servicio?.split('T')[0] !== minDate) {
+                    await apiAxios.put(`/calendario/${calRes.data.Id_Calendario}`, { Fecha_Servicio: minDate });
+                }
+            } catch (calErr) {
+                console.error('Error al sincronizar calendario:', calErr);
+            }
+
             hideModal()
             refreshTable()
         } catch (error) {
@@ -240,7 +253,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         className="form-select shadow-sm"
                         value={Id_Reproduccion}
                         onChange={e => setId_Reproduccion(e.target.value)}
-                        disabled={esPrellenado || esEdicion}
+                        disabled={esPrellenado}
                         required
                     >
                         <option value="">
@@ -290,8 +303,8 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         <option value="">
                             {!Fec_hora ? 'Primero seleccione la fecha de inseminación' : 'Seleccione una colecta'}
                         </option>
-                        {colectas
-                            .filter(c => {
+                        {(() => {
+                            const opcionesFiltradas = colectas.filter(c => {
                                 if (filtroCerdo && c.Id_Porcino != filtroCerdo) return false;
                                 if (c.Id_colecta == Id_colecta) return true; // Siempre mostrar la ya seleccionada
                                 if (!Fec_hora || !c.Fecha) return false;
@@ -305,8 +318,13 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                 if (c.Tipo === 'Externo' && diasDif > 3) return false; // Externa: hasta 3 días
 
                                 return true;
-                            })
-                            .map(c => {
+                            });
+
+                            if (Fec_hora && opcionesFiltradas.length === 0 && !Id_colecta) {
+                                return <option value="" disabled>No hay colectas válidas o vigentes para esta fecha</option>;
+                            }
+
+                            return opcionesFiltradas.map(c => {
                                 const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
                                 
                                 // Para mostrar mensaje visual si es la seleccionada pero no cumple las reglas (datos viejos)
@@ -324,8 +342,8 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                         #{c.Id_colecta} — {c.porcino?.Nom_Porcino || `Cerdo #${c.Id_Porcino}`} — {disponibles} disponibles {mensajeVencida}
                                     </option>
                                 )
-                            })
-                        }
+                            });
+                        })()}
                     </select>
                 </div>
 

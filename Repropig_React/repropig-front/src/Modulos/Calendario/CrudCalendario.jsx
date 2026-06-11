@@ -19,22 +19,27 @@ const CrudCalendario = () => {
         getAllCalendario()
     }, [])
 
+    const formatD = (dateStr) => {
+        if (!dateStr) return '—';
+        return dateStr.split('T')[0].split('-').reverse().join('/');
+    }
+
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Calendario, width: '80px' },
         { name: 'Reproducción', selector: row => row.Id_Reproduccion },
-        { name: 'Fecha Servicio', selector: row => row.Fecha_Servicio },
+        { name: 'Fecha Servicio', selector: row => formatD(row.Fecha_Servicio) },
 
-        { name: 'RC1', selector: row => row.rc1 },
-        { name: 'RC2', selector: row => row.rc2 },
-        { name: 'Cambio Alimento', selector: row => row.cambio_alimento },
-        { name: 'Día 107', selector: row => row.dia_107 },
-        { name: 'Parto', selector: row => row.parto },
+        { name: 'RC1', selector: row => formatD(row.rc1) },
+        { name: 'RC2', selector: row => formatD(row.rc2) },
+        { name: 'Cambio Alimento', selector: row => formatD(row.cambio_alimento) },
+        { name: 'Día 107', selector: row => formatD(row.dia_107) },
+        { name: 'Parto', selector: row => formatD(row.parto) },
 
-        { name: 'Real RC1', selector: row => row.real_rc1 ?? '—' },
-        { name: 'Real RC2', selector: row => row.real_rc2 ?? '—' },
-        { name: 'Real Cambio', selector: row => row.real_cambio_alimento ?? '—' },
-        { name: 'Real 107', selector: row => row.real_dia_107 ?? '—' },
-        { name: 'Real Parto', selector: row => row.real_parto ?? '—' },
+        { name: 'Real RC1', selector: row => formatD(row.real_rc1) },
+        { name: 'Real RC2', selector: row => formatD(row.real_rc2) },
+        { name: 'Real Cambio', selector: row => formatD(row.real_cambio_alimento) },
+        { name: 'Real 107', selector: row => formatD(row.real_dia_107) },
+        { name: 'Real Parto', selector: row => formatD(row.real_parto) },
     ]
 
     const filtered = calendario.filter(item => {

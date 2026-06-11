@@ -255,6 +255,27 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 }
 
             } else {
+                // Validación de seguimiento posterior antes de actualizar
+                try {
+                    const res = await apiAxios.get(`/segcamada/cria/${Id_Cria}`);
+                    const registros = res.data;
+                    const hasNewer = registros.some(item =>
+                        item.Dia_Programado > segcamadaEdit.Dia_Programado
+                    );
+
+                    if (hasNewer) {
+                        MySwal.fire({
+                            icon: "error",
+                            title: "Operación no permitida",
+                            text: "No se puede editar este registro porque ya existe un seguimiento posterior para esta cría."
+                        });
+                        hideModal();
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Error validando seguimientos posteriores:", err);
+                }
+
                 if (!huboCambios()) {
                     MySwal.fire({
                         icon: "info",

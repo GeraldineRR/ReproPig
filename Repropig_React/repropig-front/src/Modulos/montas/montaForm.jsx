@@ -76,7 +76,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
             const res = await apiAxios.get('/reproducciones');
             const activas = res.data.filter(r =>
-                r.Id_Cerda == preloaded.Id_Porcino && r.Activo === 'S'
+                r.Id_Cerda == preloaded.Id_Porcino && (r.activo || r.Activo || '').toUpperCase() === 'S'
             );
             setReproduccionesActivas(activas);
         };
@@ -120,7 +120,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getReproduccionesActivasSolo = async (id) => {
         if (!id) return setReproduccionesActivas([]);
         const res = await apiAxios.get('/reproducciones');
-        const activas = res.data.filter(r => r.Id_Cerda == id && r.Activo === 'S');
+        const activas = res.data.filter(r => r.Id_Cerda == id && (r.activo || r.Activo || '').toUpperCase() === 'S');
         setReproduccionesActivas(activas);
     };
 
@@ -149,26 +149,39 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         try {
             if (textFormButton === 'Agregar Monta') {
                 await apiAxios.post('/monta/', data);
-
-                // ✅ Auto-crear calendario si es la primera monta/inseminación
-                try {
-                    const calRes = await apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`);
-                    if (!calRes.data) {
-                        // No existe calendario → crearlo automáticamente
-                        await apiAxios.post('/calendario/', {
-                            Id_Reproduccion,
-                            Fecha_Servicio: Fec_hora
-                        });
-                    }
-                } catch (calErr) {
-                    console.error('Error al auto-crear calendario:', calErr);
-                }
-
                 MySwal.fire('OK', 'Monta creada', 'success');
             } else {
                 await apiAxios.put('/monta/' + rowToEdit.Id_Monta, data);
                 MySwal.fire('OK', 'Monta actualizada', 'success');
             }
+
+            // ✅ Auto-crear o actualizar calendario con la primera fecha
+            try {
+                const [calRes, montasRes, insemRes] = await Promise.all([
+                    apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`).catch(() => ({ data: null })),
+                    apiAxios.get('/monta').catch(() => ({ data: [] })),
+                    apiAxios.get('/inseminacion').catch(() => ({ data: [] }))
+                ]);
+
+                const misMontas = montasRes.data.filter(m => m.Id_Reproduccion == Id_Reproduccion);
+                const misInsem = insemRes.data.filter(i => i.Id_Reproduccion == Id_Reproduccion);
+
+                const allDates = [
+                    ...misMontas.map(m => m.Fec_hora?.split('T')[0]).filter(Boolean),
+                    ...misInsem.map(i => i.Fec_hora?.split('T')[0]).filter(Boolean)
+                ];
+
+                const minDate = allDates.length > 0 ? allDates.sort()[0] : Fec_hora;
+
+                if (!calRes.data) {
+                    await apiAxios.post('/calendario/', { Id_Reproduccion, Fecha_Servicio: minDate });
+                } else if (calRes.data.Fecha_Servicio?.split('T')[0] !== minDate) {
+                    await apiAxios.put(`/calendario/${calRes.data.Id_Calendario}`, { Fecha_Servicio: minDate });
+                }
+            } catch (calErr) {
+                console.error('Error al sincronizar calendario:', calErr);
+            }
+
             hideModal();
             refreshTable();
         } catch (err) {
@@ -225,15 +238,20 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         className="form-select shadow-sm"
                         value={Id_Reproduccion}
                         onChange={e => setId_Reproduccion(e.target.value)}
-                        disabled={esPrellenado || esEdicion}
+                        disabled={esPrellenado}
                         required
                     >
                         <option value="">Seleccione</option>
                         {reproduccionesActivas.map(r => (
                             <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                #{r.Id_Reproduccion}
+                                #{r.Id_Reproduccion} — {r.TipoReproduccion}
                             </option>
                         ))}
+                        {(() => {
+                            if (reproduccionesActivas.length === 0 && !Id_Reproduccion) {
+                                return <option value="" disabled>No hay reproducciones activas para esta cerda</option>;
+                            }
+                        })()}
                     </select>
                 </div>
 

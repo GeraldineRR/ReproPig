@@ -63,6 +63,15 @@ class CalendarioService {
     }
 
     async update(id, data) {
+        if (data.Fecha_Servicio) {
+            const eventos = calcularEventos(data.Fecha_Servicio);
+            data.rc1 = eventos.rc1;
+            data.rc2 = eventos.rc2;
+            data.cambio_alimento = eventos.cambio_alimento;
+            data.dia_107 = eventos.dia_107;
+            data.parto = eventos.parto;
+        }
+
         const result = await CalendarioModel.update(data, { where: { Id_Calendario: id } })
         const updated = result[0]
 

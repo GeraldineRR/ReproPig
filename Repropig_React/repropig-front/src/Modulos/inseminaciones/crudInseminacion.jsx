@@ -15,6 +15,7 @@ const CrudInseminacion = () => {
     const [inseminaciones, setInseminaciones] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [colectas, setColectas] = useState([]);
+    const [reproducciones, setReproducciones] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -77,26 +78,42 @@ const CrudInseminacion = () => {
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
         {
-            name: 'Acciones', cell: row => (
-                <div className="d-flex gap-1">
-                    <button className="btn btn-sm btn-info"
-                        onClick={() => setRowToEdit(row)}
-                        data-bs-toggle="modal" data-bs-target="#exampleModal">
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
-                    <button className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button>
-                    {row.Id_colecta && (
-                        <button className="btn btn-sm btn-success"
-                            title="Ver Colecta"
-                            onClick={() => navigate('/colectas', { state: { Id_colecta: row.Id_colecta } })}>
-                            🧪
+            name: 'Acciones', cell: row => {
+                let isInactive = false;
+                if (filtroDesdeReproduccion) {
+                    isInactive = (filtroDesdeReproduccion.Activo || filtroDesdeReproduccion.activo || '').toUpperCase() === 'N';
+                } else {
+                    const rep = reproducciones.find(r => String(r.Id_Reproduccion) === String(row.Id_Reproduccion));
+                    if (rep) {
+                        isInactive = (rep.activo || '').toUpperCase() === 'N';
+                    }
+                }
+
+                return (
+                    <div className="d-flex gap-1">
+                        <button className="btn btn-sm btn-info"
+                            onClick={() => setRowToEdit(row)}
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            disabled={isInactive}
+                            title={isInactive ? "La reproducción está inactiva" : "Editar"}>
+                            <i className="fa-solid fa-pencil"></i>
                         </button>
-                    )}
-                </div>
-            )
+                        <button className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(row)}
+                            disabled={isInactive}
+                            title={isInactive ? "La reproducción está inactiva" : "Eliminar"}>
+                            <i className="fa-solid fa-trash"></i>
+                        </button>
+                        {row.Id_colecta && (
+                            <button className="btn btn-sm btn-success"
+                                title="Ver Colecta"
+                                onClick={() => navigate('/colectas', { state: { Id_colecta: row.Id_colecta } })}>
+                                🧪
+                            </button>
+                        )}
+                    </div>
+                );
+            }
         }
     ];
 
@@ -104,6 +121,7 @@ const CrudInseminacion = () => {
         getAllInseminaciones();
         getResponsables();
         getColectas();
+        getReproducciones();
     }, []);
 
     const getAllInseminaciones = async () => {
@@ -127,6 +145,15 @@ const CrudInseminacion = () => {
             setResponsables(response.data)
         } catch (error) {
             console.error('Error al obtener responsables:', error)
+        }
+    }
+
+    const getReproducciones = async () => {
+        try {
+            const response = await apiAxios.get('/reproducciones');
+            setReproducciones(response.data);
+        } catch (error) {
+            console.error('Error al obtener reproducciones:', error);
         }
     }
 
