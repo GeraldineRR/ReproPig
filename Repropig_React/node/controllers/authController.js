@@ -20,3 +20,39 @@ export const register = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+// Recibe el email y despacha el correo con el enlace
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body
+        if (!email)
+            return res.status(400).json({ message: 'El email es requerido' })
+
+        await authService.forgotPassword(email)
+
+        // Siempre respondemos 200 para no revelar si el email existe o no
+        res.status(200).json({
+            message: 'Si ese correo está registrado, recibirás un enlace en breve.'
+        })
+    } catch (error) {
+        console.error("ERROR forgotPassword:", error)
+
+        res.status(500).json({
+            message: error.message
+        })
+    }
+}
+
+// Recibe el token (desde la URL) y la nueva contraseña
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.query   // viene como ?token=xxx en la URL del correo
+        const { password } = req.body
+
+        await authService.resetPassword(token, password)
+
+        res.status(200).json({ message: 'Contraseña actualizada exitosamente.' })
+    } catch (error) {
+        res.status(400).json({ message: error.message })
+    }
+}
