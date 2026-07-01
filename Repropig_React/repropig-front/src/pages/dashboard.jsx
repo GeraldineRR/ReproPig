@@ -25,10 +25,10 @@ const Dashboard = () => {
     colectas: 0,
     montas: 0,
     inseminaciones: 0,
-    reproducciones: 0
+    ciclos: 0
   })
 
-  const [ultimasReproducciones, setUltimasReproducciones] = useState([])
+  const [ultimasCiclos, setUltimasCiclos] = useState([])
   const [isLoading, setIsLoading] = useState(true)
 
   const hora = new Date().getHours()
@@ -44,13 +44,13 @@ const Dashboard = () => {
   const cargarDatos = async () => {
     setIsLoading(true)
     try {
-      const [porcinos, colectas, montas, inseminaciones, reproducciones] =
+      const [porcinos, colectas, montas, inseminaciones, ciclos] =
         await Promise.all([
           apiAxios.get("/porcino").catch(() => ({ data: [] })),
           apiAxios.get("/colectas").catch(() => ({ data: [] })),
           apiAxios.get("/monta").catch(() => ({ data: [] })),
           apiAxios.get("/inseminacion").catch(() => ({ data: [] })),
-          apiAxios.get("/reproducciones/").catch(() => ({ data: [] }))
+          apiAxios.get("/ciclos/").catch(() => ({ data: [] }))
         ])
 
       setStats({
@@ -58,11 +58,11 @@ const Dashboard = () => {
         colectas: colectas.data.length,
         montas: montas.data.length,
         inseminaciones: inseminaciones.data.length,
-        reproducciones: reproducciones.data.length
+        ciclos: ciclos.data.length
       })
 
-      const ultimas = [...reproducciones.data].reverse().slice(0, 5)
-      setUltimasReproducciones(ultimas)
+      const ultimas = [...ciclos.data].reverse().slice(0, 5)
+      setUltimasCiclos(ultimas)
     } catch (error) {
       console.error("Error cargando datos del dashboard:", error)
     } finally {
@@ -73,7 +73,7 @@ const Dashboard = () => {
   const todosLosModulos = [
     { nombre: "Porcinos", icono: "🐖", color: "bg-pink-100 text-pink-600", ruta: "/porcinos", desc: "Gestiona tu plantel" },
     { nombre: "Razas", icono: "🧬", color: "bg-purple-100 text-purple-600", ruta: "/razas", desc: "Información genética" },
-    { nombre: "Reproducciones", icono: "🔄", color: "bg-blue-100 text-blue-600", ruta: "/reproducciones", desc: "Control reproductivo" },
+    { nombre: "Ciclos", icono: "🔄", color: "bg-blue-100 text-blue-600", ruta: "/ciclos", desc: "Control reproductivo" },
     { nombre: "Montas", icono: "🐷", color: "bg-rose-100 text-rose-600", ruta: "/montas", desc: "Monta natural" },
     { nombre: "Inseminaciones", icono: "💉", color: "bg-teal-100 text-teal-600", ruta: "/inseminaciones", desc: "Inseminación artificial" },
     { nombre: "Colectas", icono: "🧪", color: "bg-amber-100 text-amber-600", ruta: "/colectas", desc: "Material genético" },
@@ -87,7 +87,7 @@ const Dashboard = () => {
 
   const statCards = [
     { label: "Total Porcinos", valor: stats.porcinos, icono: "🐖", bg: "bg-gradient-to-br from-pink-50 to-pink-100", iconBg: "bg-pink-200", text: "text-pink-600", ruta: "/porcinos" },
-    { label: "Reproducciones", valor: stats.reproducciones, icono: "🔄", bg: "bg-gradient-to-br from-blue-50 to-blue-100", iconBg: "bg-blue-200", text: "text-blue-600", ruta: "/reproducciones" },
+    { label: "Ciclos", valor: stats.ciclos, icono: "🔄", bg: "bg-gradient-to-br from-blue-50 to-blue-100", iconBg: "bg-blue-200", text: "text-blue-600", ruta: "/ciclos" },
     { label: "Colectas Activas", valor: stats.colectas, icono: "🧪", bg: "bg-gradient-to-br from-amber-50 to-amber-100", iconBg: "bg-amber-200", text: "text-amber-600", ruta: "/colectas" },
     { label: "Inseminaciones", valor: stats.inseminaciones, icono: "💉", bg: "bg-gradient-to-br from-teal-50 to-teal-100", iconBg: "bg-teal-200", text: "text-teal-600", ruta: "/inseminaciones" }
   ]
@@ -227,7 +227,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-gray-800">Actividad Reciente</h3>
-                <p className="text-sm text-gray-500 mt-1">Últimas reproducciones</p>
+                <p className="text-sm text-gray-500 mt-1">Últimas ciclos</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-2xl">
                 <span className="text-2xl">🕐</span>
@@ -248,20 +248,20 @@ const Dashboard = () => {
                     </div>
                   ))}
                 </div>
-              ) : ultimasReproducciones.length === 0 ? (
+              ) : ultimasCiclos.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center p-8 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                   <span className="text-5xl mb-4 grayscale opacity-50">📭</span>
-                  <p className="text-gray-500 font-medium">No hay reproducciones<br/>registradas aún</p>
+                  <p className="text-gray-500 font-medium">No hay ciclos<br/>registradas aún</p>
                 </div>
               ) : (
                 <div className="space-y-3 flex-1">
-                  {ultimasReproducciones.map(r => {
-                    const isMonta = r.TipoReproduccion === "Monta";
+                  {ultimasCiclos.map(r => {
+                    const isMonta = r.TipoCiclo === "Monta";
                     return (
                       <div
-                        key={r.Id_Reproduccion}
+                        key={r.Id_Ciclo}
                         className="group flex items-center justify-between p-4 rounded-2xl border border-gray-100 hover:border-pink-200 hover:shadow-md transition-all duration-300 bg-white cursor-pointer"
-                        onClick={() => navigate("/reproducciones")}
+                        onClick={() => navigate("/ciclos")}
                       >
                         <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 flex items-center justify-center rounded-xl shadow-inner ${isMonta ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>
@@ -272,7 +272,7 @@ const Dashboard = () => {
                               {r.porcino?.Nom_Porcino || `Porcino #${r.Id_Cerda}`}
                             </div>
                             <div className="text-xs font-medium text-gray-500 mt-0.5">
-                              {r.TipoReproduccion}
+                              {r.TipoCiclo}
                             </div>
                           </div>
                         </div>
@@ -293,7 +293,7 @@ const Dashboard = () => {
             </div>
 
             <button
-              onClick={() => navigate("/reproducciones")}
+              onClick={() => navigate("/ciclos")}
               className="mt-6 w-full relative overflow-hidden group bg-gray-50 hover:bg-[#C97A85] text-gray-700 hover:text-white py-4 rounded-2xl font-bold transition-all duration-300 border border-gray-200 hover:border-transparent shadow-sm hover:shadow-xl"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">

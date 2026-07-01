@@ -12,6 +12,7 @@ const CriaModel = db.define('crias', {
     Fecha_Muerte: { type: DataTypes.DATE, allowNull: true },
 }, {
     freezeTableName: true,
+    timestamps: false
 });
 
 export default CriaModel;

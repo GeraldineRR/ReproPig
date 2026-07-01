@@ -8,7 +8,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     const MySwal = withReactContent(Swal)
 
     const [Id_Calendario, setId_Calendario] = useState('')
-    const [Id_Reproduccion, setId_Reproduccion] = useState('')
+    const [Id_Ciclo, setId_Ciclo] = useState('')
     const [Fecha_Servicio, setFecha_Servicio] = useState('')
 
     // reales (nuevos nombres)
@@ -19,15 +19,15 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     const [real_parto, setRealParto] = useState('')
 
     const [proyectados, setProyectados] = useState(['', '', '', '', ''])
-    const [reproducciones, setReproducciones] = useState([])
+    const [ciclos, setCiclos] = useState([])
 
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     useEffect(() => {
-        getReproducciones()
+        getCiclos()
 
-        if (preloaded?.Id_Reproduccion) {
-            setId_Reproduccion(preloaded.Id_Reproduccion)
+        if (preloaded?.Id_Ciclo) {
+            setId_Ciclo(preloaded.Id_Ciclo)
         }
         if (preloaded?.Fecha_Servicio) {
             setFecha_Servicio(preloaded.Fecha_Servicio)
@@ -37,7 +37,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     useEffect(() => {
         if (calendarioEdit) {
             setId_Calendario(calendarioEdit.Id_Calendario ?? '')
-            setId_Reproduccion(calendarioEdit.Id_Reproduccion ?? '')
+            setId_Ciclo(calendarioEdit.Id_Ciclo ?? '')
             setFecha_Servicio(calendarioEdit.Fecha_Servicio?.split('T')[0] ?? '')
 
             setRealRC1(calendarioEdit.real_rc1?.split('T')[0] ?? '')
@@ -112,10 +112,10 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         setRealParto
     ]
 
-    const getReproducciones = async () => {
+    const getCiclos = async () => {
         try {
-            const response = await apiAxios.get('/reproducciones/')
-            setReproducciones(response.data)
+            const response = await apiAxios.get('/ciclos/')
+            setCiclos(response.data)
         } catch (error) {
             console.error(error)
         }
@@ -148,7 +148,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         }
 
         const data = {
-            Id_Reproduccion,
+            Id_Ciclo,
             Fecha_Servicio,
 
             real_rc1: real_rc1 || null,
@@ -183,7 +183,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         }
     }
 
-    const currentRep = reproducciones.find(r => String(r.Id_Reproduccion) === String(Id_Reproduccion));
+    const currentRep = ciclos.find(r => String(r.Id_Ciclo) === String(Id_Ciclo));
 
     let tipoServicio = '';
     if (currentRep && Fecha_Servicio) {
@@ -200,21 +200,21 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
 
             {isInactive && (
                 <div className="alert alert-warning py-2 mb-3 text-center fw-bold">
-                    ⚠️ Esta reproducción está inactiva. El calendario es de solo lectura.
+                    ⚠️ Este ciclo está inactivo. El calendario es de solo lectura.
                 </div>
             )}
 
             <div className="mb-3">
-                <label>Reproducción</label>
+                <label>Ciclo</label>
                 <select className="form-control"
-                    value={Id_Reproduccion}
-                    onChange={(e) => setId_Reproduccion(e.target.value)}
-                    disabled={!!calendarioEdit || !!preloaded?.Id_Reproduccion}
+                    value={Id_Ciclo}
+                    onChange={(e) => setId_Ciclo(e.target.value)}
+                    disabled={!!calendarioEdit || !!preloaded?.Id_Ciclo}
                 >
                     <option value="">Seleccione</option>
-                    {reproducciones.map(rep => (
-                        <option key={rep.Id_Reproduccion} value={rep.Id_Reproduccion}>
-                            #{rep.Id_Reproduccion} — {rep.porcino?.Nom_Porcino || `Cerda ${rep.Id_Cerda}`}
+                    {ciclos.map(rep => (
+                        <option key={rep.Id_Ciclo} value={rep.Id_Ciclo}>
+                            #{rep.Id_Ciclo} — {rep.porcino?.Nom_Porcino || `Cerda ${rep.Id_Cerda}`}
                         </option>
                     ))}
                 </select>

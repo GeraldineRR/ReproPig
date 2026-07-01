@@ -468,11 +468,11 @@ const CrudPorcinos = () => {
 
         const textToSearch = filterText.toLowerCase()
 
-        const chapeta = porcino.Num_Chapeta.toString().toLowerCase()
-        const nombre = porcino.Nom_Porcino.toLowerCase()
-        const placa = porcino.Plac_Sena_Porcino.toString().toLowerCase()
-        const procedencia = porcino.Proc_Porcino.toLowerCase()
-        const sexoBase = porcino.Gen_Porcino.trim().toLowerCase()
+        const chapeta = porcino.Num_Chapeta?.toString().toLowerCase() || ''
+        const nombre = porcino.Nom_Porcino?.toLowerCase() || ''
+        const placa = porcino.Plac_Sena_Porcino?.toString().toLowerCase() || ''
+        const procedencia = porcino.Proc_Porcino?.toLowerCase() || ''
+        const sexoBase = porcino.Gen_Porcino?.trim().toLowerCase() || ''
         let sexo = ''
         if (sexoBase === 'm') sexo = 'macho'
         else if (sexoBase === 'h') sexo = 'hembra'

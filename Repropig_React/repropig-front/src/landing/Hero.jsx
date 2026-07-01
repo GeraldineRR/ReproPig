@@ -1,6 +1,6 @@
 import { Suspense, useRef, useEffect, useState } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { useGLTF, OrbitControls, Environment, ContactShadows, useAnimations } from "@react-three/drei"
+import { useGLTF, OrbitControls, ContactShadows, useAnimations } from "@react-three/drei"
 
 // ── Modelo 3D del lechón ──
 function PigletModel() {
@@ -265,7 +265,6 @@ function Hero() {
                 <directionalLight position={[5, 8, 5]}   intensity={1.6} castShadow />
                 <directionalLight position={[-4, 3, -2]} intensity={0.7} color="#FFD0DC" />
                 <pointLight       position={[0, 4, 2]}   intensity={0.9} color="#FFC0CB" />
-                <Environment preset="sunset" />
                 <ContactShadows position={[0, -1.2, 0]} opacity={0.4} scale={5} blur={2} color="#8a4f58"/>
                 <Suspense fallback={null}>
                   <PigletModel />

@@ -3,7 +3,7 @@ import apiAxios from "../../api/axiosConfig.js";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
 
-// ✅ Acepta onColectaCreada para flujo encadenado desde reproducciones
+// ✅ Acepta onColectaCreada para flujo encadenado desde ciclos
 const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada }) => {
     const MySwal = WithReactContent(Swal)
 

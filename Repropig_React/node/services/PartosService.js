@@ -1,6 +1,6 @@
 import PartosModel from "../models/PartosModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
-import reproduccionesModel from "../models/reproduccionesModel.js";
+import ciclosModel from "../models/ciclosModel.js";
 import RazaModel from "../models/razaModel.js";
 import CriaModel from "../models/criaModel.js";
 
@@ -16,9 +16,9 @@ class PartosService {
                         { model: RazaModel, as: 'raza' }
                     ]
                 },
-                { model: reproduccionesModel, as: 'reproduccion' },
+                { model: ciclosModel, as: 'ciclo' },
             ],
-            order: [['createdAt', 'DESC']]
+            order: [['Id_parto', 'DESC']]
         })
     }
 
@@ -32,7 +32,7 @@ class PartosService {
                         { model: RazaModel, as: 'raza' }
                     ]
                 },
-                { model: reproduccionesModel, as: 'reproduccion' },
+                { model: ciclosModel, as: 'ciclo' },
             ]
         })
         if (!parto) throw new Error('Parto no encontrado')
@@ -42,10 +42,10 @@ class PartosService {
     async create(data) {
         const parto = await PartosModel.create(data)
 
-        if (data.Id_Reproduccion) {
-            await reproduccionesModel.update(
+        if (data.Id_Ciclo) {
+            await ciclosModel.update(
                 { Activo: 'N' },
-                { where: { Id_Reproduccion: data.Id_Reproduccion } }
+                { where: { Id_Ciclo: data.Id_Ciclo } }
             )
         }
 

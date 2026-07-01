@@ -13,6 +13,7 @@ const ResponsablesModel = db.define('responsable', {
     Estado: { type: DataTypes.ENUM('Activo', 'Inactivo') }
 }, {
     freezeTableName: true,
+    timestamps: false
 })
 
 export default ResponsablesModel;

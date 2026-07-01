@@ -55,13 +55,14 @@ const PartosModel = db.define("partos", {
     defaultValue: "Activo",
   },
 
-  Id_Reproduccion: {
+  Id_Ciclo: {
     type: DataTypes.INTEGER,
     allowNull: true,
   }
 
 }, {
   freezeTableName: true,
+  timestamps: false
 })
 
 export default PartosModel

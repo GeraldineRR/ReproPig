@@ -16,7 +16,7 @@ const crudSeguimiento_Cerda = () => {
         { name: 'Fecha', selector: row => row.Fecha },
         { name: 'Hora', selector: row => row.Hora },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
-        { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion || '—' },
+        { name: 'Id Ciclo', selector: row => row.Id_Ciclo || '—' },
         { name: 'Responsable', selector: row => row.Responsables?.Nombres || '—' },
         { name: 'Medicamento', selector: row => row.medicamentos?.Nombre || '—' },
         { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
@@ -40,8 +40,8 @@ const crudSeguimiento_Cerda = () => {
 
     const newListSeguimiento_Cerda = Seguimiento_Cerda.filter(Seguimiento_Cerda => {
         const textToSearch = filterText.toLowerCase()
-        const Id = Seguimiento_Cerda.Id_Seguimiento_Cerda.toString().toLowerCase()
-        const Fecha = Seguimiento_Cerda.Fecha.toLowerCase()
+        const Id = String(Seguimiento_Cerda?.Id_Seguimiento_Cerda || '').toLowerCase()
+        const Fecha = String(Seguimiento_Cerda?.Fecha || '').toLowerCase()
         return (
             Id.includes(textToSearch) ||
             Fecha.includes(textToSearch)

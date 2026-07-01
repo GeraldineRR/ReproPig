@@ -16,6 +16,7 @@ const colectaModel = db.define('colecta', {
     Observaciones: { type: DataTypes.STRING },
 
 }, {
-    freezeTableName: true
+    freezeTableName: true,
+    timestamps: false
 })
 export default colectaModel;

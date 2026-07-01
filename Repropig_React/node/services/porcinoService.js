@@ -11,7 +11,7 @@ class PorcinoService {
                     as: 'raza'
                 },
             ],
-            order: [['createdAt', 'DESC']]
+            order: [['Id_Porcino', 'DESC']]
         })
     }
 
