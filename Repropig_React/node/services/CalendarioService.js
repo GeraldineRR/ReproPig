@@ -79,6 +79,65 @@ class CalendarioService {
         return true
     }
 
+    /**
+     * Registrar revisión de un evento específico del calendario.
+     * @param {number} id - Id del calendario
+     * @param {string} evento - Nombre del evento: 'rc1', 'rc2', 'cambio_alimento', 'dia_107', 'parto'
+     * @param {object} revisionData - { fecha_revision, resultado, observaciones }
+     */
+    async registerRevision(id, evento, revisionData) {
+        const calendario = await CalendarioModel.findByPk(id)
+        if (!calendario) throw new Error('Calendario no encontrado')
+
+        // Validar que no haya eventos posteriores registrados
+        if (evento === 'rc1' && (calendario.real_rc2 || calendario.real_cambio_alimento || calendario.real_dia_107 || calendario.real_parto)) {
+            throw new Error('No se puede modificar este evento porque ya existe un registro posterior')
+        }
+        if (evento === 'rc2' && (calendario.real_cambio_alimento || calendario.real_dia_107 || calendario.real_parto)) {
+            throw new Error('No se puede modificar este evento porque ya existe un registro posterior')
+        }
+        if (evento === 'cambio_alimento' && (calendario.real_dia_107 || calendario.real_parto)) {
+            throw new Error('No se puede modificar este evento porque ya existe un registro posterior')
+        }
+        if (evento === 'dia_107' && calendario.real_parto) {
+            throw new Error('No se puede modificar este evento porque ya existe un registro posterior')
+        }
+
+        const { fecha_revision, resultado, observaciones } = revisionData
+
+        const updateData = {}
+
+        switch (evento) {
+            case 'rc1':
+                updateData.real_rc1 = fecha_revision || null
+                updateData.resultado_rc1 = resultado || null
+                updateData.observaciones_rc1 = observaciones || null
+                break
+            case 'rc2':
+                updateData.real_rc2 = fecha_revision || null
+                updateData.resultado_rc2 = resultado || null
+                updateData.observaciones_rc2 = observaciones || null
+                break
+            case 'cambio_alimento':
+                updateData.real_cambio_alimento = fecha_revision || null
+                updateData.observaciones_cambio = observaciones || null
+                break
+            case 'dia_107':
+                updateData.real_dia_107 = fecha_revision || null
+                updateData.observaciones_107 = observaciones || null
+                break
+            case 'parto':
+                updateData.real_parto = fecha_revision || null
+                updateData.observaciones_parto = observaciones || null
+                break
+            default:
+                throw new Error('Evento no válido: ' + evento)
+        }
+
+        await CalendarioModel.update(updateData, { where: { Id_Calendario: id } })
+        return await CalendarioModel.findByPk(id)
+    }
+
     async findByReproduccion(Id_Reproduccion) {
         return await CalendarioModel.findOne({
             where: { Id_Reproduccion }
@@ -93,4 +152,4 @@ class CalendarioService {
     }
 }
 
-export default new CalendarioService()
+export default new CalendarioService()

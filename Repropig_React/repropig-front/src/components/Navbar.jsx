@@ -1,6 +1,7 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
+import NotificacionesCamada from "./NotificacionesCamada";
 
 export default function Navbar({ sidebarOpen, onToggleSidebar }) {
 
@@ -44,7 +45,8 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
       <div className="flex items-center gap-4">
         {usuario ? (
           <>
-            <button 
+            <NotificacionesCamada />
+            <button
               onClick={() => navigate("/mi-perfil")}
               className="flex items-center gap-3 mr-4 hover:bg-white/40 p-1.5 rounded-2xl transition-colors cursor-pointer text-left"
               title="Ir a mi perfil"
@@ -57,6 +59,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
                 {usuario?.nombres ? usuario.nombres.charAt(0).toUpperCase() : 'U'}
               </div>
             </button>
+
             <button
               onClick={handleLogout}
               className="bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 w-9 h-9 flex items-center justify-center rounded-xl transition-colors border border-gray-100 shadow-sm"

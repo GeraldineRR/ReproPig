@@ -5,7 +5,7 @@ import apiAxios from "../../api/axiosConfig"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
-const CriaForm = ({ hideModal, criaEdit, reload}) => {
+const CriaForm = ({ hideModal, criaEdit, reload }) => {
     const MySwal = withReactContent(Swal)
 
     const [Id_parto, setIdParto] = useState('')
@@ -19,24 +19,24 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
     const { id: partoIdParams } = useParams()
 
     const handlePartoChange = async (value) => {
-    setIdParto(value)
+        setIdParto(value)
 
-    if (criaEdit) return
+        if (criaEdit) return
 
-    if (!value) {
-        setNumCria('')
-        return
+        if (!value) {
+            setNumCria('')
+            return
+        }
+
+        try {
+            const response = await apiAxios.get(`/cria/count/${value}`)
+            const total = response.data
+
+            setNumCria(total + 1)
+        } catch (error) {
+            console.error(error)
+        }
     }
-
-    try {
-        const response = await apiAxios.get(`/cria/count/${value}`)
-        const total = response.data
-
-        setNumCria(total + 1)
-    } catch (error) {
-        console.error(error)
-    }
-}
 
     useEffect(() => {
         Partos()
@@ -152,7 +152,7 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
 
             <div className="mb-3">
                 <label htmlFor="Id_parto" className="form-label">Parto</label>
-                <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange (e.target.value)} required disabled={!!partoIdParams && !criaEdit}>
+                <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange(e.target.value)} required disabled={!!partoIdParams && !criaEdit}>
                     <option value="">Selecciona...</option>
                     {partos.map((parto) => (
                         <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcino?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}</option>
@@ -165,7 +165,7 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
                     <div className="mb-3">
                         <label className="form-label">Número de Cría</label>
                         {Num_Cria && Id_parto && (
-                            <div className="alert alert-info py-2"> Cría #{Num_Cria} del parto {Id_parto} </div> )}
+                            <div className="alert alert-info py-2"> Cría #{Num_Cria} del parto {Id_parto} </div>)}
                     </div>
                 </>
             )}
@@ -189,18 +189,25 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
             </div>
 
             {Estado === "Muerto" && (
-                    <>
-                        <div className="mb-3">
-                            <label className="form-label">Causa de Muerte</label>
-                            <input type="text" className="form-control" value={Causa_Muerte} onChange={(e) => setCausaMuerte(e.target.value)} />
-                        </div>
+                <>
+                    <div className="mb-3">
+                        <label className="form-label">Causa de Muerte</label>
+                        <select className="form-control" value={Causa_Muerte} onChange={(e) => setCausaMuerte(e.target.value)}>
+                            <option value="">Selecciona...</option>
+                            <option value="Nacido muerto">Nacido muerto</option>
+                            <option value="Momia">Momia</option>
+                            <option value="Peso 0: Enfermo">Peso 0: Enfermo</option>
+                            <option value="Peso 0: Aplastado">Peso 0: Aplastado</option>
+                            <option value="Peso 0: Inanición">Peso 0: Inanición</option>
+                        </select>
+                    </div>
 
-                        <div className="mb-3">
-                            <label className="form-label">Fecha de Muerte</label>
-                            <input type="date" className="form-control" value={Fecha_Muerte} onChange={(e) => setFechaMuerte(e.target.value)} />
-                        </div>
-                    </>
-                )
+                    <div className="mb-3">
+                        <label className="form-label">Fecha de Muerte</label>
+                        <input type="date" className="form-control" value={Fecha_Muerte} onChange={(e) => setFechaMuerte(e.target.value)} />
+                    </div>
+                </>
+            )
             }
 
             <div className="mb-3">

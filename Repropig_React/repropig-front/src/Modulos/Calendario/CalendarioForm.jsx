@@ -2,271 +2,593 @@ import { useState, useEffect } from "react"
 import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import '../../styles/calendarioReproductivo.css'
 
-const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInactive }) => {
+const EVENTOS = [
+    { key: 'rc1', nombre: '1er control de recelo', dias: 21, icon: '🔍', iconClass: 'evento-icon-rc1', esRecelo: true },
+    { key: 'rc2', nombre: '2° control de recelo', dias: 42, icon: '🔍', iconClass: 'evento-icon-rc2', esRecelo: true },
+    { key: 'cambio_alimento', nombre: 'Cambio de alimento', dias: 100, icon: '🥣', iconClass: 'evento-icon-cambio', esRecelo: false },
+    { key: 'dia_107', nombre: 'Traslado a lactancia', dias: 107, icon: '🏠', iconClass: 'evento-icon-107', esRecelo: false },
+    { key: 'parto', nombre: 'Fecha probable de parto', dias: 114, icon: '🐷', iconClass: 'evento-icon-parto', esRecelo: false },
+]
+
+const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInactive, reproduccionData }) => {
 
     const MySwal = withReactContent(Swal)
 
-    const [Id_Calendario, setId_Calendario] = useState('')
-    const [Id_Reproduccion, setId_Reproduccion] = useState('')
-    const [Fecha_Servicio, setFecha_Servicio] = useState('')
+    const [calendario, setCalendario] = useState(calendarioEdit || null)
+    const [loading, setLoading] = useState(false)
 
-    // reales (nuevos nombres)
-    const [real_rc1, setRealRC1] = useState('')
-    const [real_rc2, setRealRC2] = useState('')
-    const [real_cambio, setRealCambio] = useState('')
-    const [real_107, setReal107] = useState('')
-    const [real_parto, setRealParto] = useState('')
+    // Panel lateral de revisión
+    const [revisionPanel, setRevisionPanel] = useState(null) // { eventoKey, eventoNombre, ... }
+    const [revFechaRevision, setRevFechaRevision] = useState('')
+    const [revResultado, setRevResultado] = useState('')
+    const [revObservaciones, setRevObservaciones] = useState('')
 
-    const [proyectados, setProyectados] = useState(['', '', '', '', ''])
-    const [reproducciones, setReproducciones] = useState([])
+    // Datos de la reproducción
+    const repData = reproduccionData || {}
+    const nombreCerda = repData.nombreCerda || 'Sin nombre'
+    const idReproduccion = repData.Id_Reproduccion || preloaded?.Id_Reproduccion || calendario?.Id_Reproduccion || ''
+    const tipoInicial = repData.tipoInicial || 'Monta'
+    const estadoReproduccion = repData.estado || 'Activa'
+    const fechaServicioRaw = repData.fechaServicio || preloaded?.Fecha_Servicio || calendario?.Fecha_Servicio || ''
+    const fechaServicio = fechaServicioRaw ? fechaServicioRaw.split('T')[0] : ''
 
-    const [textFormButton, setTextFormButton] = useState('Enviar')
+    // Calcular días de gestación
+    const calcularDiasGestacion = () => {
+        if (!fechaServicio) return 0
+        const servicio = new Date(fechaServicio + 'T00:00:00')
 
-    useEffect(() => {
-        getReproducciones()
-
-        if (preloaded?.Id_Reproduccion) {
-            setId_Reproduccion(preloaded.Id_Reproduccion)
-        }
-        if (preloaded?.Fecha_Servicio) {
-            setFecha_Servicio(preloaded.Fecha_Servicio)
-        }
-    }, [preloaded])
-
-    useEffect(() => {
-        if (calendarioEdit) {
-            setId_Calendario(calendarioEdit.Id_Calendario ?? '')
-            setId_Reproduccion(calendarioEdit.Id_Reproduccion ?? '')
-            setFecha_Servicio(calendarioEdit.Fecha_Servicio?.split('T')[0] ?? '')
-
-            setRealRC1(calendarioEdit.real_rc1?.split('T')[0] ?? '')
-            setRealRC2(calendarioEdit.real_rc2?.split('T')[0] ?? '')
-            setRealCambio(calendarioEdit.real_cambio_alimento?.split('T')[0] ?? '')
-            setReal107(calendarioEdit.real_dia_107?.split('T')[0] ?? '')
-            setRealParto(calendarioEdit.real_parto?.split('T')[0] ?? '')
-
-            setProyectados([
-                calendarioEdit.rc1?.split('T')[0] ?? '',
-                calendarioEdit.rc2?.split('T')[0] ?? '',
-                calendarioEdit.cambio_alimento?.split('T')[0] ?? '',
-                calendarioEdit.dia_107?.split('T')[0] ?? '',
-                calendarioEdit.parto?.split('T')[0] ?? '',
-            ])
-
-            setTextFormButton('Actualizar')
-        } else {
-            setTextFormButton('Enviar')
-        }
-    }, [calendarioEdit])
-
-    // cálculo correcto
-    useEffect(() => {
-        if (calendarioEdit || !Fecha_Servicio) return
-
-        const base = new Date(Fecha_Servicio + 'T00:00:00')
-
-        const sumar = (dias) => {
-            const d = new Date(base)
-            d.setDate(d.getDate() + dias)
-            return d.toISOString().split('T')[0]
+        if (estadoReproduccion === 'Fallida') {
+            if (calendario?.resultado_rc1 === 'recelo_detectado' && calendario?.real_rc1) {
+                const fin = new Date(calendario.real_rc1.split('T')[0] + 'T00:00:00')
+                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
+                return diff > 0 ? diff : 0
+            }
+            if (calendario?.resultado_rc2 === 'recelo_detectado' && calendario?.real_rc2) {
+                const fin = new Date(calendario.real_rc2.split('T')[0] + 'T00:00:00')
+                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
+                return diff > 0 ? diff : 0
+            }
+            return 0
         }
 
-        setProyectados([
-            sumar(21),
-            sumar(42),
-            sumar(100),
-            sumar(107),
-            sumar(114),
-        ])
-    }, [Fecha_Servicio])
+        if (estadoReproduccion === 'Lactante' || estadoReproduccion === 'Completado') {
+            if (calendario?.real_parto) {
+                const fin = new Date(calendario.real_parto.split('T')[0] + 'T00:00:00')
+                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
+                return diff > 0 ? diff : 0
+            }
+            return 114
+        }
 
-    const getMinDate = (fecha) => {
-        if (!fecha) return undefined
-        const d = new Date(fecha + 'T00:00:00')
-        d.setDate(d.getDate() - 5)
+        const hoy = new Date()
+        const diff = Math.floor((hoy - servicio) / (1000 * 60 * 60 * 24))
+        return diff > 0 ? diff : 0
+    }
+
+    const diasGestacion = calcularDiasGestacion()
+
+    // Calcular fecha probable de parto
+    const calcularFechaParto = () => {
+        if (!fechaServicio) return '—'
+        const d = new Date(fechaServicio + 'T00:00:00')
+        d.setDate(d.getDate() + 114)
+        return formatDate(d.toISOString().split('T')[0])
+    }
+
+    // Proyectar fechas
+    const proyectarFecha = (dias) => {
+        if (!fechaServicio) return null
+        const d = new Date(fechaServicio + 'T00:00:00')
+        d.setDate(d.getDate() + dias)
         return d.toISOString().split('T')[0]
     }
 
-    const EVENTOS = [
-        '1RC',
-        '2RC',
-        'Cambio Alimento',
-        'Traslado a lactancia',
-        'Parto'
-    ]
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '—'
+        const clean = dateStr.split('T')[0]
+        return clean.split('-').reverse().join('/')
+    }
 
-    const reales = [
-        real_rc1,
-        real_rc2,
-        real_cambio,
-        real_107,
-        real_parto
-    ]
+    const isSiguienteRegistrado = (eventoKey) => {
+        const index = EVENTOS.findIndex(e => e.key === eventoKey)
+        if (index === -1) return false
+        // Check if any event after this one has a registered date
+        for (let i = index + 1; i < EVENTOS.length; i++) {
+            const evData = getEventoData(EVENTOS[i])
+            if (evData.fechaReal) {
+                return true
+            }
+        }
+        return false
+    }
 
-    const setters = [
-        setRealRC1,
-        setRealRC2,
-        setRealCambio,
-        setReal107,
-        setRealParto
-    ]
+    // Crear calendario si no existe al montar
+    useEffect(() => {
+        if (!calendario && preloaded?.Id_Reproduccion && fechaServicio) {
+            crearCalendario()
+        }
+    }, [])
 
-    const getReproducciones = async () => {
+    const crearCalendario = async () => {
+        setLoading(true)
         try {
-            const response = await apiAxios.get('/reproducciones/')
-            setReproducciones(response.data)
+            const response = await apiAxios.post('/calendario/', {
+                Id_Reproduccion: preloaded.Id_Reproduccion,
+                Fecha_Servicio: fechaServicio
+            })
+            setCalendario(response.data)
         } catch (error) {
-            console.error(error)
+            // Si ya existe, obtenerlo
+            if (error.response?.status === 400) {
+                try {
+                    const res = await apiAxios.get(`/calendario/reproduccion/${preloaded.Id_Reproduccion}`)
+                    if (res.data) setCalendario(res.data)
+                } catch (e) {
+                    console.error(e)
+                }
+            } else {
+                console.error(error)
+            }
+        }
+        setLoading(false)
+    }
+
+    // Obtener datos del evento del calendario
+    const getEventoData = (evento) => {
+        if (!calendario) return { fechaProyectada: null, fechaReal: null, resultado: null, observaciones: null }
+
+        const map = {
+            rc1: { proj: 'rc1', real: 'real_rc1', resultado: 'resultado_rc1', obs: 'observaciones_rc1' },
+            rc2: { proj: 'rc2', real: 'real_rc2', resultado: 'resultado_rc2', obs: 'observaciones_rc2' },
+            cambio_alimento: { proj: 'cambio_alimento', real: 'real_cambio_alimento', resultado: null, obs: 'observaciones_cambio' },
+            dia_107: { proj: 'dia_107', real: 'real_dia_107', resultado: null, obs: 'observaciones_107' },
+            parto: { proj: 'parto', real: 'real_parto', resultado: null, obs: 'observaciones_parto' },
+        }
+
+        const m = map[evento.key]
+        return {
+            fechaProyectada: calendario[m.proj]?.split('T')[0] || proyectarFecha(evento.dias),
+            fechaReal: calendario[m.real]?.split('T')[0] || null,
+            resultado: m.resultado ? calendario[m.resultado] : null,
+            observaciones: m.obs ? calendario[m.obs] : null,
         }
     }
 
-    const gestionarForm = async (e) => {
-        e.preventDefault()
+    // Determinar el estado de un evento
+    const getEstado = (evento) => {
+        const data = getEventoData(evento)
 
-        if (!Fecha_Servicio) {
-            MySwal.fire({
-                icon: 'warning',
-                title: 'Sin fecha de servicio',
-                text: 'No se puede guardar el calendario sin una fecha de servicio. Registre primero una monta o inseminación.'
-            })
+        // Si se detectó recelo en RC1, RC2 y los siguientes no aplican
+        if (calendario?.resultado_rc1 === 'recelo_detectado') {
+            if (evento.key !== 'rc1') return 'no_aplica'
+        }
+
+        // Si RC1 fue "no recelo" y RC2 detectó recelo
+        if (calendario?.resultado_rc2 === 'recelo_detectado') {
+            if (evento.key !== 'rc1' && evento.key !== 'rc2') return 'no_aplica'
+        }
+
+        if (data.fechaReal) {
+            if (evento.esRecelo) {
+                if (data.resultado === 'no_recelo') return 'no_recelo'
+                if (data.resultado === 'recelo_detectado') return 'recelo_detectado'
+                return 'realizado'
+            }
+            return 'realizado'
+        }
+
+        return 'pendiente'
+    }
+
+    // Render status badge
+    const renderStatus = (evento) => {
+        const estado = getEstado(evento)
+
+        switch (estado) {
+            case 'pendiente':
+                return <span className="cal-status cal-status-pendiente">⏳ Pendiente</span>
+            case 'no_recelo':
+                return <span className="cal-status cal-status-no-recelo">✅ No presentó recelo</span>
+            case 'recelo_detectado':
+                return <span className="cal-status cal-status-recelo">🔴 Recelo detectado</span>
+            case 'realizado':
+                return <span className="cal-status cal-status-realizado">☑️ Realizado</span>
+            case 'no_aplica':
+                return <span className="cal-status cal-status-no-aplica">— No aplica</span>
+            default:
+                return <span className="cal-status cal-status-pendiente">⏳ Pendiente</span>
+        }
+    }
+
+    // Render action button
+    const renderAction = (evento) => {
+        const estado = getEstado(evento)
+        const data = getEventoData(evento)
+
+        if (isInactive) return null
+        if (estado === 'no_aplica') return null
+
+        const isDisabledByNext = isSiguienteRegistrado(evento.key)
+
+        if (estado === 'pendiente') {
+            return (
+                <button
+                    className="cal-btn-registrar"
+                    onClick={() => abrirPanelRevision(evento, data)}
+                    disabled={isInactive || isDisabledByNext}
+                    title={isDisabledByNext ? "No se puede registrar porque ya hay revisiones posteriores registradas" : "Registrar revisión"}
+                >
+                    Registrar revisión
+                </button>
+            )
+        }
+
+        // Already has data, allow editing
+        return (
+            <div className="d-flex gap-1">
+                <button
+                    className="cal-btn-editar"
+                    onClick={() => abrirPanelRevision(evento, data)}
+                    title={isDisabledByNext ? "No se puede editar porque ya hay revisiones posteriores registradas" : "Editar revisión"}
+                    disabled={isInactive || isDisabledByNext}
+                >
+                    ✏️
+                </button>
+            </div>
+        )
+    }
+
+    // Open revision panel
+    const abrirPanelRevision = (evento, data) => {
+        setRevisionPanel(evento)
+        setRevFechaRevision(data.fechaReal || '')
+        setRevResultado(data.resultado || '')
+        setRevObservaciones(data.observaciones || '')
+    }
+
+    const cerrarPanelRevision = () => {
+        setRevisionPanel(null)
+        setRevFechaRevision('')
+        setRevResultado('')
+        setRevObservaciones('')
+    }
+
+    // Submit revision
+    const guardarRevision = async () => {
+        if (!revFechaRevision) {
+            MySwal.fire({ icon: 'warning', title: 'Fecha requerida', text: 'Debes ingresar la fecha de revisión.' })
             return
         }
 
-        for (let i = 0; i < reales.length; i++) {
-            if (reales[i] && proyectados[i]) {
-                const min = getMinDate(proyectados[i])
-                if (reales[i] < min) {
-                    MySwal.fire({
-                        icon: 'warning',
-                        title: 'Fecha inválida',
-                        text: `La fecha real de ${EVENTOS[i]} no puede ser menor al ${min.split('-').reverse().join('/')} (5 días antes de la programada).`
-                    })
-                    return
-                }
-            }
+        if (revisionPanel.esRecelo && !revResultado) {
+            MySwal.fire({ icon: 'warning', title: 'Resultado requerido', text: 'Debes seleccionar si presentó recelo o no.' })
+            return
         }
 
-        const data = {
-            Id_Reproduccion,
-            Fecha_Servicio,
-
-            real_rc1: real_rc1 || null,
-            real_rc2: real_rc2 || null,
-            real_cambio_alimento: real_cambio || null,
-            real_dia_107: real_107 || null,
-            real_parto: real_parto || null,
-        }
-
+        setLoading(true)
         try {
-            if (textFormButton === 'Enviar') {
-                await apiAxios.post('/calendario/', data)
-            } else {
-                await apiAxios.put(`/calendario/${Id_Calendario}`, data)
-            }
+            const response = await apiAxios.patch(`/calendario/${calendario.Id_Calendario}/revision`, {
+                evento: revisionPanel.key,
+                fecha_revision: revFechaRevision,
+                resultado: revisionPanel.esRecelo ? revResultado : null,
+                observaciones: revObservaciones || null
+            })
+
+            setCalendario(response.data)
+            cerrarPanelRevision()
 
             MySwal.fire({
                 icon: 'success',
-                title: 'Guardado',
-                text: 'Calendario guardado correctamente'
+                title: 'Revisión registrada',
+                text: `${revisionPanel.nombre} actualizado correctamente`,
+                timer: 2000,
+                showConfirmButton: false
             })
 
-            hideModal()
             reload && reload()
 
         } catch (error) {
             MySwal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.response?.data?.message || 'Error al guardar'
+                text: error.response?.data?.message || 'Error al guardar la revisión'
             })
         }
+        setLoading(false)
     }
 
-    const currentRep = reproducciones.find(r => String(r.Id_Reproduccion) === String(Id_Reproduccion));
 
-    let tipoServicio = '';
-    if (currentRep && Fecha_Servicio) {
-        const isMonta = currentRep.montas?.some(m => m.Fec_hora?.startsWith(Fecha_Servicio));
-        const isInsem = currentRep.inseminaciones?.some(i => i.Fec_hora?.startsWith(Fecha_Servicio));
+    // Estado label para badge
+    const getEstadoLabel = () => {
+        if (estadoReproduccion === 'Activa') return 'Activa (Gestante)'
+        return estadoReproduccion
+    }
 
-        if (isMonta && isInsem) tipoServicio = '— (Monta e Inseminación)';
-        else if (isMonta) tipoServicio = '— (Monta)';
-        else if (isInsem) tipoServicio = '— (Inseminación)';
+    if (loading && !calendario) {
+        return (
+            <div className="cal-loading">
+                <div className="cal-loading-spinner"></div>
+                <span>Cargando calendario...</span>
+            </div>
+        )
     }
 
     return (
-        <form onSubmit={gestionarForm}>
+        <div className="cal-container">
+            {/* ── Header Info Card ──────────────────── */}
+            <div className="cal-header-card">
+                <div className="cal-cerda-avatar">🐷</div>
 
-            {isInactive && (
-                <div className="alert alert-warning py-2 mb-3 text-center fw-bold">
-                    ⚠️ Esta reproducción está inactiva. El calendario es de solo lectura.
+                <div className="cal-cerda-info">
+                    <h3>Cerda: {nombreCerda}</h3>
+                    <div className="cal-meta">
+                        <strong>ID Reproducción:</strong> {idReproduccion} &nbsp;|&nbsp;
+                        <strong>Tipo Inicial:</strong> {tipoInicial}<br />
+                        <strong>Fecha del primer servicio:</strong> {fechaServicio ? formatDate(fechaServicio) : '—'}
+                    </div>
                 </div>
-            )}
 
-            <div className="mb-3">
-                <label>Reproducción</label>
-                <select className="form-control"
-                    value={Id_Reproduccion}
-                    onChange={(e) => setId_Reproduccion(e.target.value)}
-                    disabled={!!calendarioEdit || !!preloaded?.Id_Reproduccion}
-                >
-                    <option value="">Seleccione</option>
-                    {reproducciones.map(rep => (
-                        <option key={rep.Id_Reproduccion} value={rep.Id_Reproduccion}>
-                            #{rep.Id_Reproduccion} — {rep.porcino?.Nom_Porcino || `Cerda ${rep.Id_Cerda}`}
-                        </option>
-                    ))}
-                </select>
+                <div className="cal-badges">
+                    <div className="cal-badge cal-badge-dias">
+                        <span className="cal-badge-icon">📅</span>
+                        <div>
+                            <span className="cal-badge-label">Días de gestación</span>
+                            <span className="cal-badge-value">{diasGestacion} días</span>
+                        </div>
+                    </div>
+
+                    <div className="cal-badge cal-badge-estado">
+                        <span className="cal-badge-icon">💚</span>
+                        <div>
+                            <span className="cal-badge-label">Estado actual</span>
+                            <span className="cal-badge-value">{getEstadoLabel()}</span>
+                        </div>
+                    </div>
+
+                    <div className="cal-badge cal-badge-parto">
+                        <span className="cal-badge-icon">🍼</span>
+                        <div>
+                            <span className="cal-badge-label">Fecha probable de parto</span>
+                            <span className="cal-badge-value">{calcularFechaParto()}</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div className="mb-3">
-                <label>Fecha Servicio {tipoServicio}</label>
-                <input type="date"
-                    className="form-control"
-                    value={Fecha_Servicio}
-                    onChange={(e) => setFecha_Servicio(e.target.value)} readOnly
-                />
+            {/* ── Alert Info ──────────────────────────── */}
+            <div className="cal-alert-info">
+                <span className="cal-alert-icon">ℹ️</span>
+                <span className="cal-alert-text">
+                    Las fechas mostradas son proyectadas automáticamente a partir de la fecha del primer servicio.
+                    Puedes registrar las revisiones cuando ocurran.
+                </span>
             </div>
 
-            <table className="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Evento</th>
-                        <th>Proyectado</th>
-                        <th>Real</th>
-                    </tr>
-                </thead>
+            {/* ── Events Table ────────────────────────── */}
+            <div className="cal-table-wrapper">
+                <table className="cal-table">
+                    <thead>
+                        <tr>
+                            <th>Evento</th>
+                            <th>Días desde fecha base</th>
+                            <th>Fecha proyectada</th>
+                            <th>Fecha de revisión</th>
+                            <th>Resultado / Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {EVENTOS.map((evento) => {
+                            const data = getEventoData(evento)
+                            const estado = getEstado(evento)
+                            const isDisabled = estado === 'no_aplica'
 
-                <tbody>
-                    {EVENTOS.map((evento, i) => (
-                        <tr key={evento}>
-                            <td>{evento}</td>
+                            return (
+                                <tr key={evento.key} style={isDisabled ? { opacity: 0.5 } : {}}>
+                                    <td>
+                                        <div className="evento-name">
+                                            <span className={`evento-icon ${evento.iconClass}`}>
+                                                {evento.icon}
+                                            </span>
+                                            <div>
+                                                <div>{evento.nombre}</div>
+                                                {data.observaciones && (
+                                                    <div className="text-muted" style={{ fontSize: '0.78rem', fontStyle: 'italic', marginTop: '0.2rem', fontWeight: 'normal' }}>
+                                                        📝 Obs: {data.observaciones}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span className="dias-badge">{evento.dias} días</span>
+                                    </td>
+                                    <td className="fecha-proyectada">
+                                        {formatDate(data.fechaProyectada)}
+                                    </td>
+                                    <td className="fecha-revision">
+                                        {data.fechaReal ? formatDate(data.fechaReal) : '—'}
+                                    </td>
+                                    <td>{renderStatus(evento)}</td>
+                                    <td>{renderAction(evento)}</td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
 
-                            <td>{proyectados[i] ? proyectados[i].split('-').reverse().join('/') : '—'}</td>
+            {/* ── Fecha base / Última actualización ──── */}
+            <div className="cal-fecha-base">
+                Fecha base (primer servicio): {fechaServicio ? formatDate(fechaServicio) : '—'}
+            </div>
 
-                            <td>
+            {/* ── Legend + Info Importante ─────────────── */}
+            <div className="cal-footer">
+                <div className="cal-footer-grid">
+                    <div className="cal-legend">
+                        <h5>Leyenda de Resultados</h5>
+                        <div className="cal-legend-item">
+                            <div className="cal-legend-dot cal-legend-dot-no-recelo"></div>
+                            <span className="cal-legend-label">No presentó recelo</span>
+                            <span className="cal-legend-desc">La cerda no mostró signos de celo</span>
+                        </div>
+                        <div className="cal-legend-item">
+                            <div className="cal-legend-dot cal-legend-dot-recelo"></div>
+                            <span className="cal-legend-label">Recelo detectado</span>
+                            <span className="cal-legend-desc">La cerda presentó celo nuevamente</span>
+                        </div>
+                        <div className="cal-legend-item">
+                            <div className="cal-legend-dot cal-legend-dot-no-aplica"></div>
+                            <span className="cal-legend-label">No aplica</span>
+                            <span className="cal-legend-desc">El evento ya no aplica para esta reproducción</span>
+                        </div>
+                        <div className="cal-legend-item">
+                            <div className="cal-legend-dot cal-legend-dot-realizado"></div>
+                            <span className="cal-legend-label">Realizado</span>
+                            <span className="cal-legend-desc">Evento completado (aplica para otros eventos)</span>
+                        </div>
+                    </div>
+
+                    <div className="cal-info-importante">
+                        <h5>Información Importante</h5>
+                        <ul>
+                            <li>Si la cerda presenta recelo en el 1er o 2do control, la reproducción se marcará como fallida y deberá iniciar una nueva reproducción.</li>
+                            <li>Si no presenta recelo, continúa el seguimiento con los eventos restantes.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+
+            {/* ── Revision Side Panel ────────────────── */}
+            {revisionPanel && (
+                <div className="cal-revision-overlay" onClick={(e) => { if (e.target === e.currentTarget) cerrarPanelRevision() }}>
+                    <div className="cal-revision-panel">
+                        <div className="cal-revision-header">
+                            <div>
+                                <h4>Registrar revisión - {revisionPanel.nombre}</h4>
+                                <div className="cal-revision-subtitle">
+                                    Fecha proyectada: {formatDate(getEventoData(revisionPanel).fechaProyectada)}
+                                    {revisionPanel.dias && ` (${revisionPanel.dias} días desde el primer servicio)`}
+                                </div>
+                            </div>
+                            <button className="cal-revision-close" onClick={cerrarPanelRevision}>✕</button>
+                        </div>
+
+                        <div className="cal-revision-body">
+                            {/* Fecha de revisión */}
+                            <div className="cal-form-group">
+                                <label className="cal-form-label">
+                                    Fecha de revisión <span className="required">*</span>
+                                </label>
                                 <input
                                     type="date"
-                                    className="form-control"
-                                    value={reales[i]}
-                                    min={getMinDate(proyectados[i])}
-                                    onChange={(e) => setters[i](e.target.value)}
-                                    disabled={isInactive}
+                                    className="cal-form-input"
+                                    value={revFechaRevision}
+                                    onChange={(e) => setRevFechaRevision(e.target.value)}
+                                    placeholder="dd/mm/aaaa"
                                 />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                            </div>
 
-            {!isInactive && (
-                <button className="btn btn-primary">
-                    {textFormButton}
-                </button>
+                            {/* Radio buttons - solo para controles de recelo */}
+                            {revisionPanel.esRecelo && (
+                                <div className="cal-form-group">
+                                    <label className="cal-form-label">
+                                        ¿Presentó recelo? <span className="required">*</span>
+                                    </label>
+                                    <div className="cal-radio-group">
+                                        <div
+                                            className={`cal-radio-option ${revResultado === 'no_recelo' ? 'selected-no-recelo' : ''}`}
+                                            onClick={() => setRevResultado('no_recelo')}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="resultado_recelo"
+                                                checked={revResultado === 'no_recelo'}
+                                                onChange={() => setRevResultado('no_recelo')}
+                                            />
+                                            <div>
+                                                <span className="cal-radio-label">🟢 No presentó recelo</span>
+                                                <span className="cal-radio-desc">La cerda no mostró signos de celo</span>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            className={`cal-radio-option ${revResultado === 'recelo_detectado' ? 'selected-recelo' : ''}`}
+                                            onClick={() => setRevResultado('recelo_detectado')}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="resultado_recelo"
+                                                checked={revResultado === 'recelo_detectado'}
+                                                onChange={() => setRevResultado('recelo_detectado')}
+                                            />
+                                            <div>
+                                                <span className="cal-radio-label">🔴 Sí presentó recelo</span>
+                                                <span className="cal-radio-desc">La cerda volvió a entrar en celo</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Observaciones */}
+                            <div className="cal-form-group">
+                                <label className="cal-form-label">Observaciones (opcional)</label>
+                                <textarea
+                                    className="cal-form-textarea"
+                                    value={revObservaciones}
+                                    onChange={(e) => setRevObservaciones(e.target.value.slice(0, 200))}
+                                    placeholder="Escribir observaciones (opcional)"
+                                    maxLength={200}
+                                />
+                                <div className="cal-char-counter">{revObservaciones.length}/200</div>
+                            </div>
+
+                            {/* Context Notes */}
+                            {revisionPanel.esRecelo && revResultado === 'no_recelo' && (
+                                <div className="cal-context-notes">
+                                    <h6>ℹ️ Si no presentó recelo:</h6>
+                                    <ul>
+                                        <li>Se guarda la revisión.</li>
+                                        <li>La reproducción continúa normalmente.</li>
+                                        <li>El 2° control sigue pendiente.</li>
+                                    </ul>
+                                </div>
+                            )}
+
+                            {revisionPanel.esRecelo && revResultado === 'recelo_detectado' && (
+                                <div className="cal-context-notes cal-context-notes-recelo">
+                                    <h6>⚠️ Si presentó recelo:</h6>
+                                    <ul>
+                                        <li>Se guarda la revisión.</li>
+                                        <li>La reproducción se marca como fallida.</li>
+                                        <li>Los siguientes eventos pasan a "No aplica".</li>
+                                        <li>Puedes iniciar una nueva reproducción.</li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="cal-revision-footer">
+                            <button className="cal-btn-cancelar" onClick={cerrarPanelRevision}>
+                                Cancelar
+                            </button>
+                            <button
+                                className="cal-btn-guardar"
+                                onClick={guardarRevision}
+                                disabled={loading}
+                            >
+                                {loading ? 'Guardando...' : 'Guardar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
-
-        </form>
+        </div>
     )
 }
 

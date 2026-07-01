@@ -25,6 +25,7 @@ const CrudReproducciones = () => {
     const [calendarioData, setCalendarioData] = useState(null)
     const [calendarioEdit, setCalendarioEdit] = useState(null)
     const [calendarioIsInactive, setCalendarioIsInactive] = useState(false)
+    const [selectedReproduccion, setSelectedReproduccion] = useState(null)
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
@@ -91,6 +92,18 @@ const CrudReproducciones = () => {
             ? todasFechas.sort()[0].split('T')[0]
             : ''
 
+        const tieneMontas = row.montas?.length > 0
+        const tieneInseminaciones = row.inseminaciones?.length > 0
+        const tipo = tieneMontas && tieneInseminaciones ? 'Monta e Inseminación' : tieneMontas ? 'Monta' : tieneInseminaciones ? 'Inseminación' : row.TipoReproduccion || 'Monta'
+
+        setSelectedReproduccion({
+            nombreCerda: row.porcino?.Nom_Porcino || 'Sin nombre',
+            Id_Reproduccion: row.Id_Reproduccion,
+            tipoInicial: tipo,
+            estado: row.Estado || 'Activa',
+            fechaServicio: row.Fec_servicio || fecha
+        })
+
         // ✅ Verificar si ya existe un calendario para esta reproducción
         try {
             const calRes = await apiAxios.get(`/calendario/reproduccion/${row.Id_Reproduccion}`)
@@ -121,6 +134,7 @@ const CrudReproducciones = () => {
     const hideModalCalendario = async () => {
         setCalendarioData(null)
         setCalendarioEdit(null)
+        setSelectedReproduccion(null)
         cerrarModal(modalCalendarioInstanceRef)
         await getAllReproducciones()
     }
@@ -199,22 +213,66 @@ const CrudReproducciones = () => {
             }
         },
         {
-            name: 'Activo',
-            width: '110px',
+            name: 'Estado',
+            width: '130px',
             cell: row => {
-                const isActivo = (row.activo || '').toUpperCase() === 'S';
+                const estado = row.Estado || 'Activa';
+                let badgeClass = 'bg-secondary';
+                let icon = '';
+
+                switch (estado) {
+                    case 'Activa':
+                        badgeClass = 'bg-success';
+                        icon = '🤰';
+                        break;
+                    case 'Fallida':
+                        badgeClass = 'bg-danger';
+                        icon = '❌';
+                        break;
+                    case 'Lactante':
+                        badgeClass = 'bg-info';
+                        icon = '🍼';
+                        break;
+                    case 'Completado':
+                        badgeClass = 'bg-primary';
+                        icon = '✅';
+                        break;
+                }
+
                 return (
                     <span
-                        className={`badge ${isActivo ? 'bg-success' : 'bg-secondary'}`}
-                        style={{ cursor: 'pointer', fontSize: '12px' }}
-                        title={isActivo ? 'Clic para inactivar' : 'Clic para activar'}
-                        onClick={() => handleToggleActivo(row)}
+                        className={`badge ${badgeClass}`}
+                        style={{ fontSize: '12px' }}
                     >
-                        {isActivo ? '✅ Activo' : '⛔ Inactivo'}
+                        {icon} {estado}
                     </span>
                 );
             }
         },
+        {
+            name: 'F. Servicio',
+            width: '120px',
+            selector: row => row.Fec_servicio ? row.Fec_servicio.split('T')[0] : '-',
+            sortable: true
+        },
+        {
+            name: 'Días Gestación',
+            width: '110px',
+            cell: row => {
+                const dias = calcularDiasGestacion(row);
+                return <span style={{ fontWeight: 'bold' }}>{dias}</span>;
+            },
+            sortable: true
+        },
+        // {
+        //     name: 'Fecha Probable Parto',
+        //     width: '140px',
+        //     cell: row => {
+        //         const fecha = calcularFechaProbableParto(row.Fec_servicio);
+        //         return <span>{fecha}</span>;
+        //     },
+        //     sortable: true
+        // },
         {
             name: 'Montas',
             width: '100px',
@@ -306,6 +364,48 @@ const CrudReproducciones = () => {
         cerrarModal(modalColectaInstanceRef)
     }
 
+    // Helper function to calculate gestation days
+    const calcularDiasGestacion = (row) => {
+        const fecServicio = row.Fec_servicio
+        if (!fecServicio) return '-'
+        const servicio = new Date(fecServicio.split('T')[0] + 'T00:00:00')
+
+        if (row.Estado === 'Fallida') {
+            if (row.calendario?.resultado_rc1 === 'recelo_detectado' && row.calendario?.real_rc1) {
+                const fin = new Date(row.calendario.real_rc1.split('T')[0] + 'T00:00:00')
+                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
+                return diff > 0 ? diff : 0
+            }
+            if (row.calendario?.resultado_rc2 === 'recelo_detectado' && row.calendario?.real_rc2) {
+                const fin = new Date(row.calendario.real_rc2.split('T')[0] + 'T00:00:00')
+                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
+                return diff > 0 ? diff : 0
+            }
+            return 0
+        }
+
+        if (row.Estado === 'Lactante' || row.Estado === 'Completado') {
+            if (row.calendario?.real_parto) {
+                const fin = new Date(row.calendario.real_parto.split('T')[0] + 'T00:00:00')
+                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
+                return diff > 0 ? diff : 0
+            }
+            return 114
+        }
+
+        const hoy = new Date()
+        const diff = Math.floor((hoy - servicio) / (1000 * 60 * 60 * 24))
+        return diff > 0 ? diff : 0
+    }
+
+    // Helper function to calculate probable farrowing date (114 days gestation)
+    const calcularFechaProbableParto = (fecServicio) => {
+        if (!fecServicio) return '-'
+        const servicio = new Date(fecServicio)
+        servicio.setDate(servicio.getDate() + 114)
+        return servicio.toLocaleDateString('es-ES')
+    }
+
     const filteredReproducciones = reproducciones.filter(rep => {
         const text = filterText.toLowerCase()
         return (
@@ -363,12 +463,12 @@ const CrudReproducciones = () => {
                 </div>
             </div>
             {/* Modal Calendario */}
-            <div className="modal fade" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
-                <div className="modal-dialog modal-lg">
+            <div className="modal fade calendario-modal" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
+                <div className="modal-dialog modal-xl">
                     <div className="modal-content">
-                        <div className="modal-header bg-info bg-opacity-10">
+                        <div className="modal-header">
                             <h5 className="modal-title">
-                                {calendarioEdit ? '📅 Actualizar Calendario' : '📅 Agregar Calendario'}
+                                📅 Calendario Reproductivo
                             </h5>
                             <button type="button" className="btn-close"
                                 onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
@@ -382,6 +482,7 @@ const CrudReproducciones = () => {
                                     hideModal={hideModalCalendario}
                                     reload={getAllReproducciones}
                                     isInactive={calendarioIsInactive}
+                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                             {!calendarioEdit && calendarioData && (
@@ -394,6 +495,7 @@ const CrudReproducciones = () => {
                                         Fecha_Servicio: calendarioData.Fecha_Servicio
                                     }}
                                     isInactive={calendarioIsInactive}
+                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                         </div>

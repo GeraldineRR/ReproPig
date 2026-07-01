@@ -56,23 +56,41 @@ const CrudCrias = () => {
         {
             name: 'Causa Muerte',
             cell: row => (
+                <select
+                    className="form-select form-select-sm"
+                    value={row.Causa_Muerte || ''}
+                    onChange={(e) => updateCriaField(row.Id_Cria, 'Causa_Muerte', e.target.value || null)}
+                    disabled
+                >
+                    <option value="">—</option>
+                    <option value="Nacido muerto">Nacido muerto</option>
+                    <option value="Momia">Momia</option>
+                    <option value="Peso 0: Enfermo">Peso 0: Enfermo</option>
+                    <option value="Peso 0: Aplastado">Peso 0: Aplastado</option>
+                    <option value="Peso 0: Inanición">Peso 0: Inanición</option>
+                </select>
+            )
+        },
+
+        {
+            name: 'Observaciones',
+            cell: row => (
                 <input
                     type="text"
                     className="form-control form-control-sm"
-                    defaultValue={row.Causa_Muerte || ''}
+                    defaultValue={row.Observaciones || ''}
                     placeholder="—"
                     onBlur={(e) => {
-                        if (e.target.value !== (row.Causa_Muerte || '')) {
-                            updateCriaField(row.Id_Cria, 'Causa_Muerte', e.target.value)
+                        if (e.target.value !== (row.Observaciones || '')) {
+                            updateCriaField(row.Id_Cria, 'Observaciones', e.target.value)
                         }
                     }}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                            updateCriaField(row.Id_Cria, 'Causa_Muerte', e.target.value)
+                            updateCriaField(row.Id_Cria, 'Observaciones', e.target.value)
                             e.target.blur()
                         }
                     }}
-                    disabled={row.Estado !== 'Muerto'}
                 />
             )
         },
@@ -156,7 +174,9 @@ const CrudCrias = () => {
 
         const causaMuerte = cria.Causa_Muerte?.toLowerCase() || ''
 
-        const matchesText = estado.includes(text) || sexo.includes(text) || numCria.includes(text) || causaMuerte.includes(text) || fechaMuerte.includes(text)
+        const observaciones = cria.Observaciones?.toLowerCase() || ''
+
+        const matchesText = estado.includes(text) || sexo.includes(text) || numCria.includes(text) || causaMuerte.includes(text) || fechaMuerte.includes(text) || observaciones.includes(text)
 
         if (partoIdParams) {
             return cria.Id_parto?.toString() === partoIdParams && matchesText

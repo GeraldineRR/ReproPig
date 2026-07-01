@@ -1,5 +1,6 @@
 import apiAxios from "../../api/axiosConfig.js"
 import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
 import DataTable from 'react-data-table-component'
 import Seguimiento_CerdaForm from "./Seguimiento_CerdaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
@@ -10,14 +11,21 @@ const crudSeguimiento_Cerda = () => {
     const [Seguimiento_CerdaEdit, setSeguimiento_CerdaEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
     const [modalKey, setModalKey] = useState(0)  // ← AGREGADO
+    const { id: partoIdParams } = useParams()
+    const navigate = useNavigate()
+
+    const calcularFechaProgramada = (fechaParto, dia) => {
+        if (!fechaParto) return '';
+        const [year, month, day] = fechaParto.split('T')[0].split('-');
+        const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
+        return fecha.toISOString().split('T')[0];
+    }
 
     const columnsTable = [
-        { name: 'Id', selector: row => row.Id_Seguimiento_Cerda, width: '70px' },
-        { name: 'Fecha', selector: row => row.Fecha },
-        { name: 'Hora', selector: row => row.Hora },
-        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
-        { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion || '—' },
-        { name: 'Responsable', selector: row => row.Responsables?.Nombres || '—' },
+        { name: 'Día Seguimiento', selector: row => `Día ${row.Dia_Programado}` },
+        { name: 'Fecha Programada', selector: row => calcularFechaProgramada(row.partos?.Fec_fin, row.Dia_Programado) },
+        { name: 'Fecha Real', selector: row => row.Fecha_Real ? row.Fecha_Real.split('T')[0] : '—' },
+        { name: 'Responsable', selector: row => row.Responsables ? `${row.Responsables.Nombres} ${row.Responsables.Apellidos || ''}` : '—' },
         { name: 'Medicamento', selector: row => row.medicamentos?.Nombre || '—' },
         { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
         {
@@ -38,14 +46,20 @@ const crudSeguimiento_Cerda = () => {
         setSeguimiento_Cerda(response.data)
     }
 
-    const newListSeguimiento_Cerda = Seguimiento_Cerda.filter(Seguimiento_Cerda => {
+    const newListSeguimiento_Cerda = Seguimiento_Cerda.filter(row => {
         const textToSearch = filterText.toLowerCase()
-        const Id = Seguimiento_Cerda.Id_Seguimiento_Cerda.toString().toLowerCase()
-        const Fecha = Seguimiento_Cerda.Fecha.toLowerCase()
-        return (
-            Id.includes(textToSearch) ||
-            Fecha.includes(textToSearch)
-        )
+        const Id = row.Id_Seguimiento_Cerda.toString().toLowerCase()
+        const FechaReal = row.Fecha_Real ? row.Fecha_Real.toLowerCase() : ''
+        const NomCerda = row.partos?.porcino?.Nom_Porcino ? row.partos.porcino.Nom_Porcino.toLowerCase() : ''
+
+        const matchesText = Id.includes(textToSearch) || FechaReal.includes(textToSearch) || NomCerda.includes(textToSearch)
+
+        let matchesParto = true
+        if (partoIdParams) {
+            matchesParto = String(row.Id_parto) === String(partoIdParams)
+        }
+
+        return matchesText && matchesParto
     })
 
     const hideModal = () => {
@@ -73,19 +87,41 @@ const crudSeguimiento_Cerda = () => {
     return (
         <>
             <div className="container mt-5">
-                <div className="row d-flex mb-3 justify-content-between">
-                    <div className="col-4">
-                        <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar...." />
+                <div className="row d-flex mb-3 justify-content-between align-items-center">
+                    <div className="col-4 d-flex gap-2">
+                        {partoIdParams && (
+                            <button className="btn btn-secondary" onClick={() => navigate('/partos')} title="Volver a Partos">
+                                <i className="fa-solid fa-arrow-left"></i>
+                            </button>
+                        )}
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input
+                                className="form-control"
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                placeholder="Buscar por Fecha Real, medicamento, observaciones..."
+                            />
+                        </div>
                     </div>
-                    <div className="col-2">
-                        <button type="button" className="btn btn-primary" onClick={handleNuevo}>
-                            Nuevo
+
+                    <div className="col-3 text-end">
+                        <button
+                            type="button"
+                            className="btn btn-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#exampleModal"
+                            onClick={() => setSegcamadaEdit(null)}
+                        >
+                            + Registrar seguimiento
                         </button>
                     </div>
                 </div>
 
                 <DataTable
-                    title="Seguimiento Cerda"
+                    title={partoIdParams ? `Seguimiento Cerda - Parto #${partoIdParams}` : "Seguimiento Cerda"}
                     columns={columnsTable}
                     data={newListSeguimiento_Cerda}
                     keyField="Id_Seguimiento_Cerda"
@@ -100,7 +136,7 @@ const crudSeguimiento_Cerda = () => {
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h1 className="modal-title fs-5" id="exampleModalLabel">
-                                    {Seguimiento_CerdaEdit ? "Editar Seguimiento_Cerda" : "Agregar Seguimiento_Cerda"}
+                                    {Seguimiento_CerdaEdit ? "Editar Seguimiento" : "Agregar Seguimiento"}
                                 </h1>
                                 <button id="closeModal" type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
@@ -110,6 +146,7 @@ const crudSeguimiento_Cerda = () => {
                                     hideModal={hideModal}
                                     Seguimiento_CerdaEdit={Seguimiento_CerdaEdit}
                                     reload={getAllSeguimiento_Cerda}
+                                    partoIdParams={partoIdParams}
                                 />
                             </div>
                         </div>

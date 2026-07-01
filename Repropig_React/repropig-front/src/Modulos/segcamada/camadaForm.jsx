@@ -17,6 +17,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const [Dia_Programado, setDiaProgramado] = useState(0);
     const [Fecha_Real, setFechaReal] = useState('');
     const [Peso_Cria, setPesoCria] = useState('');
+    const [causaMuertePeso0, setCausaMuertePeso0] = useState('');
     const [Id_Medicamento, setIdMedicamento] = useState('');
     const [medicamentos, setMedicamentos] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
@@ -137,6 +138,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
+        setCausaMuertePeso0('');
         setIdMedicamento('');
         setObservaciones('');
         setTextFormButton("Enviar");
@@ -154,15 +156,31 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         );
     }
 
-    // Verifica si el peso es 0 y pregunta si la cría ha muerto
+    // Verifica si el peso es 0 y marca la cría como muerta con la causa seleccionada
     const verificarPesoCero = async () => {
         if (Number(Peso_Cria) === 0) {
+            if (!causaMuertePeso0) {
+                MySwal.fire({
+                    icon: 'warning',
+                    title: 'Causa de muerte requerida',
+                    text: 'Si el peso es 0, debes seleccionar una causa de muerte antes de continuar.'
+                });
+                return 'error';
+            }
+
+            const causaMap = {
+                'Enfermo': 'Peso 0: Enfermo',
+                'Aplastado': 'Peso 0: Aplastado',
+                'Inanición': 'Peso 0: Inanición'
+            };
+
             const result = await MySwal.fire({
                 icon: 'warning',
                 title: 'Peso igual a 0',
                 html: `<p>Has ingresado un peso de <strong>0 kg</strong> para esta cría.</p>
-                       <p><strong>Peso 0 = Cría muerta.</strong></p>
-                       <p>¿La cría ha fallecido?</p>`,
+                       <p>Causa seleccionada: <strong>${causaMuertePeso0}</strong></p>
+                       <p>La cría será marcada como <strong>Muerta</strong> automáticamente.</p>
+                       <p>¿Deseas continuar?</p>`,
                 showCancelButton: true,
                 confirmButtonText: 'Sí, continuar',
                 cancelButtonText: 'No, cancelar',
@@ -171,11 +189,11 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             });
 
             if (result.isConfirmed) {
-                // Marcar la cría como muerta en la base de datos
+                // Marcar la cría como muerta en la base de datos con la causa seleccionada
                 try {
                     await apiAxios.put(`/cria/${Id_Cria}`, {
                         Estado: 'Muerto',
-                        Causa_Muerte: 'Registrado por peso 0 en seguimiento',
+                        Causa_Muerte: causaMap[causaMuertePeso0],
                         Fecha_Muerte: Fecha_Real || new Date().toISOString().split('T')[0]
                     });
                 } catch (error) {
@@ -374,14 +392,14 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             />
                         </div>
 
-                        {/* Día Programado */}
+                        {/* Día Seguimiento */}
                         <div className="col-6">
-                            <label className="form-label">Día Programado</label>
+                            <label className="form-label">Día Seguimiento</label>
                             <input
                                 type="text"
                                 className="form-control py-2"
-                                style={{ backgroundColor: "#d1ecf1" }}
-                                value={`N° ${Dia_Programado}`}
+                                style={{ backgroundColor: "#E3E3E3" }}
+                                value={`Día N° ${Dia_Programado}`}
                                 readOnly
                             />
                         </div>
@@ -406,7 +424,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             <input
                                 type="date"
                                 className="form-control"
-                                style={{ backgroundColor: "#d1ecf1" }}
+                                style={{ backgroundColor: "#E3E3E3" }}
                                 value={Fecha_Programada}
                                 readOnly
                             />
@@ -416,7 +434,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
                     <button
                         type="button"
-                        className="btn btn-warning mb-3"
+                        className="btn mb-3"
+                        style={{ backgroundColor: "#ffe100b1", borderColor: "#ffe100d6" }}
                         onClick={activarCorreccion}
                     >
                         Cambiar cría / parto
@@ -476,12 +495,12 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         {Id_Cria && (
                             <>
                                 <div className="mb-3">
-                                    <label className="form-label">Día Programado</label>
+                                    <label className="form-label">Día Seguimiento</label>
                                     <input
                                         type="text"
                                         className="form-control py-2"
                                         style={{ backgroundColor: "#d1ecf1" }}
-                                        value={`N° ${Dia_Programado}`}
+                                        value={`Día N° ${Dia_Programado}`}
                                         readOnly
                                     />
                                     <small className="text-muted">
@@ -529,10 +548,36 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             step="0.01"
                             className="form-control"
                             value={Peso_Cria}
-                            onChange={(e) => setPesoCria(e.target.value)}
+                            onChange={(e) => {
+                                setPesoCria(e.target.value);
+                                if (Number(e.target.value) !== 0) {
+                                    setCausaMuertePeso0('');
+                                }
+                            }}
                             required
                         />
                     </div>
+
+                    {/* Causa de muerte — solo visible cuando el peso es 0 */}
+                    {Peso_Cria !== '' && Number(Peso_Cria) === 0 && (
+                        <div className="mb-3">
+                            <label className="form-label">Causa de muerte</label>
+                            <select
+                                className="form-control border-danger"
+                                value={causaMuertePeso0}
+                                onChange={(e) => setCausaMuertePeso0(e.target.value)}
+                                required
+                            >
+                                <option value="">Selecciona la causa...</option>
+                                <option value="Enfermo">Enfermo</option>
+                                <option value="Aplastado">Aplastado</option>
+                                <option value="Inanición">Inanición</option>
+                            </select>
+                            <small className="text-danger">
+                                Peso 0 = Cría muerta. Selecciona la causa de muerte.
+                            </small>
+                        </div>
+                    )}
 
                     <div className="mb-3">
                         <label className="form-label">Medicamento</label>

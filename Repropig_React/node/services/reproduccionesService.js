@@ -2,18 +2,73 @@ import reproduccionesModel from "../models/reproduccionesModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import MontaModel from "../models/montaModel.js";
 import InseminacionModel from "../models/inseminacionModel.js";
+import CalendarioModel from "../models/CalendarioModel.js";
+import PartosModel from "../models/PartosModel.js";
+import SeguimientoCerda_Model from "../models/Seguimiento_CerdaModel.js";
 
 class reproduccionesService {
 
     async getAll() {
-        return await reproduccionesModel.findAll({
+        const list = await reproduccionesModel.findAll({
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },           // 👈 agrega Fecha
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] } // 👈 agrega Fecha
+                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },
+                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] },
+                { model: CalendarioModel, as: 'calendario' },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    include: [
+                        { model: SeguimientoCerda_Model, as: 'seguimiento_cerda' }
+                    ]
+                }
             ],
             order: [['Createdat', 'DESC']]
-        })
+        });
+
+        // Calcular estado para cada reproducción
+        for (const rep of list) {
+            await this.actualizarEstado(rep);
+        }
+
+        return list;
+    }
+
+    async actualizarEstado(rep) {
+        if (!rep) return;
+        let nuevoEstado = 'Activa';
+        let nuevoActivo = rep.activo;
+
+        // Verificar si tiene calendario
+        if (rep.calendario) {
+            // Fallida: si se registró recelo detectado en primer o segundo control
+            if (rep.calendario.resultado_rc1 === 'recelo_detectado' || rep.calendario.resultado_rc2 === 'recelo_detectado') {
+                nuevoEstado = 'Fallida';
+                nuevoActivo = 'N';
+            }
+            // Lactante: si se registró fecha real del parto
+            else if (rep.calendario.real_parto) {
+                nuevoEstado = 'Lactante';
+            }
+        }
+
+        // Completado: si tiene parto con seguimiento completo
+        if (rep.partos && rep.partos.length > 0) {
+            const parto = rep.partos[0];
+            if (parto.seguimiento_cerda && parto.seguimiento_cerda.length > 0) {
+                const seguimientoCompleto = parto.seguimiento_cerda.every(s => s.Fecha_Real);
+                if (seguimientoCompleto) {
+                    nuevoEstado = 'Completado';
+                }
+            }
+        }
+
+        // Actualizar si cambió
+        if (rep.Estado !== nuevoEstado || rep.activo !== nuevoActivo) {
+            rep.Estado = nuevoEstado;
+            rep.activo = nuevoActivo;
+            await rep.save();
+        }
     }
 
     async getById(id) {
@@ -21,10 +76,19 @@ class reproduccionesService {
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Nom_Porcino'] },
                 { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'] },
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] }
+                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'] },
+                { model: CalendarioModel, as: 'calendario' },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    include: [
+                        { model: SeguimientoCerda_Model, as: 'seguimiento_cerda' }
+                    ]
+                }
             ]
         })
         if (!reproduccion) throw new Error('Reproduccion no encontrada')
+        await this.actualizarEstado(reproduccion)
         return reproduccion
     }
 
@@ -47,7 +111,9 @@ class reproduccionesService {
             const nueva = await reproduccionesModel.create({
                 Id_Cerda: data.Id_Cerda,
                 TipoReproduccion: data.TipoReproduccion,
-                activo: 'S'
+                Fec_servicio: data.Fec_servicio || null,
+                activo: 'S',
+                Estado: 'Activa'
             });
             console.log("✅ Guardado con ID:", nueva.Id_Reproduccion);
             return nueva;
@@ -65,6 +131,7 @@ class reproduccionesService {
         reproduccion.Id_Cerda = data.Id_Cerda || reproduccion.Id_Cerda
         reproduccion.activo = data.activo || data.Activo || reproduccion.activo
         reproduccion.TipoReproduccion = data.TipoReproduccion || reproduccion.TipoReproduccion
+        reproduccion.Fec_servicio = data.Fec_servicio !== undefined ? data.Fec_servicio : reproduccion.Fec_servicio
 
         await reproduccion.save()
         return true

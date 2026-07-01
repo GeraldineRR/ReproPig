@@ -19,6 +19,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
     const [Hor_final, setHor_final] = useState('')
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Registrar')
+    const [tieneSeguimiento, setTieneSeguimiento] = useState(false)
 
     // 🔢 Total automático
     const totalNacidos =
@@ -39,6 +40,16 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
         }
     }
 
+    const checkTieneSeguimiento = async (idParto) => {
+        try {
+            const res = await apiAxios.get(`/partos/${idParto}/tiene-seguimiento`)
+            setTieneSeguimiento(res.data.tieneSeguimiento)
+        } catch (error) {
+            console.error("Error al verificar seguimiento:", error)
+            setTieneSeguimiento(false)
+        }
+    }
+
     useEffect(() => {
         if (rowToEdit?.Id_parto) {
             setPorcino(rowToEdit.Id_Porcino || '')
@@ -52,8 +63,10 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             setFec_fin(rowToEdit.Fec_fin?.split('T')[0] || '')
             setHor_final(rowToEdit.Hor_final || '')
             setTextFormButton("Actualizar")
+            checkTieneSeguimiento(rowToEdit.Id_parto)
         } else {
             resetForm()
+            setTieneSeguimiento(false)
         }
     }, [rowToEdit])
 
@@ -69,6 +82,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
         setFec_fin('')
         setHor_final('')
         setTextFormButton("Registrar")
+        setTieneSeguimiento(false)
     }
 
     const gestionarForm = async (e) => {
@@ -167,23 +181,30 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             <div className="row">
                 <div className="col">
                     <label>Vivos</label>
-                    <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} />
+                    <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} disabled={tieneSeguimiento} />
                 </div>
                 <div className="col">
                     <label>Muertos</label>
-                    <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} />
+                    <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} disabled={tieneSeguimiento} />
                 </div>
                 <div className="col">
                     <label>Momias</label>
-                    <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} />
+                    <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} disabled={tieneSeguimiento} />
                 </div>
             </div>
 
             {/* 🔥 Total automático */}
-            <div className="mt-2">
-                <span className="badge bg-dark">
-                    Total nacidos: {totalNacidos}
-                </span>
+            <div className="mt-2 d-flex flex-column gap-2">
+                <div>
+                    <span className="badge bg-dark">
+                        Total nacidos: {totalNacidos}
+                    </span>
+                </div>
+                {tieneSeguimiento && (
+                    <div className="alert alert-warning py-2 px-3 m-0" style={{ fontSize: '13px', borderRadius: '10px' }}>
+                        ⚠️ No se pueden modificar las crías porque ya ha comenzado su registro de seguimiento de camada.
+                    </div>
+                )}
             </div>
 
             {/* Peso */}

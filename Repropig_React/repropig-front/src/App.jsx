@@ -59,6 +59,7 @@ function App() {
         <Route path="/segcamada" element={<CrudSegcamada />} />
         <Route path="/segcamada/parto/:id" element={<CrudSegcamada />} />
         <Route path="/Seguimiento_Cerda" element={<CrudSeguimiento_Cerda />} />
+        <Route path="/Seguimiento_Cerda/parto/:id" element={<CrudSeguimiento_Cerda />} />
         <Route path="/Calendario" element={<CrudCalendario />} />
         <Route path="/perfil-cerda/:id" element={<PerfilCerda />} />
         <Route path="/mi-perfil" element={<MiPerfil />} />

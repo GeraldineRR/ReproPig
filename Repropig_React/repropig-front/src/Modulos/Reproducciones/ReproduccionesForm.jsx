@@ -11,6 +11,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
     const [Id_Cerda, setId_Cerda] = useState('')
     const [Activo, setActivo] = useState('S')
     const [TipoReproduccion, setTipoReproduccion] = useState('')
+    const [Fec_servicio, setFec_servicio] = useState('')
     const [accionEdicion, setAccionEdicion] = useState('') // 'agregar_monta' | 'agregar_inseminacion' | ''
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
@@ -36,6 +37,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
             setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
             setActivo((reproduccionEdit.activo || 'S').toUpperCase())
             setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
+            setFec_servicio(reproduccionEdit.Fec_servicio ? reproduccionEdit.Fec_servicio.split('T')[0] : '')
             setAccionEdicion('')
             setTextFormButton("Actualizar")
         } else {
@@ -43,6 +45,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
             setId_Cerda('')
             setActivo('S')
             setTipoReproduccion('')
+            setFec_servicio('')
             setAccionEdicion('')
             setTextFormButton("Enviar")
         }
@@ -85,7 +88,8 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                     const response = await apiAxios.post('/reproducciones', {
                         Id_Cerda: Number(Id_Cerda),
                         Activo: 'S',
-                        TipoReproduccion
+                        TipoReproduccion,
+                        Fec_servicio: Fec_servicio || null
                     })
                     const nuevaReproduccion = response.data?.reproducciones || response.data
 
@@ -125,7 +129,8 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                 await apiAxios.put(`/reproducciones/${Id_Reproduccion}`, {
                     Id_Cerda: Number(Id_Cerda),
                     Activo,
-                    TipoReproduccion: reproduccionEdit.TipoReproduccion
+                    TipoReproduccion: reproduccionEdit.TipoReproduccion,
+                    Fec_servicio: Fec_servicio || null
                 })
                 await MySwal.fire({ icon: 'success', title: 'Éxito', text: 'Reproducción actualizada correctamente' })
                 hideModal()
@@ -159,6 +164,17 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                         ))}
                     </select>
                 )}
+            </div>
+
+            {/* Fecha de servicio */}
+            <div className="mb-3">
+                <label className="form-label">Fecha de Servicio</label>
+                <input
+                    type="date"
+                    className="form-control"
+                    value={Fec_servicio}
+                    onChange={(e) => setFec_servicio(e.target.value)}
+                />
             </div>
 
             {/* ── MODO EDICIÓN ─────────────────────────────── */}

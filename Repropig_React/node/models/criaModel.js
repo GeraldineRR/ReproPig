@@ -8,8 +8,9 @@ const CriaModel = db.define('crias', {
     Num_Cria: { type: DataTypes.INTEGER, allowNull: true},
     Sexo: { type: DataTypes.CHAR(1), allowNull: false},
     Estado: { type: DataTypes.ENUM('Vivo', 'Muerto'), allowNull: false},
-    Causa_Muerte: { type: DataTypes.CHAR(50), allowNull: true },
+    Causa_Muerte: { type: DataTypes.ENUM('Nacido muerto', 'Momia', 'Peso 0: Enfermo', 'Peso 0: Aplastado', 'Peso 0: Inanición'), allowNull: true },
     Fecha_Muerte: { type: DataTypes.DATE, allowNull: true },
+    Observaciones: { type: DataTypes.TEXT, allowNull: true },
 }, {
     freezeTableName: true,
 });

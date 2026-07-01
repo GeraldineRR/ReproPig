@@ -11,6 +11,8 @@ const reproduccionesModel = db.define('reproduccion', {
         field: 'Activo'
     },
     TipoReproduccion: { type: DataTypes.STRING(20), allowNull: true },
+    Fec_servicio: { type: DataTypes.DATEONLY, allowNull: true },
+    Estado: { type: DataTypes.STRING(20), allowNull: true, defaultValue: 'Activa' },
 }, {
     freezeTableName: true,
     timestamps: false,

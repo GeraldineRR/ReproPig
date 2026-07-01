@@ -3,24 +3,49 @@ import PorcinoModel from "../models/porcinoModel.js";
 import responsablesModel from "../models/responsablesModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
 import reproduccionesModel from "../models/reproduccionesModel.js";
+import PartosModel from "../models/PartosModel.js";
 
 class Seguimiento_CerdaService {
 
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [
-                { model: PorcinoModel, as: 'porcino' },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    include: [
+                        { model: PorcinoModel, as: 'porcino' }
+                    ]
+                },
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
-                { model: reproduccionesModel, as: 'reproduccion' },
             ]
         })
     }
 
     async getById(id) {
-        const Seguimiento_Cerda = await Seguimiento_CerdaModel.findByPk(id)
+        const Seguimiento_Cerda = await Seguimiento_CerdaModel.findByPk(id, {
+            include: [
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    include: [
+                        { model: PorcinoModel, as: 'porcino' }
+                    ]
+                },
+                { model: responsablesModel, as: 'Responsables' },
+                { model: MedicamentosModel, as: 'medicamentos' },
+            ]
+        })
         if (!Seguimiento_Cerda) throw new Error('Seguimiento_Cerda no encontrado')
         return Seguimiento_Cerda
+    }
+
+    async getByParto(idParto) {
+        return await Seguimiento_CerdaModel.findAll({
+            where: { Id_parto: idParto },
+            order: [['Dia_Programado', 'ASC']]
+        })
     }
 
     async create(data) {

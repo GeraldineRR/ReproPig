@@ -53,3 +53,12 @@ export const deleteSeguimiento_Cerda = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+export const getSeguimientoByParto = async (req, res) => {
+    try {
+        const registros = await Seguimiento_CerdaService.getByParto(req.params.idParto)
+        res.status(200).json(registros)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
