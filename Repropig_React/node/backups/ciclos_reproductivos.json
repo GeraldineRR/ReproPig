@@ -1,0 +1,14 @@
+[
+  {
+    "Id_Ciclo_Reproductivo": 1,
+    "Id_Cerda": 2,
+    "Activo": "S",
+    "TipoReproduccion": "Inseminacion"
+  },
+  {
+    "Id_Ciclo_Reproductivo": 2,
+    "Id_Cerda": 3,
+    "Activo": "N",
+    "TipoReproduccion": "Monta"
+  }
+]

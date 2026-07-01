@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import apiAxios from '../api/axiosConfig'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/logo.png'
@@ -9,8 +9,10 @@ export default function Login() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [cargando, setCargando] = useState(false)
-    const { login } = useAuth()
+    const { usuario, login } = useAuth()
     const navigate = useNavigate()
+
+    if (usuario) return <Navigate to="/dashboard" replace />
 
     const handleLogin = async (e) => {
         e.preventDefault()

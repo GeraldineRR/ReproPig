@@ -4,8 +4,8 @@ import { DataTypes } from "sequelize";
 const PorcinoModel = db.define('porcinos', {
 
     Id_Porcino: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    Nom_Porcino: { type: DataTypes.STRING, allowNull: false },
-    Num_Chapeta: { type: DataTypes.INTEGER, allowNull: false },
+    Nom_Porcino: { type: DataTypes.STRING, allowNull: true },
+    Num_Chapeta: { type: DataTypes.INTEGER, allowNull: true },
     Plac_Sena_Porcino: { type: DataTypes.INTEGER, allowNull: true },
     Id_Raza: { type: DataTypes.INTEGER, allowNull: false },
     Gen_Porcino: { type: DataTypes.CHAR(1), allowNull: false },
@@ -17,6 +17,7 @@ const PorcinoModel = db.define('porcinos', {
     Estado: { type: DataTypes.CHAR(10), defaultValue: "Activo", allowNull: false},
 }, {
     freezeTableName: true,
+    timestamps: false
 });
 
 export default PorcinoModel;

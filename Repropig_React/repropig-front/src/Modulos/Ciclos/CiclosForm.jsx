@@ -3,23 +3,23 @@ import apiAxios from "../../api/axiosConfig"
 import Swal from "sweetalert2"
 import withReactContent from "sweetalert2-react-content"
 
-const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada }) => {
+const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
 
     const MySwal = withReactContent(Swal)
 
-    const [Id_Reproduccion, setId_Reproduccion] = useState('')
+    const [Id_Ciclo, setId_Ciclo] = useState('')
     const [Id_Cerda, setId_Cerda] = useState('')
     const [Activo, setActivo] = useState('S')
-    const [TipoReproduccion, setTipoReproduccion] = useState('')
+    const [TipoCiclo, setTipoCiclo] = useState('')
     const [accionEdicion, setAccionEdicion] = useState('') // 'agregar_monta' | 'agregar_inseminacion' | ''
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
-    const esEdicion = !!reproduccionEdit?.Id_Reproduccion
+    const esEdicion = !!cicloEdit?.Id_Ciclo
 
-    // Qué tipos ya tiene esta reproducción
-    const tieneMontas = reproduccionEdit?.montas?.length > 0
-    const tieneInseminaciones = reproduccionEdit?.inseminaciones?.length > 0
+    // Qué tipos ya tiene este ciclo
+    const tieneMontas = cicloEdit?.montas?.length > 0
+    const tieneInseminaciones = cicloEdit?.inseminaciones?.length > 0
 
     useEffect(() => { getPorcinos() }, [])
 
@@ -31,103 +31,109 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
     }
 
     useEffect(() => {
-        if (reproduccionEdit?.Id_Reproduccion) {
-            setId_Reproduccion(reproduccionEdit.Id_Reproduccion || '')
-            setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
-            setActivo((reproduccionEdit.activo || 'S').toUpperCase())
-            setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
+        if (cicloEdit?.Id_Ciclo) {
+            setId_Ciclo(cicloEdit.Id_Ciclo || '')
+            setId_Cerda(cicloEdit.Id_Cerda || cicloEdit.porcino?.Id_Porcino || '')
+            setActivo((cicloEdit.activo || 'S').toUpperCase())
+            setTipoCiclo(cicloEdit.TipoCiclo || '')
             setAccionEdicion('')
             setTextFormButton("Actualizar")
         } else {
-            setId_Reproduccion('')
+            setId_Ciclo('')
             setId_Cerda('')
             setActivo('S')
-            setTipoReproduccion('')
+            setTipoCiclo('')
             setAccionEdicion('')
             setTextFormButton("Enviar")
         }
-    }, [reproduccionEdit?.Id_Reproduccion])
+    }, [cicloEdit?.Id_Ciclo])
+
+    const cleanId = (id) => String(id || '').replace(/^:+/, '')
 
     const gestionarForm = async (e) => {
         e.preventDefault()
 
         try {
             if (!esEdicion) {
-                // ── CREAR NUEVA REPRODUCCIÓN ──────────────────────────────
-                if (!TipoReproduccion) {
-                    MySwal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Debes seleccionar el tipo de reproducción' })
+                // ── CREAR NUEVO CICLO ──────────────────────────────
+                if (!TipoCiclo) {
+                    MySwal.fire({ icon: 'warning', title: 'Campo requerido', text: 'Debes seleccionar el tipo de ciclo' })
                     return
                 }
 
-                const todasReprods = await apiAxios.get('/reproducciones/')
+                const todosCiclos = await apiAxios.get('/ciclos/')
 
-                // Buscar reproducción activa de la misma cerda
-                const existente = todasReprods.data.find(r =>
+                // Buscar ciclo activo de la misma cerda
+                const existente = todosCiclos.data.find(r =>
                     String(r.Id_Cerda) === String(Id_Cerda) && (r.activo || '').toUpperCase() === 'S'
                 )
 
                 if (existente) {
                     await MySwal.fire({
                         icon: 'info',
-                        title: 'Reproducción activa encontrada',
-                        html: `Esta cerda ya tiene una reproducción activa (#${existente.Id_Reproduccion}).<br>Se registrará la nueva <b>${TipoReproduccion}</b> en esa reproducción.`,
+                        title: 'Ciclo activo encontrado',
+                        html: `Esta cerda ya tiene un ciclo activo (#${existente.Id_Ciclo}).<br>Se registrará la nueva <b>${TipoCiclo}</b> en ese ciclo.`,
                         confirmButtonColor: '#C97A85',
                     })
                     hideModal()
-                    if (onReproduccionCreada) {
-                        onReproduccionCreada({
-                            tipo: TipoReproduccion,
-                            Id_Reproduccion: existente.Id_Reproduccion,
+                    if (onCicloCreada) {
+                        onCicloCreada({
+                            tipo: TipoCiclo,
+                            Id_Ciclo: existente.Id_Ciclo,
                             Id_Porcino: Number(Id_Cerda)
                         })
                     }
                 } else {
-                    const response = await apiAxios.post('/reproducciones', {
+                    const response = await apiAxios.post('/ciclos', {
                         Id_Cerda: Number(Id_Cerda),
                         Activo: 'S',
-                        TipoReproduccion
+                        TipoCiclo
                     })
-                    const nuevaReproduccion = response.data?.reproducciones || response.data
+                    const nuevaCiclo = response.data?.ciclos || response.data
 
                     await MySwal.fire({
                         icon: 'success',
-                        title: 'Reproducción creada',
-                        text: `Ahora completa los datos de ${TipoReproduccion}`
+                        title: 'Ciclo creado',
+                        text: `Ahora completa los datos de ${TipoCiclo}`
                     })
                     hideModal()
-                    if (onReproduccionCreada) {
-                        onReproduccionCreada({
-                            tipo: TipoReproduccion,
-                            Id_Reproduccion: nuevaReproduccion.Id_Reproduccion,
+                    if (onCicloCreada) {
+                        onCicloCreada({
+                            tipo: TipoCiclo,
+                            Id_Ciclo: nuevaCiclo.Id_Ciclo,
                             Id_Porcino: Number(Id_Cerda)
                         })
                     }
                 }
 
             } else {
-                // ── EDITAR REPRODUCCIÓN EXISTENTE ─────────────────────────
+                // ── EDITAR CICLO EXISTENTE ─────────────────────────
 
                 // Si eligió agregar monta o inseminación, abrir el modal encadenado
                 if (accionEdicion === 'agregar_monta' || accionEdicion === 'agregar_inseminacion') {
                     const tipo = accionEdicion === 'agregar_monta' ? 'Monta' : 'Inseminacion'
                     hideModal()
-                    if (onReproduccionCreada) {
-                        onReproduccionCreada({
+                    if (onCicloCreada) {
+                        onCicloCreada({
                             tipo,
-                            Id_Reproduccion: Number(Id_Reproduccion),
+                            Id_Ciclo: Number(Id_Ciclo),
                             Id_Porcino: Number(Id_Cerda)
                         })
                     }
                     return
                 }
 
+                const sanitizedId = cleanId(Id_Ciclo)
+                if (!sanitizedId) {
+                    throw new Error('Id de ciclo inválido')
+                }
                 // Solo actualizar estado
-                await apiAxios.put(`/reproducciones/${Id_Reproduccion}`, {
+                await apiAxios.put(`/ciclos/${sanitizedId}`, {
                     Id_Cerda: Number(Id_Cerda),
                     Activo,
-                    TipoReproduccion: reproduccionEdit.TipoReproduccion
+                    TipoCiclo: cicloEdit.TipoCiclo
                 })
-                await MySwal.fire({ icon: 'success', title: 'Éxito', text: 'Reproducción actualizada correctamente' })
+                await MySwal.fire({ icon: 'success', title: 'Éxito', text: 'Ciclo actualizado correctamente' })
                 hideModal()
             }
 
@@ -147,7 +153,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                     <input
                         type="text"
                         className="form-control"
-                        value={reproduccionEdit?.porcino?.Nom_Porcino || ''}
+                        value={cicloEdit?.porcino?.Nom_Porcino || ''}
                         disabled
                     />
                 ) : (
@@ -195,7 +201,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                                     Monta
                                 </div>
                                 <small className="text-muted">
-                                    {tieneMontas ? `Ya tiene ${reproduccionEdit.montas.length}` : 'Sin montas aún'}
+                                    {tieneMontas ? `Ya tiene ${cicloEdit.montas.length}` : 'Sin montas aún'}
                                 </small>
                             </div>
 
@@ -215,7 +221,7 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
                                     Inseminación
                                 </div>
                                 <small className="text-muted">
-                                    {tieneInseminaciones ? `Ya tiene ${reproduccionEdit.inseminaciones.length}` : 'Sin inseminaciones aún'}
+                                    {tieneInseminaciones ? `Ya tiene ${cicloEdit.inseminaciones.length}` : 'Sin inseminaciones aún'}
                                 </small>
                             </div>
                         </div>
@@ -233,34 +239,34 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
             {!esEdicion && (
                 <div className="mb-3">
                     <label className="form-label fw-semibold">
-                        Tipo de Reproducción <span className="text-danger">*</span>
+                        Tipo de Ciclo <span className="text-danger">*</span>
                     </label>
                     <div className="d-flex gap-3">
-                        <div onClick={() => setTipoReproduccion('Monta')}
+                        <div onClick={() => setTipoCiclo('Monta')}
                             className="border rounded p-3 text-center flex-fill"
                             style={{
                                 cursor: 'pointer',
-                                borderWidth: TipoReproduccion === 'Monta' ? '2px' : '1px',
-                                borderColor: TipoReproduccion === 'Monta' ? '#e75480' : '#dee2e6',
-                                backgroundColor: TipoReproduccion === 'Monta' ? '#fff0f5' : '#fff',
+                                borderWidth: TipoCiclo === 'Monta' ? '2px' : '1px',
+                                borderColor: TipoCiclo === 'Monta' ? '#e75480' : '#dee2e6',
+                                backgroundColor: TipoCiclo === 'Monta' ? '#fff0f5' : '#fff',
                                 transition: 'all 0.2s'
                             }}>
                             <div style={{ fontSize: 28 }}>🐷</div>
-                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Monta' ? '#e75480' : '#555' }}>Monta</div>
+                            <div className="fw-bold mt-1" style={{ color: TipoCiclo === 'Monta' ? '#e75480' : '#555' }}>Monta</div>
                             <small className="text-muted">Natural</small>
                         </div>
 
-                        <div onClick={() => setTipoReproduccion('Inseminacion')}
+                        <div onClick={() => setTipoCiclo('Inseminacion')}
                             className="border rounded p-3 text-center flex-fill"
                             style={{
                                 cursor: 'pointer',
-                                borderWidth: TipoReproduccion === 'Inseminacion' ? '2px' : '1px',
-                                borderColor: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#dee2e6',
-                                backgroundColor: TipoReproduccion === 'Inseminacion' ? '#f0f6ff' : '#fff',
+                                borderWidth: TipoCiclo === 'Inseminacion' ? '2px' : '1px',
+                                borderColor: TipoCiclo === 'Inseminacion' ? '#1e90ff' : '#dee2e6',
+                                backgroundColor: TipoCiclo === 'Inseminacion' ? '#f0f6ff' : '#fff',
                                 transition: 'all 0.2s'
                             }}>
                             <div style={{ fontSize: 28 }}>💉</div>
-                            <div className="fw-bold mt-1" style={{ color: TipoReproduccion === 'Inseminacion' ? '#1e90ff' : '#555' }}>Inseminación</div>
+                            <div className="fw-bold mt-1" style={{ color: TipoCiclo === 'Inseminacion' ? '#1e90ff' : '#555' }}>Inseminación</div>
                             <small className="text-muted">Artificial</small>
                         </div>
                     </div>
@@ -275,4 +281,4 @@ const ReproduccionesForm = ({ hideModal, reproduccionEdit, onReproduccionCreada 
     )
 }
 
-export default ReproduccionesForm
+export default CiclosForm

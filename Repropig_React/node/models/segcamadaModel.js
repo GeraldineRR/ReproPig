@@ -12,6 +12,7 @@ const SegcamadaModel = db.define ('segcamada', {
     Observaciones: { type: DataTypes.CHAR(255), allowNull: true },
 }, {
     freezeTableName: true,
+    timestamps: false
 });
 
 export default SegcamadaModel;

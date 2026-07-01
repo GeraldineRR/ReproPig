@@ -10,9 +10,10 @@ const Seguimiento_CerdaModel = db.define('Seguimiento_Cerda', {
     Id_Porcino: { type: DataTypes.INTEGER },
     Id_Responsable: { type: DataTypes.INTEGER },
     Id_Medicamento: { type: DataTypes.INTEGER },
-    Id_Reproduccion: { type: DataTypes.INTEGER, allowNull: true },
+    Id_Ciclo: { type: DataTypes.INTEGER, allowNull: true },
 }, {
     freezeTableName: true,
+    timestamps: false
 })
 
 export default Seguimiento_CerdaModel;

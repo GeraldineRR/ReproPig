@@ -26,7 +26,7 @@ const CrudCalendario = () => {
 
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Calendario, width: '80px' },
-        { name: 'Reproducción', selector: row => row.Id_Reproduccion },
+        { name: 'Ciclo', selector: row => row.Id_Ciclo },
         { name: 'Fecha Servicio', selector: row => formatD(row.Fecha_Servicio) },
 
         { name: 'RC1', selector: row => formatD(row.rc1) },

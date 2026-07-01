@@ -10,11 +10,11 @@ const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
-    const filtroDesdeReproduccion = location.state || null // { Id_Reproduccion, Id_Porcino, Nom_Porcino }
+    const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
 
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
-    const [reproducciones, setReproducciones] = useState([]);
+    const [ciclos, setCiclos] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -67,14 +67,14 @@ const CrudMonta = () => {
         { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
+        { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
             name: 'Acciones', cell: row => {
                 let isInactive = false;
-                if (filtroDesdeReproduccion) {
-                    isInactive = (filtroDesdeReproduccion.Activo || filtroDesdeReproduccion.activo || '').toUpperCase() === 'N';
+                if (filtroDesdeCiclo) {
+                    isInactive = (filtroDesdeCiclo.Activo || filtroDesdeCiclo.activo || '').toUpperCase() === 'N';
                 } else {
-                    const rep = reproducciones.find(r => String(r.Id_Reproduccion) === String(row.Id_Reproduccion));
+                    const rep = ciclos.find(r => String(r.Id_Ciclo) === String(row.Id_Ciclo));
                     if (rep) {
                         isInactive = (rep.activo || '').toUpperCase() === 'N';
                     }
@@ -86,13 +86,13 @@ const CrudMonta = () => {
                             onClick={() => setRowToEdit(row)}
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             disabled={isInactive}
-                            title={isInactive ? "La reproducción está inactiva" : "Editar"}>
+                            title={isInactive ? "El ciclo está inactivo" : "Editar"}>
                             <i className="fa-solid fa-pencil"></i>
                         </button>
                         <button className="btn btn-sm btn-danger"
                             onClick={() => handleDelete(row)}
                             disabled={isInactive}
-                            title={isInactive ? "La reproducción está inactiva" : "Eliminar"}>
+                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
                             <i className="fa-solid fa-trash"></i>
                         </button>
                     </div>
@@ -104,7 +104,7 @@ const CrudMonta = () => {
     useEffect(() => {
         getAllMontas();
         getResponsables();
-        getReproducciones();
+        getCiclos();
     }, []);
 
     const getAllMontas = async () => {
@@ -122,18 +122,18 @@ const CrudMonta = () => {
         }
     }
 
-    const getReproducciones = async () => {
+    const getCiclos = async () => {
         try {
-            const response = await apiAxios.get('/reproducciones');
-            setReproducciones(response.data);
+            const response = await apiAxios.get('/ciclos');
+            setCiclos(response.data);
         } catch (error) {
-            console.error('Error al obtener reproducciones:', error);
+            console.error('Error al obtener ciclos:', error);
         }
     }
 
-    // ✅ Primero filtra por reproducción si viene desde Reproducciones
-    const montasFiltradas = filtroDesdeReproduccion
-        ? montas.filter(m => m.Id_Reproduccion == filtroDesdeReproduccion.Id_Reproduccion)
+    // ✅ Primero filtra por reproducción si viene desde Ciclos
+    const montasFiltradas = filtroDesdeCiclo
+        ? montas.filter(m => m.Id_Ciclo == filtroDesdeCiclo.Id_Ciclo)
         : montas
 
     // ✅ Luego aplica el buscador sobre lo ya filtrado
@@ -149,16 +149,16 @@ const CrudMonta = () => {
         <div className="container mt-5">
 
             {/* Banner de filtro activo */}
-            {filtroDesdeReproduccion && (
+            {filtroDesdeCiclo && (
                 <div className="alert alert-warning d-flex justify-content-between align-items-center py-2 mb-3">
                     <span>
-                        🐷 Montas de <strong>{filtroDesdeReproduccion.Nom_Porcino || `Cerda #${filtroDesdeReproduccion.Id_Porcino}`}</strong>
-                        {' '}— Reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                        🐷 Montas de <strong>{filtroDesdeCiclo.Nom_Porcino || `Cerda #${filtroDesdeCiclo.Id_Porcino}`}</strong>
+                        {' '}— Ciclo <strong>#{filtroDesdeCiclo.Id_Ciclo}</strong>
                     </span>
                     <button
                         className="btn btn-sm btn-outline-secondary"
                         onClick={() => navigate(-1)}>
-                        ← Volver a Reproducciones
+                        ← Volver a Ciclos
                     </button>
                 </div>
             )}
@@ -169,14 +169,14 @@ const CrudMonta = () => {
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    {(!filtroDesdeReproduccion || filtroDesdeReproduccion.Activo !== 'N') ? (
+                    {(!filtroDesdeCiclo || filtroDesdeCiclo.Activo !== 'N') ? (
                         <button type="button" className="btn btn-primary"
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             onClick={() => setRowToEdit({})}>
                             Nueva Monta
                         </button>
                     ) : (
-                        <button type="button" className="btn btn-secondary" disabled title="La reproducción está inactiva">
+                        <button type="button" className="btn btn-secondary" disabled title="El ciclo está inactivo">
                             Nueva Monta
                         </button>
                     )}
@@ -200,7 +200,7 @@ const CrudMonta = () => {
                                 hideModal={hideModal}
                                 rowToEdit={rowToEdit}
                                 refreshTable={getAllMontas}
-                                preloaded={filtroDesdeReproduccion || {}}
+                                preloaded={filtroDesdeCiclo || {}}
                             />
                         </div>
                     </div>

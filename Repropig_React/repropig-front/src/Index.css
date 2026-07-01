@@ -35,3 +35,36 @@ body {
 .modal-footer {
   border-top: 1px solid #f1f5f9 !important;
 }
+
+/* Responsive utilities */
+.mobile-only { display: none; }
+.mobile-hidden { display: inherit; }
+@media (max-width: 767px) {
+  .mobile-only { display: block !important; }
+  .mobile-hidden { display: none !important; }
+}
+
+/* DataTable responsive tweaks (react-data-table-component) */
+.rdt_TableWrapper, .rdt_Table { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.rdt_TableCell, .rdt_TableHeadCell { white-space: nowrap; }
+
+@media (max-width: 767px) {
+  .rdt_TableCell, .rdt_TableHeadCell {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    font-size: 13px !important;
+  }
+
+  /* Make bootstrap modals fullscreen on small screens (smoother than forcing every modal) */
+  .modal-fullscreen-sm-down .modal-content {
+    border-radius: 0 !important;
+    height: 100vh;
+  }
+
+  /* Buttons slightly larger and full-width where appropriate */
+  .btn { font-size: 14px !important; }
+  .btn.w-100 { width: 100% !important; }
+}
+
+/* Force table container to allow horizontal scrolling */
+.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }

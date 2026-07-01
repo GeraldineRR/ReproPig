@@ -1,0 +1,44 @@
+[
+  {
+    "Id_Ciclo": 1,
+    "Id_Cerda": 1001,
+    "Activo": "S",
+    "TipoCiclo": null
+  },
+  {
+    "Id_Ciclo": 2,
+    "Id_Cerda": 1002,
+    "Activo": "S",
+    "TipoCiclo": null
+  },
+  {
+    "Id_Ciclo": 3,
+    "Id_Cerda": 1003,
+    "Activo": "S",
+    "TipoCiclo": null
+  },
+  {
+    "Id_Ciclo": 4,
+    "Id_Cerda": 1004,
+    "Activo": "S",
+    "TipoCiclo": null
+  },
+  {
+    "Id_Ciclo": 5,
+    "Id_Cerda": 1005,
+    "Activo": "S",
+    "TipoCiclo": null
+  },
+  {
+    "Id_Ciclo": 6,
+    "Id_Cerda": 2004,
+    "Activo": "S",
+    "TipoCiclo": "Monta"
+  },
+  {
+    "Id_Ciclo": 7,
+    "Id_Cerda": 2006,
+    "Activo": "S",
+    "TipoCiclo": "Monta"
+  }
+]

@@ -7,7 +7,7 @@ export default function PerfilCerda() {
     const navigate = useNavigate()
 
     const [porcino, setPorcino] = useState(null)
-    const [reproducciones, setReproducciones] = useState([])
+    const [ciclos, setCiclos] = useState([])
     const [partos, setPartos] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -23,10 +23,10 @@ export default function PerfilCerda() {
             const resPorcino = await apiAxios.get(`/porcino/${id}`)
             setPorcino(resPorcino.data)
 
-            // Traer reproducciones
-            const resRepro = await apiAxios.get('/reproducciones/')
+            // Traer ciclos
+            const resRepro = await apiAxios.get('/ciclos/')
             const reprosDeCerda = resRepro.data.filter(r => r.Id_Cerda == id)
-            setReproducciones(reprosDeCerda)
+            setCiclos(reprosDeCerda)
 
             // Traer partos
             const resPartos = await apiAxios.get('/partos/')
@@ -124,25 +124,25 @@ export default function PerfilCerda() {
                                     Ciclos Reproductivos
                                 </h3>
                                 <span className="bg-gray-100 text-gray-600 font-bold px-3 py-1 rounded-full text-sm">
-                                    {reproducciones.length} Total
+                                    {ciclos.length} Total
                                 </span>
                             </div>
 
-                            {reproducciones.length === 0 ? (
+                            {ciclos.length === 0 ? (
                                 <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                                    <p className="text-gray-500 font-medium">No hay reproducciones registradas para esta cerda.</p>
+                                    <p className="text-gray-500 font-medium">No hay ciclos registradas para esta cerda.</p>
                                 </div>
                             ) : (
                                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                                    {reproducciones.map((repro) => (
-                                        <div key={repro.Id_Reproduccion} className="border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-shadow bg-gray-50/50 relative overflow-hidden group">
+                                    {ciclos.map((repro) => (
+                                        <div key={repro.Id_Ciclo} className="border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-shadow bg-gray-50/50 relative overflow-hidden group">
                                             {/* Indicador de estado */}
                                             <div className={`absolute top-0 left-0 w-1 h-full ${repro.Activo === 'S' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                                             
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ciclo #{repro.Id_Reproduccion}</span>
-                                                    <h4 className="text-lg font-bold text-gray-800 mt-1">{repro.TipoReproduccion}</h4>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ciclo #{repro.Id_Ciclo}</span>
+                                                    <h4 className="text-lg font-bold text-gray-800 mt-1">{repro.TipoCiclo}</h4>
                                                 </div>
                                                 {repro.Activo === 'S' ? 
                                                     <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-md flex items-center shadow-sm">
@@ -196,7 +196,7 @@ export default function PerfilCerda() {
                                             <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6 text-center sm:text-left min-w-[120px]">
                                                 <div className="text-sm font-bold text-gray-800">{parto.Fec_inicio}</div>
                                                 <div className="text-xs text-gray-400 mt-1">
-                                                    Ciclo Ref: <span className="font-semibold text-gray-600">#{parto.Id_Reproduccion || '—'}</span>
+                                                    Ciclo Ref: <span className="font-semibold text-gray-600">#{parto.Id_Ciclo || '—'}</span>
                                                 </div>
                                             </div>
 

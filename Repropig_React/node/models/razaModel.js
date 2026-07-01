@@ -8,6 +8,7 @@ const RazaModel = db.define('razas', {
     Estado: { type: DataTypes.CHAR(10), defaultValue: "Activo", allowNull: false},
 },{
     freezeTableName: true,
+    timestamps: false
 })
 
 export default RazaModel;

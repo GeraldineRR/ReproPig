@@ -23,15 +23,15 @@ export const getCalendario = async (req, res) => {
 
 export const createCalendario = async (req, res) => {
     try {
-        const { Id_Reproduccion } = req.body
+        const { Id_Ciclo } = req.body
 
-        if (!Id_Reproduccion) {
+        if (!Id_Ciclo) {
             return res.status(400).json({
-                message: "Id_Reproduccion es obligatorio"
+                message: "Id_Ciclo es obligatorio"
             })
         }
 
-        const existe = await CalendarioService.findByReproduccion(Id_Reproduccion)
+        const existe = await CalendarioService.findByCiclo(Id_Ciclo)
 
         if (existe) {
             return res.status(400).json({
@@ -59,9 +59,9 @@ export const updateCalendario = async (req, res) => {
 }
 
 
-export const getCalendarioByReproduccion = async (req, res) => {
+export const getCalendarioByCiclo = async (req, res) => {
     try {
-        const calendario = await CalendarioService.findByReproduccion(req.params.idReproduccion)
+        const calendario = await CalendarioService.findByCiclo(req.params.idCiclo)
         res.status(200).json(calendario) // devuelve null si no existe
     } catch (error) {
         res.status(500).json({ message: error.message })

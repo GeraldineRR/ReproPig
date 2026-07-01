@@ -14,12 +14,12 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Id_Porcino, setId_Porcino] = useState('')
     const [Id_Responsable, setId_Responsable] = useState('')
     const [Id_Medicamento, setId_Medicamento] = useState('')
-    const [Id_Reproduccion, setId_Reproduccion] = useState('')
+    const [Id_Ciclo, setId_Ciclo] = useState('')
 
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
-    const [reproduccionesActivas, setReproduccionesActivas] = useState([])
+    const [ciclosActivas, setCiclosActivas] = useState([])
 
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
@@ -38,12 +38,12 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
             setId_Responsable(Seguimiento_CerdaEdit.Id_Responsable ?? '')
             setId_Medicamento(Seguimiento_CerdaEdit.Id_Medicamento ?? '')
-            setId_Reproduccion(Seguimiento_CerdaEdit.Id_Reproduccion ?? '')
+            setId_Ciclo(Seguimiento_CerdaEdit.Id_Ciclo ?? '')
             setTextFormButton("Actualizar")
 
-            // Cargar reproducciones de esa cerda para edición
+            // Cargar ciclos de esa cerda para edición
             if (Seguimiento_CerdaEdit.Id_Porcino) {
-                getReproduccionesActivas(Seguimiento_CerdaEdit.Id_Porcino)
+                getCiclosActivas(Seguimiento_CerdaEdit.Id_Porcino)
             }
         } else {
             setId_Seguimiento_Cerda('')
@@ -53,8 +53,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setId_Porcino('')
             setId_Responsable('')
             setId_Medicamento('')
-            setId_Reproduccion('')
-            setReproduccionesActivas([])
+            setId_Ciclo('')
+            setCiclosActivas([])
             setTextFormButton("Enviar")
         }
     }, [Seguimiento_CerdaEdit])
@@ -90,25 +90,25 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         }
     }
 
-    const getReproduccionesActivas = async (idPorcino) => {
-        if (!idPorcino) { setReproduccionesActivas([]); return }
+    const getCiclosActivas = async (idPorcino) => {
+        if (!idPorcino) { setCiclosActivas([]); return }
         try {
-            const response = await apiAxios.get('/reproducciones/')
+            const response = await apiAxios.get('/ciclos/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino && r.Activo === 'S'
             )
-            setReproduccionesActivas(activas)
+            setCiclosActivas(activas)
         } catch (error) {
-            console.error('Error obteniendo reproducciones:', error)
-            setReproduccionesActivas([])
+            console.error('Error obteniendo ciclos:', error)
+            setCiclosActivas([])
         }
     }
 
     const handlePorcinoChange = (e) => {
         const val = e.target.value
         setId_Porcino(val)
-        setId_Reproduccion('')
-        getReproduccionesActivas(val)
+        setId_Ciclo('')
+        getCiclosActivas(val)
     }
 
     const gestionarForm = async (e) => {
@@ -121,7 +121,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             Id_Porcino,
             Id_Responsable,
             Id_Medicamento,
-            Id_Reproduccion: Id_Reproduccion || null
+            Id_Ciclo: Id_Ciclo || null
         }
 
         try {
@@ -157,9 +157,9 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         <form onSubmit={gestionarForm} className="col-12">
 
             <div className="text-center mb-4">
-                <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
-                <small className="text-muted">Registro vinculado al ciclo reproductivo</small>
-            </div>
+                        <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
+                        <small className="text-muted">Registro vinculado al ciclo</small>
+                    </div>
 
             <div className="row g-3">
 
@@ -205,24 +205,24 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                     </select>
                 </div>
 
-                {/* REPRODUCCIÓN ACTIVA */}
+                {/* CICLO ACTIVO */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">🔁 Reproducción</label>
+                    <label className="form-label fw-semibold">🔁 Ciclo</label>
                     <select
                         className="form-select shadow-sm"
-                        value={Id_Reproduccion}
-                        onChange={(e) => setId_Reproduccion(e.target.value)}
+                        value={Id_Ciclo}
+                        onChange={(e) => setId_Ciclo(e.target.value)}
                     >
                         <option value="">
                             {!Id_Porcino
                                 ? 'Primero seleccione una cerda'
-                                : reproduccionesActivas.length === 0
-                                    ? 'Sin reproducciones activas'
-                                    : 'Seleccione una reproducción'}
+                                : ciclosActivas.length === 0
+                                    ? 'Sin ciclos activos'
+                                    : 'Seleccione un ciclo'}
                         </option>
-                        {reproduccionesActivas.map(r => (
-                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                #{r.Id_Reproduccion} — {r.TipoReproduccion}
+                        {ciclosActivas.map(r => (
+                            <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
+                                #{r.Id_Ciclo} — {r.TipoCiclo}
                             </option>
                         ))}
                     </select>
