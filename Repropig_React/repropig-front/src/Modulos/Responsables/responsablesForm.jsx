@@ -17,7 +17,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
     const [Email, setEmail] = useState('');
     const [Password, setPassword] = useState('');
 
-    // 🔥 LIMPIAR FORMULARIO
+
     const limpiarFormulario = () => {
         setId_Responsable('');
         setNombres('');
@@ -29,7 +29,6 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
         setPassword('');
     };
 
-    // 🔥 CARGAR DATOS  EDITAR
     useEffect(() => {
         if (rowToEdit && rowToEdit.Id_Responsable) {
             setId_Responsable(rowToEdit.Id_Responsable || '');

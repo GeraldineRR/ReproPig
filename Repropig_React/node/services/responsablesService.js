@@ -21,7 +21,6 @@ class ResponsablesService {
     }
 
     async update(id, data) {
-        // ✅ Verificar existencia antes de actualizar
         const responsable = await ResponsablesModel.findByPk(id)
         if (!responsable) throw new Error('Responsable no encontrado')
 
@@ -38,6 +37,24 @@ class ResponsablesService {
     async delete(id) {
         const deleted = await ResponsablesModel.destroy({ where: { Id_Responsable: id } })
         if (!deleted) throw new Error('Responsable no encontrado')
+        return true
+    }
+
+    // ✅ Nuevo: verificar contraseña actual y actualizar
+    async cambiarContrasena(id, contrasenaActual, contrasenaNueva) {
+        const responsable = await ResponsablesModel.findByPk(id)
+        if (!responsable) throw new Error('Responsable no encontrado')
+
+        // Verificar que la contraseña actual sea correcta
+        const esValida = await bcrypt.compare(contrasenaActual, responsable.Password)
+        if (!esValida) throw new Error('La contraseña actual es incorrecta')
+
+        // Hashear y guardar la nueva
+        const hasheada = await bcrypt.hash(contrasenaNueva, 10)
+        await ResponsablesModel.update(
+            { Password: hasheada },
+            { where: { Id_Responsable: id } }
+        )
         return true
     }
 }
