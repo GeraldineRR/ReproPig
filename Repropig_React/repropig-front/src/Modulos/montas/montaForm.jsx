@@ -185,7 +185,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             hideModal();
             refreshTable();
         } catch (err) {
-            MySwal.fire('Error', err.message, 'error');
+            MySwal.fire('Error', err.response?.data?.message || err.message, 'error');
         }
     };
 

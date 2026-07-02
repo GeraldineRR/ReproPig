@@ -84,12 +84,12 @@ const CrudCiclos = () => {
     // CALENDARIO
     // ========================
     const handleAgregarCalendario = async (row) => {
-        const isActivo = (row.activo || '').toUpperCase() === 'S';
+        const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
         setCalendarioIsInactive(!isActivo)
 
         const todasFechas = [
-            ...((row.montas || []).map(m => m.Fec_hora)),
-            ...((row.inseminaciones || []).map(i => i.Fec_hora))
+            ...((row.montas || []).map(m => m.Fec_hora).filter(Boolean)),
+            ...((row.inseminaciones || []).map(i => i.Fec_hora).filter(Boolean))
         ]
         const fecha = todasFechas.length
             ? todasFechas.sort()[0].split('T')[0]
@@ -101,28 +101,39 @@ const CrudCiclos = () => {
             return
         }
 
+        // Determinar tipo de ciclo
+        const tieneMontas = row.montas?.length > 0
+        const tieneInseminaciones = row.inseminaciones?.length > 0
+        let tipoCiclo = row.TipoCiclo || 'Monta'
+        if (tieneMontas && tieneInseminaciones) tipoCiclo = 'Monta e Inseminación'
+        else if (tieneMontas) tipoCiclo = 'Monta'
+        else if (tieneInseminaciones) tipoCiclo = 'Inseminacion'
+
+        // Construir cicloData con los datos del row (siempre disponible)
+        const cicloInfo = {
+            Id_Ciclo: sanitizedId,
+            TipoCiclo: tipoCiclo,
+            activo: row.activo || row.Activo || 'S',
+            nombreCerda: row.porcino?.Nom_Porcino || `Cerda #${row.Id_Cerda || ''}`,
+            fechaServicio: fecha,
+        }
+
         // ✅ Verificar si ya existe un calendario para este ciclo
         try {
             const calRes = await apiAxios.get(`/calendario/ciclo/${sanitizedId}`)
             if (calRes.data) {
                 // Ya existe → abrir en modo edición para actualizar fechas reales
                 setCalendarioEdit(calRes.data)
-                setCalendarioData(null)
+                setCalendarioData(cicloInfo)
             } else {
                 // No existe → abrir en modo creación
                 setCalendarioEdit(null)
-                setCalendarioData({
-                    Id_Ciclo: sanitizedId,
-                    Fecha_Servicio: fecha
-                })
+                setCalendarioData(cicloInfo)
             }
         } catch (error) {
             // Si hay error, abrir en modo creación por defecto
             setCalendarioEdit(null)
-            setCalendarioData({
-                Id_Ciclo: sanitizedId,
-                Fecha_Servicio: fecha
-            })
+            setCalendarioData(cicloInfo)
         }
 
         abrirModal(modalCalendarioRef, modalCalendarioInstanceRef)
@@ -166,7 +177,7 @@ const CrudCiclos = () => {
     }
 
     const handleToggleActivo = async (row) => {
-        const isActivo = (row.activo || '').toUpperCase() === 'S';
+        const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
         const accion = isActivo ? 'inactivar' : 'activar'
         const result = await MySwal.fire({
             title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} ciclo?`,
@@ -214,7 +225,7 @@ const CrudCiclos = () => {
             name: 'Activo',
             width: '110px',
             cell: row => {
-                const isActivo = (row.activo || '').toUpperCase() === 'S';
+                const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
                 return (
                     <span
                         className={`badge ${isActivo ? 'bg-success' : 'bg-secondary'}`}
@@ -394,6 +405,7 @@ const CrudCiclos = () => {
                                 <CalendarioForm
                                     key={`edit-${calendarioEdit.Id_Calendario}`}
                                     calendarioEdit={calendarioEdit}
+                                    cicloData={calendarioData}
                                     hideModal={hideModalCalendario}
                                     reload={getAllCiclos}
                                     isInactive={calendarioIsInactive}
@@ -404,9 +416,10 @@ const CrudCiclos = () => {
                                     key={`new-${calendarioData.Id_Ciclo}`}
                                     hideModal={hideModalCalendario}
                                     reload={getAllCiclos}
+                                    cicloData={calendarioData}
                                     preloaded={{
                                         Id_Ciclo: calendarioData.Id_Ciclo,
-                                        Fecha_Servicio: calendarioData.Fecha_Servicio
+                                        Fecha_Servicio: calendarioData.fechaServicio
                                     }}
                                     isInactive={calendarioIsInactive}
                                 />

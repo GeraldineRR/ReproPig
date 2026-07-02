@@ -20,7 +20,7 @@ import CrudResponsables from "./Modulos/Responsables/crudresponsables"
 import CrudPartos from "./Modulos/Partos/crudPartos"
 import CrudCalendario from "./Modulos/Calendario/CrudCalendario"
 import CrudCrias from "./Modulos/crias/crudCrias"
-import CrudSegcamada from "./Modulos/segcamada/crudCamada"
+
 import CrudSeguimiento_Cerda from "./Modulos/Seguimiento_Cerda/CrudSeguimiento_Cerda"
 import PerfilCerda from "./pages/PerfilCerda"
 import MiPerfil from "./pages/MiPerfil"
@@ -48,8 +48,7 @@ function App() {
           <Route path="/partos" element={<CrudPartos />} />
           <Route path="/crias" element={<CrudCrias />} />
           <Route path="/crias/parto/:id" element={<CrudCrias />} />
-          <Route path="/segcamada" element={<CrudSegcamada />} />
-          <Route path="/segcamada/parto/:id" element={<CrudSegcamada />} />
+          <Route path="/actividades_camada/parto/:id" element={<CrudActividadesCamada />} />
           <Route path="/seguimiento_cerda" element={<CrudSeguimiento_Cerda />} />
           <Route path="/calendario" element={<CrudCalendario />} />
           <Route path="/perfil-cerda/:id" element={<PerfilCerda />} />

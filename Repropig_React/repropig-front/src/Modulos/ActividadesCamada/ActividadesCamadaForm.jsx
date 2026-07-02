@@ -4,7 +4,7 @@ import apiAxios from "../../api/axiosConfig";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 
-const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
+const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const MySwal = withReactContent(Swal);
 
     const [partoConfirmado, setPartoConfirmado] = useState(false);
@@ -38,18 +38,13 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         if (!Id_parto || !idCria) return;
 
         try {
-            // Trae los registros de seguimiento ya guardados para esta cría
             const response = await apiAxios.get(`/segcamada/cria/${idCria}`);
-            const registros = response.data; // array de registros
+            const registros = response.data;
 
-            // Encuentra el último día registrado
             const ultimoDia = registros.length ? registros[registros.length - 1].Dia_Programado : 0;
-
-            // Encuentra el siguiente día disponible
             const nextDay = diasSeguimiento.find(d => d > ultimoDia) || diasSeguimiento[diasSeguimiento.length - 1];
             setDiaProgramado(nextDay);
 
-            // Calcula la fecha basada en el parto
             const fechaParto = partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin;
             if (fechaParto) {
                 const fechaProg = calcularFechaProgramada(fechaParto, nextDay);
@@ -67,7 +62,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     useEffect(() => { getMedicamentos() }, []);
 
     useEffect(() => {
-        if (!segcamadaEdit || modoCorreccion) {
+        if (!actividadEdit || modoCorreccion) {
             if (Id_Cria && Id_parto) {
                 actualizarDiaYFecha(Id_Cria);
             }
@@ -97,31 +92,29 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     }
 
     useEffect(() => {
-        if (segcamadaEdit) {
-            console.log("EDIT DATA:", segcamadaEdit);
-
-            setIdParto(segcamadaEdit.crias?.Id_parto ?? '');
+        if (actividadEdit) {
+            setIdParto(actividadEdit.crias?.Id_parto ?? '');
             setPartoConfirmado(true);
-            setIdCria(segcamadaEdit.Id_Cria ?? '');
-            setNumCria(segcamadaEdit.crias?.Num_Cria ?? '');
-            setDiaProgramado(segcamadaEdit.Dia_Programado ?? '');
+            setIdCria(actividadEdit.Id_Cria ?? '');
+            setNumCria(actividadEdit.crias?.Num_Cria ?? '');
+            setDiaProgramado(actividadEdit.Dia_Programado ?? '');
 
             const parto = partos.find(
-                p => p.Id_parto === Number(segcamadaEdit.crias?.Id_parto)
+                p => p.Id_parto === Number(actividadEdit.crias?.Id_parto)
             );
 
-            if (parto?.Fec_fin && segcamadaEdit.Dia_Programado) {
+            if (parto?.Fec_fin && actividadEdit.Dia_Programado) {
                 const fechaProg = calcularFechaProgramada(
                     parto.Fec_fin,
-                    segcamadaEdit.Dia_Programado
+                    actividadEdit.Dia_Programado
                 );
                 setFechaProgramada(fechaProg);
             }
 
-            setFechaReal(segcamadaEdit.Fecha_Real?.split('T')[0] ?? '');
-            setPesoCria(segcamadaEdit.Peso_Cria ?? '');
-            setIdMedicamento(segcamadaEdit.Id_Medicamento ?? '');
-            setObservaciones(segcamadaEdit.Observaciones ?? '');
+            setFechaReal(actividadEdit.Fecha_Real?.split('T')[0] ?? '');
+            setPesoCria(actividadEdit.Peso_Cria ?? '');
+            setIdMedicamento(actividadEdit.Id_Medicamento ?? '');
+            setObservaciones(actividadEdit.Observaciones ?? '');
             setTextFormButton("Actualizar");
         } else {
             resetForm();
@@ -130,7 +123,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 setPartoConfirmado(true);
             }
         }
-    }, [segcamadaEdit, partos, partoIdParams]);
+    }, [actividadEdit, partos, partoIdParams]);
 
     const resetForm = () => {
         setIdCria('');
@@ -143,18 +136,17 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     }
 
     const huboCambios = () => {
-        if (!segcamadaEdit) return true;
+        if (!actividadEdit) return true;
         return !(
-            Number(Id_Cria) === Number(segcamadaEdit.Id_Cria) &&
-            Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
-            Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
-            Number(Peso_Cria) === Number(segcamadaEdit.Peso_Cria) &&
-            Number(Id_Medicamento || 0) === Number(segcamadaEdit.Id_Medicamento || 0) &&
-            Observaciones === (segcamadaEdit.Observaciones || '')
+            Number(Id_Cria) === Number(actividadEdit.Id_Cria) &&
+            Number(Dia_Programado) === Number(actividadEdit.Dia_Programado) &&
+            Fecha_Real === actividadEdit.Fecha_Real?.split('T')[0] &&
+            Number(Peso_Cria) === Number(actividadEdit.Peso_Cria) &&
+            Number(Id_Medicamento || 0) === Number(actividadEdit.Id_Medicamento || 0) &&
+            Observaciones === (actividadEdit.Observaciones || '')
         );
     }
 
-    // Verifica si el peso es 0 y pregunta si la cría ha muerto
     const verificarPesoCero = async () => {
         if (Number(Peso_Cria) === 0) {
             const result = await MySwal.fire({
@@ -171,7 +163,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             });
 
             if (result.isConfirmed) {
-                // Marcar la cría como muerta en la base de datos
                 try {
                     await apiAxios.put(`/cria/${Id_Cria}`, {
                         Estado: 'Muerto',
@@ -180,29 +171,22 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     });
                 } catch (error) {
                     console.error("Error actualizando estado de cría:", error);
-                    MySwal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: 'No se pudo actualizar el estado de la cría a Muerto.'
-                    });
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el estado de la cría a Muerto.' });
                     return 'error';
                 }
-                return 'muerto'; // Confirma muerte, continuar guardando el seguimiento
+                return 'muerto';
             } else {
-                return 'cancelar'; // Canceló el diálogo
+                return 'cancelar';
             }
         }
-        return 'ok'; // Peso no es 0, continuar normalmente
+        return 'ok';
     };
 
     const gestionarForm = async (e) => {
         e.preventDefault();
 
-        // Verificar peso 0 antes de continuar
         const resultadoPeso = await verificarPesoCero();
-        if (resultadoPeso === 'cancelar' || resultadoPeso === 'error') {
-            return; // No guardar, el usuario debe corregir el peso
-        }
+        if (resultadoPeso === 'cancelar' || resultadoPeso === 'error') return;
 
         const data = {
             Id_Cria,
@@ -218,10 +202,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 await apiAxios.post('/segcamada/', data);
                 await reload();
 
-                // Si la cría fue marcada como muerta, refrescar la lista de crías
                 if (resultadoPeso === 'muerto') {
                     if (Id_parto) await getCriasPorParto(Id_parto);
-
                     await MySwal.fire({
                         title: 'Registro guardado',
                         html: `El seguimiento fue guardado y la cría fue marcada como <strong>Muerta</strong> automáticamente.`,
@@ -246,22 +228,19 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
                 if (result.isConfirmed) resetForm();
                 else {
-                    resetForm() // limpia todo
+                    resetForm();
                     if (!partoIdParams) {
-                        setPartoConfirmado(false) // permite elegir otro parto después
-                        setIdParto('')
+                        setPartoConfirmado(false);
+                        setIdParto('');
                     }
-                    hideModal()
+                    hideModal();
                 }
 
             } else {
-                // Validación de seguimiento posterior antes de actualizar
                 try {
                     const res = await apiAxios.get(`/segcamada/cria/${Id_Cria}`);
                     const registros = res.data;
-                    const hasNewer = registros.some(item =>
-                        item.Dia_Programado > segcamadaEdit.Dia_Programado
-                    );
+                    const hasNewer = registros.some(item => item.Dia_Programado > actividadEdit.Dia_Programado);
 
                     if (hasNewer) {
                         MySwal.fire({
@@ -277,42 +256,28 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 }
 
                 if (!huboCambios()) {
-                    MySwal.fire({
-                        icon: "info",
-                        title: "Sin cambios",
-                        text: "No se realizaron cambios."
-                    });
+                    MySwal.fire({ icon: "info", title: "Sin cambios", text: "No se realizaron cambios." });
                     return;
                 }
 
-                await apiAxios.put(`/segcamada/${segcamadaEdit.Id_SegCamada}`, data);
+                await apiAxios.put(`/segcamada/${actividadEdit.Id_SegCamada}`, data);
                 await reload();
 
-                // Si la cría fue marcada como muerta, refrescar la lista de crías
                 if (resultadoPeso === 'muerto') {
                     if (Id_parto) await getCriasPorParto(Id_parto);
-
                     MySwal.fire({
                         title: 'Actualizado',
                         html: 'Seguimiento actualizado y la cría fue marcada como <strong>Muerta</strong> automáticamente.',
                         icon: 'info'
                     });
                 } else {
-                    MySwal.fire({
-                        title: 'Actualizado',
-                        text: 'Seguimiento actualizado correctamente.',
-                        icon: 'success'
-                    });
+                    MySwal.fire({ title: 'Actualizado', text: 'Seguimiento actualizado correctamente.', icon: 'success' });
                 }
                 hideModal();
             }
 
         } catch (error) {
-            MySwal.fire({
-                icon: "error",
-                title: "Error",
-                text: "No se pudo guardar el registro."
-            });
+            MySwal.fire({ icon: "error", title: "Error", text: "No se pudo guardar el registro." });
         }
     }
 
@@ -347,7 +312,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         if (result.isConfirmed) {
             setModoCorreccion(true);
             setPartoConfirmado(false);
-
             setIdCria('');
             setDiaProgramado('');
             setFechaProgramada('');
@@ -358,11 +322,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         <form onSubmit={gestionarForm} className="col-12">
 
             {/* DE PARTO */}
-            {segcamadaEdit && !modoCorreccion ? (
-                // ── MODO EDICIÓN: Parto + Cría + Día + Fecha en 2 columnas ──
+            {actividadEdit && !modoCorreccion ? (
                 <>
                     <div className="row mb-3">
-                        {/* Parto */}
                         <div className="col-6">
                             <label className="form-label">Parto</label>
                             <input
@@ -374,7 +336,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             />
                         </div>
 
-                        {/* Día Programado */}
                         <div className="col-6">
                             <label className="form-label">Día Programado</label>
                             <input
@@ -388,7 +349,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="row mb-3">
-                        {/* Cría */}
                         <div className="col-6">
                             <label className="form-label">Cría</label>
                             <input
@@ -400,7 +360,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             />
                         </div>
 
-                        {/* Fecha Programada */}
                         <div className="col-6">
                             <label className="form-label">Fecha Programada</label>
                             <input
@@ -413,7 +372,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         </div>
                     </div>
 
-
                     <button
                         type="button"
                         className="btn btn-warning mb-3"
@@ -423,14 +381,13 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </button>
                 </>
             ) : (
-                // ── MODO CREACIÓN / CORRECCIÓN PARTO: ──
                 <div className="mb-3">
                     <label className="form-label">Parto</label>
                     <select
                         className="form-control"
                         value={Id_parto}
                         onChange={(e) => handleSelectParto(e.target.value)}
-                        disabled={(partoConfirmado && !modoCorreccion) || (!!partoIdParams && !segcamadaEdit)}
+                        disabled={(partoConfirmado && !modoCorreccion) || (!!partoIdParams && !actividadEdit)}
                         required
                     >
                         <option value="">Selecciona...</option>
@@ -443,9 +400,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 </div>
             )}
 
-            {/* CRÍA Y FORMULARIO — solo en modo creación/corrección */}
-            {!segcamadaEdit || modoCorreccion ? (
-                (Id_parto || segcamadaEdit) && (
+            {/* CRÍA — solo en modo creación/corrección */}
+            {!actividadEdit || modoCorreccion ? (
+                (Id_parto || actividadEdit) && (
                     <>
                         <div className="mb-3">
                             <label className="form-label">Cría</label>
@@ -508,8 +465,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 )
             ) : null}
 
-            {/* CAMPOS COMUNES — siempre visibles cuando hay Id_parto o segcamadaEdit y hay crías disponibles */}
-            {(Id_parto || segcamadaEdit) && (segcamadaEdit && !modoCorreccion || crias.filter(cria => cria.Estado !== 'Muerto').length > 0) && (
+            {/* CAMPOS COMUNES */}
+            {(Id_parto || actividadEdit) && (actividadEdit && !modoCorreccion || crias.filter(cria => cria.Estado !== 'Muerto').length > 0) && (
                 <>
                     <div className="mb-3">
                         <label className="form-label">Fecha Real</label>
@@ -573,4 +530,4 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     );
 }
 
-export default SegcamadaForm;
+export default ActividadesCamadaForm;

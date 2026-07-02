@@ -35,7 +35,7 @@ export const createCalendario = async (req, res) => {
 
         if (existe) {
             return res.status(400).json({
-                message: "Ya existe calendario para esta reproducción"
+                message: "Ya existe calendario para este ciclo"
             })
         }
 
@@ -43,7 +43,7 @@ export const createCalendario = async (req, res) => {
         res.status(201).json(data)
 
     } catch (error) {
-        console.error(error) // 👈 IMPORTANTE
+        console.error(error)
         res.status(500).json({ message: error.message })
     }
 }
@@ -58,6 +58,27 @@ export const updateCalendario = async (req, res) => {
     }
 }
 
+export const registerRevision = async (req, res) => {
+    try {
+        const { evento, fecha_revision, resultado, observaciones } = req.body
+
+        if (!evento) {
+            return res.status(400).json({ message: "El campo 'evento' es obligatorio" })
+        }
+
+        const updated = await CalendarioService.registerRevision(
+            req.params.id,
+            evento,
+            { fecha_revision, resultado, observaciones }
+        )
+
+        res.status(200).json(updated)
+
+    } catch (error) {
+        console.error(error)
+        res.status(400).json({ message: error.message })
+    }
+}
 
 export const getCalendarioByCiclo = async (req, res) => {
     try {
@@ -76,4 +97,4 @@ export const deleteCalendario = async (req, res) => {
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
-} 
+}
