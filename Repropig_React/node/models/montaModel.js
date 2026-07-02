@@ -6,7 +6,7 @@ const montaModel = db.define('monta', {
     Fec_hora: { type: DataTypes.DATE },
     Id_Porcino: { type: DataTypes.INTEGER },
     Id_Cerdo: { type: DataTypes.INTEGER },
-    Id_Responsable: { type: DataTypes.INTEGER },
+    Id_Responsable: { type: DataTypes.TEXT },
     Observaciones: { type: DataTypes.STRING },
     Id_Ciclo: { type: DataTypes.INTEGER },
 }, {
