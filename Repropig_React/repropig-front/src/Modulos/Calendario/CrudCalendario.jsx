@@ -1,7 +1,7 @@
 import apiAxios from "../../api/axiosConfig.js"
 import { useState, useEffect } from "react"
 import DataTable from 'react-data-table-component'
-import CalendarioForm from "./CalendarioForm.jsx"
+import CalendarioForm from "../Calendario/CalendarioForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const CrudCalendario = () => {
