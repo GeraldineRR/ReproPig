@@ -1,5 +1,5 @@
 import SegcamadaService from "../services/segcamadaService.js";
-import SegCamadaModel from "../models/SegCamadaModel.js";
+import SegCamadaModel from "../models/segcamadaModel.js";
 
 export const getAllSegcamadas = async (req, res) => {
     try {
