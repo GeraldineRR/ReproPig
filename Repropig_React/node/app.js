@@ -21,7 +21,8 @@ import CalendarioModel from './models/CalendarioModel.js'
 import NovedadesModel from './models/novedadesModel.js'
 import segcamadaModel from './models/segcamadaModel.js'
 
-// ====== Relaciones ======
+
+// ====== Relaciones (ANTES de importar rutas) ======
 PorcinoModel.belongsTo(RazaModel, { foreignKey: 'Id_Raza', as: 'raza' })
 RazaModel.hasMany(PorcinoModel, { foreignKey: 'Id_Raza', as: 'porcinos' })
 

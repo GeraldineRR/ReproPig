@@ -7,6 +7,8 @@ import RutaProtegida from "./components/RutaProtegida"
 import Landing from "./pages/landing"
 import Login from "./pages/Login"
 import Dashboard from "./pages/dashboard"
+import ForgotPassword from "./Forgotpassword"
+import ResetPassword from "./Resetpassword"
 
 // módulos
 import CrudPorcinos from "./Modulos/porcinos/crudPorcinos"
@@ -33,6 +35,8 @@ function App() {
       {/* públicas */}
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* protegidas */}
       <Route element={<RutaProtegida />}>
