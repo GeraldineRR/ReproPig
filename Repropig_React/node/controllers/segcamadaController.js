@@ -1,8 +1,5 @@
 import SegcamadaService from "../services/segcamadaService.js";
-import SegCamadaModel from "../models/SegCamadaModel.js";
-import CriaModel from "../models/criaModel.js";
-import PartosModel from "../models/PartosModel.js";
-import PorcinoModel from "../models/porcinoModel.js";
+import SegCamadaModel from "../models/segcamadaModel.js";
 
 export const getAllSegcamadas = async (req, res) => {
     try {

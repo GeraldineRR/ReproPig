@@ -2,13 +2,13 @@ import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
-import SegcamadaForm from "./camadaForm.jsx"
+import ActividadesCamadaForm from "./ActividadesCamadaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
-const CrudSegcamada = () => {
+const CrudActividadesCamada = () => {
 
-    const [segcamadas, setSegcamadas] = useState([])
-    const [segcamadaEdit, setSegcamadaEdit] = useState(null)
+    const [actividades, setActividades] = useState([])
+    const [actividadEdit, setActividadEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
     const [diaFiltro, setDiaFiltro] = useState(null)
     const { id: partoIdParams } = useParams()
@@ -18,10 +18,9 @@ const CrudSegcamada = () => {
 
     const columnsTable = [
         {
-            name: 'Seguimiento Crias',
+            name: 'Seguimiento Crías',
             selector: row => `Cría #${row.crias?.Num_Cria ?? '—'} — Día ${row.Dia_Programado}`
         },
-
         {
             name: 'Fecha Programada',
             selector: row => {
@@ -44,12 +43,10 @@ const CrudSegcamada = () => {
                 }
             }
         },
-
         {
             name: 'Fecha Real',
             selector: row => row.Fecha_Real?.split('T')[0]?.split('-').reverse().join('/')
         },
-
         {
             name: 'Peso Cría (kg)',
             selector: row => {
@@ -75,21 +72,18 @@ const CrudSegcamada = () => {
                 )
             }
         },
-
         {
             name: 'Medicamento',
             selector: row => row.medicamentos?.Nombre ?? '—'
         },
-
         {
             name: 'Observaciones',
             selector: row => row.Observaciones || '—'
         },
-
         {
             name: 'Acciones',
             cell: row => {
-                const hasNewer = segcamadas.some(item =>
+                const hasNewer = actividades.some(item =>
                     item.Id_Cria === row.Id_Cria &&
                     item.Dia_Programado > row.Dia_Programado
                 );
@@ -110,47 +104,47 @@ const CrudSegcamada = () => {
     ]
 
     useEffect(() => {
-        getAllSegcamadas()
+        getAllActividades()
     }, [])
 
-    const getAllSegcamadas = async () => {
+    const getAllActividades = async () => {
         const response = await apiAxios.get('/segcamada/')
-        setSegcamadas(response.data)
+        setActividades(response.data)
     }
 
-    const newListSegcamadas = segcamadas.filter(seg => {
+    const newListActividades = actividades.filter(act => {
 
         const textToSearch = filterText.toLowerCase()
 
-        const medicamento = seg.medicamentos?.Nombre?.toLowerCase() || ''
-        const observaciones = seg.Observaciones?.toLowerCase() || ''
-        const numCria = seg.crias?.Num_Cria?.toString() || ''
+        const medicamento = act.medicamentos?.Nombre?.toLowerCase() || ''
+        const observaciones = act.Observaciones?.toLowerCase() || ''
+        const numCria = act.crias?.Num_Cria?.toString() || ''
 
         const matchesText = medicamento.includes(textToSearch) || observaciones.includes(textToSearch) || numCria.includes(textToSearch)
 
         let matchesParto = true
         if (partoIdParams) {
-            matchesParto = String(seg.crias?.Id_parto) === String(partoIdParams) || String(seg.crias?.partos?.Id_parto) === String(partoIdParams);
+            matchesParto = String(act.crias?.Id_parto) === String(partoIdParams) || String(act.crias?.partos?.Id_parto) === String(partoIdParams);
         }
 
         let matchesDia = true
         if (diaFiltro !== null) {
-            matchesDia = Number(seg.Dia_Programado) === diaFiltro
+            matchesDia = Number(act.Dia_Programado) === diaFiltro
         }
 
         return matchesText && matchesParto && matchesDia
     })
 
     const hideModal = () => {
-        setSegcamadaEdit(null)
-        document.getElementById('closeModal').click()
+        setActividadEdit(null)
+        document.getElementById('closeModalActividades').click()
     }
 
-    const handleEdit = (segcamada) => {
-        setSegcamadaEdit(segcamada)
+    const handleEdit = (actividad) => {
+        setActividadEdit(actividad)
 
         const modal = new bootstrap.Modal(
-            document.getElementById('exampleModal')
+            document.getElementById('modalActividadesCamada')
         )
         modal.show()
     }
@@ -167,9 +161,7 @@ const CrudSegcamada = () => {
                             </button>
                         )}
                         <div className="input-group">
-                            <span className="input-group-text">
-                                🔍
-                            </span>
+                            <span className="input-group-text">🔍</span>
                             <input
                                 className="form-control"
                                 value={filterText}
@@ -205,18 +197,18 @@ const CrudSegcamada = () => {
                             type="button"
                             className="btn btn-success"
                             data-bs-toggle="modal"
-                            data-bs-target="#exampleModal"
-                            onClick={() => setSegcamadaEdit(null)}
+                            data-bs-target="#modalActividadesCamada"
+                            onClick={() => setActividadEdit(null)}
                         >
-                            + Registrar seguimiento
+                            + Registrar actividad
                         </button>
                     </div>
                 </div>
 
                 <DataTable
-                    title="Seguimiento de Camada"
+                    title="Actividades de Camada"
                     columns={columnsTable}
-                    data={newListSegcamadas}
+                    data={newListActividades}
                     keyField="Id_SegCamada"
                     pagination
                     highlightOnHover
@@ -226,7 +218,7 @@ const CrudSegcamada = () => {
 
                 <div
                     className="modal fade"
-                    id="exampleModal"
+                    id="modalActividadesCamada"
                     tabIndex="-1"
                 >
                     <div className="modal-dialog" style={{ maxWidth: "585px" }}>
@@ -234,27 +226,27 @@ const CrudSegcamada = () => {
 
                             <div className="modal-header">
                                 <h1 className="modal-title fs-5">
-                                    {segcamadaEdit
-                                        ? "Editar Seguimiento"
-                                        : "Agregar Seguimiento"}
+                                    {actividadEdit
+                                        ? "Editar Actividad"
+                                        : "Registrar Actividad"}
                                 </h1>
 
                                 <button
                                     type="button"
                                     className="btn-close"
                                     data-bs-dismiss="modal"
-                                    id="closeModal"
+                                    id="closeModalActividades"
                                 ></button>
                             </div>
 
                             <div className="modal-body">
-                                <SegcamadaForm
-                                    key={segcamadaEdit
-                                        ? segcamadaEdit.Id_SegCamada
+                                <ActividadesCamadaForm
+                                    key={actividadEdit
+                                        ? actividadEdit.Id_SegCamada
                                         : 'new'}
                                     hideModal={hideModal}
-                                    segcamadaEdit={segcamadaEdit}
-                                    reload={getAllSegcamadas}
+                                    actividadEdit={actividadEdit}
+                                    reload={getAllActividades}
                                 />
                             </div>
 
@@ -267,4 +259,4 @@ const CrudSegcamada = () => {
     )
 }
 
-export default CrudSegcamada
+export default CrudActividadesCamada

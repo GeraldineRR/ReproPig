@@ -14,11 +14,19 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
     const [Fecha_Real, setFechaReal] = useState('')
     const [Id_Responsable, setId_Responsable] = useState('')
     const [Id_Medicamento, setId_Medicamento] = useState('')
+<<<<<<< HEAD
     const [Observaciones, setObservaciones] = useState('')
+=======
+    const [Id_Ciclo, setId_Ciclo] = useState('')
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
 
     const [partos, setPartos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
+<<<<<<< HEAD
+=======
+    const [ciclosActivas, setCiclosActivas] = useState([])
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
 
     const [partoConfirmado, setPartoConfirmado] = useState(false)
     const [modoCorreccion, setModoCorreccion] = useState(false)
@@ -83,6 +91,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
             setFechaReal(Seguimiento_CerdaEdit.Fecha_Real?.split('T')[0] ?? '')
             setId_Responsable(Seguimiento_CerdaEdit.Id_Responsable ?? '')
             setId_Medicamento(Seguimiento_CerdaEdit.Id_Medicamento ?? '')
+<<<<<<< HEAD
             setObservaciones(Seguimiento_CerdaEdit.Observaciones ?? '')
             setTextFormButton("Actualizar")
 
@@ -98,6 +107,26 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
                 setIdParto(partoIdParams)
                 setPartoConfirmado(true)
             }
+=======
+            setId_Ciclo(Seguimiento_CerdaEdit.Id_Ciclo ?? '')
+            setTextFormButton("Actualizar")
+
+            // Cargar ciclos de esa cerda para edición
+            if (Seguimiento_CerdaEdit.Id_Porcino) {
+                getCiclosActivas(Seguimiento_CerdaEdit.Id_Porcino)
+            }
+        } else {
+            setId_Seguimiento_Cerda('')
+            setFecha('')
+            setHora('')
+            setObservaciones('')
+            setId_Porcino('')
+            setId_Responsable('')
+            setId_Medicamento('')
+            setId_Ciclo('')
+            setCiclosActivas([])
+            setTextFormButton("Enviar")
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
         }
     }, [Seguimiento_CerdaEdit, partos, partoIdParams])
 
@@ -131,6 +160,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
         }
     }
 
+<<<<<<< HEAD
     const resetForm = () => {
         setId_Seguimiento_Cerda('')
         setIdParto('')
@@ -169,18 +199,49 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
             setFechaProgramada('')
             setFechaReal('')
         }
+=======
+    const getCiclosActivas = async (idPorcino) => {
+        if (!idPorcino) { setCiclosActivas([]); return }
+        try {
+            const response = await apiAxios.get('/ciclos/')
+            const activas = response.data.filter(r =>
+                r.Id_Cerda == idPorcino && r.Activo === 'S'
+            )
+            setCiclosActivas(activas)
+        } catch (error) {
+            console.error('Error obteniendo ciclos:', error)
+            setCiclosActivas([])
+        }
+    }
+
+    const handlePorcinoChange = (e) => {
+        const val = e.target.value
+        setId_Porcino(val)
+        setId_Ciclo('')
+        getCiclosActivas(val)
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
     }
 
     const gestionarForm = async (e) => {
         e.preventDefault()
 
         const data = {
+<<<<<<< HEAD
             Id_parto: Number(Id_parto),
             Dia_Programado: Number(Dia_Programado),
             Fecha_Real,
             Id_Responsable: Number(Id_Responsable),
             Id_Medicamento: Id_Medicamento ? Number(Id_Medicamento) : null,
             Observaciones
+=======
+            Fecha,
+            Hora,
+            Observaciones,
+            Id_Porcino,
+            Id_Responsable,
+            Id_Medicamento,
+            Id_Ciclo: Id_Ciclo || null
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
         }
 
         try {
@@ -217,9 +278,15 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
         <form onSubmit={gestionarForm} className="col-12">
 
             <div className="text-center mb-4">
+<<<<<<< HEAD
                 <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
                 <small className="text-muted">Registro de control post-parto de la madre</small>
             </div>
+=======
+                        <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
+                        <small className="text-muted">Registro vinculado al ciclo</small>
+                    </div>
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
 
             {/* Edición */}
             {Seguimiento_CerdaEdit && !modoCorreccion ? (
@@ -351,7 +418,90 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload, parto
                         {textFormButton}
                     </button>
                 </div>
+<<<<<<< HEAD
             )}
+=======
+
+                {/* CICLO ACTIVO */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">🔁 Ciclo</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Ciclo}
+                        onChange={(e) => setId_Ciclo(e.target.value)}
+                    >
+                        <option value="">
+                            {!Id_Porcino
+                                ? 'Primero seleccione una cerda'
+                                : ciclosActivas.length === 0
+                                    ? 'Sin ciclos activos'
+                                    : 'Seleccione un ciclo'}
+                        </option>
+                        {ciclosActivas.map(r => (
+                            <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
+                                #{r.Id_Ciclo} — {r.TipoCiclo}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* RESPONSABLE */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">👨‍🌾 Responsable</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Responsable}
+                        onChange={(e) => setId_Responsable(e.target.value)}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        {responsables.map((responsable) => (
+                            <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
+                                {responsable.Nombres} {responsable.Apellidos}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* MEDICAMENTO */}
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">💊 Medicamento</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Medicamento}
+                        onChange={(e) => setId_Medicamento(e.target.value)}
+                        required
+                    >
+                        <option value="">Seleccione</option>
+                        {medicamentos.map((medicamento) => (
+                            <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
+                                {medicamento.Nombre}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* OBSERVACIONES */}
+                <div className="col-12">
+                    <label className="form-label fw-semibold">📝 Observaciones</label>
+                    <textarea
+                        className="form-control shadow-sm"
+                        value={Observaciones}
+                        onChange={(e) => setObservaciones(e.target.value)}
+                        rows="2"
+                    />
+                </div>
+
+            </div>
+
+            {/* BOTÓN */}
+            <div className="d-grid mt-4">
+                <button className="btn btn-primary fw-semibold py-2 shadow-sm">
+                    {textFormButton}
+                </button>
+            </div>
+
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
         </form>
     )
 }

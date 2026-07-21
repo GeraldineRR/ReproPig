@@ -18,9 +18,12 @@ export default function Sidebar({ isOpen }) {
 
   return (
     <aside
-      className={`bg-white border-r border-gray-100 h-full transition-all duration-300 overflow-y-auto shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-20 ${
-        isOpen ? "w-72" : "w-0 opacity-0"
+      className={`bg-white border-r border-gray-100 h-full transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-40 shrink-0 ${
+        isOpen ? "w-72 overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:w-72" : "w-0 opacity-0 overflow-hidden pointer-events-none md:relative md:w-0 md:opacity-0 md:pointer-events-none"
       }`}
+      style={{
+        // ensure proper stacking on mobile overlay
+      }}
     >
       <nav className="flex flex-col gap-1 py-4">
 
@@ -36,32 +39,38 @@ export default function Sidebar({ isOpen }) {
             </div>
             <i className={`fa-solid fa-chevron-down text-xs transition-transform text-gray-400 ${animalesOpen ? 'rotate-180' : ''}`}></i>
           </button>
-          <div className={`overflow-hidden transition-all duration-300 ${animalesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className={`overflow-hidden transition-all duration-300 ${animalesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
               <NavLink to="/razas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
               <NavLink to="/porcinos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
+              <NavLink to="/novedades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Novedades</NavLink>
               {/* <NavLink to="/crias" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Crías</NavLink> */}
             </div>
           </div>
         </div>
 
-        {/* Reproducción */}
+        {/* Ciclos */}
         <div>
           <button className={buttonClass} onClick={() => setReproOpen(!reproOpen)}>
             <div className="flex items-center gap-2">
-              <i className="fa-solid fa-dna text-purple-500 w-5 text-center"></i> Reproducción
+              <i className="fa-solid fa-dna text-purple-500 w-5 text-center"></i> Ciclos
             </div>
             <i className={`fa-solid fa-chevron-down text-xs transition-transform text-gray-400 ${reproOpen ? 'rotate-180' : ''}`}></i>
           </button>
-          <div className={`overflow-hidden transition-all duration-300 ${reproOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className={`overflow-hidden transition-all duration-300 ${reproOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/reproducciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Reproducciones</NavLink>
+              <NavLink to="/ciclos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos</NavLink>
               <NavLink to="/montas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas</NavLink>
               <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas</NavLink>
               <NavLink to="/inseminaciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
               <NavLink to="/partos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
+<<<<<<< HEAD
               {/* <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink> */}
               {/* <NavLink to="/segcamada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seg. Camada</NavLink> */}
+=======
+              <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
+              <NavLink to="/actividades_camada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Actividades Camada</NavLink>
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
             </div>
           </div>
         </div>
@@ -74,7 +83,7 @@ export default function Sidebar({ isOpen }) {
             </div>
             <i className={`fa-solid fa-chevron-down text-xs transition-transform text-gray-400 ${sanidadOpen ? 'rotate-180' : ''}`}></i>
           </button>
-          <div className={`overflow-hidden transition-all duration-300 ${sanidadOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className={`overflow-hidden transition-all duration-300 ${sanidadOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
               <NavLink to="/medicamentos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Medicamentos</NavLink>
             </div>
@@ -90,7 +99,7 @@ export default function Sidebar({ isOpen }) {
               </div>
               <i className={`fa-solid fa-chevron-down text-xs transition-transform text-gray-400 ${adminOpen ? 'rotate-180' : ''}`}></i>
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ${adminOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className={`overflow-hidden transition-all duration-300 ${adminOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
               <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
                 <NavLink to="/responsables" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Responsables</NavLink>
               </div>

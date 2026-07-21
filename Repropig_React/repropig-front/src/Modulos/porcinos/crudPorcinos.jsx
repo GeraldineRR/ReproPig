@@ -183,11 +183,11 @@ const CrudPorcinos = () => {
 
         const textToSearch = filterText.toLowerCase()
 
-        const chapeta = porcino.Num_Chapeta.toString().toLowerCase()
-        const nombre = porcino.Nom_Porcino.toLowerCase()
-        const placa = porcino.Plac_Sena_Porcino.toString().toLowerCase()
-        const procedencia = porcino.Proc_Porcino.toLowerCase()
-        const sexoBase = porcino.Gen_Porcino.trim().toLowerCase()
+        const chapeta = porcino.Num_Chapeta?.toString().toLowerCase() || ''
+        const nombre = porcino.Nom_Porcino?.toLowerCase() || ''
+        const placa = porcino.Plac_Sena_Porcino?.toString().toLowerCase() || ''
+        const procedencia = porcino.Proc_Porcino?.toLowerCase() || ''
+        const sexoBase = porcino.Gen_Porcino?.trim().toLowerCase() || ''
         let sexo = ''
         if (sexoBase === 'm') sexo = 'macho'
         else if (sexoBase === 'h') sexo = 'hembra'
@@ -243,7 +243,7 @@ const CrudPorcinos = () => {
                 </div>
 
                 <DataTable
-                    title="Porcinos"
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Porcinos</h4>}
                     columns={columnsTable}
                     data={newListPorcinos}
                     keyField="Id_Porcino"
@@ -251,6 +251,7 @@ const CrudPorcinos = () => {
                     highlightOnHover
                     pointerOnHover
                     striped
+                    customStyles={customTableStyles}
                 />
 
 
@@ -280,9 +281,13 @@ const CrudPorcinos = () => {
                                     <>
                                         <h5 className="mb-1 text-danger fw-bold">{porcinoQR.Nom_Porcino}</h5>
                                         <p className="text-muted small mb-3">Chapeta: {porcinoQR.Num_Chapeta}</p>
+<<<<<<< HEAD
 
                                         <div className="p-3 bg-white d-inline-block rounded shadow-sm border">
                                             {/* Usamos window.location.origin para que el QR apunte al dominio/IP actual */}
+=======
+                                        <div className="p-3 bg-white d-inline-block rounded shadow-sm border">
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
                                             <QRCodeSVG
                                                 value={`${window.location.origin}/perfil-cerda/${porcinoQR.Id_Porcino}`}
                                                 size={200}

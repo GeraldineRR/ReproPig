@@ -14,12 +14,12 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const [Id_Responsable, setId_Responsable] = useState([]);
     const [Id_colecta, setId_colecta] = useState('');
     const [Observaciones, setObservaciones] = useState('');
-    const [Id_Reproduccion, setId_Reproduccion] = useState('');
+    const [Id_Ciclo, setId_Ciclo] = useState('');
     const [porcinos, setPorcinos] = useState([]);
     const [machos, setMachos] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [colectas, setColectas] = useState([]);
-    const [reproduccionesActivas, setReproduccionesActivas] = useState([]);
+    const [ciclosActivas, setCiclosActivas] = useState([]);
     const [textFormButton, setTextFormButton] = useState('Agregar Inseminacion');
     const [filtroCerdo, setFiltroCerdo] = useState('');
 
@@ -53,25 +53,25 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         } catch (error) { console.error('Error al obtener colectas:', error) }
     }
 
-    // ✅ FIX — se quitó el filtro de TipoReproduccion === 'Inseminacion'
-    // Una cerda con reproducción activa de cualquier tipo puede recibir una inseminación
-    const getReproduccionesActivas = async (idPorcino) => {
-        if (!idPorcino) { setReproduccionesActivas([]); return }
+    // ✅ FIX — se quitó el filtro de TipoCiclo === 'Inseminacion'
+    // Una cerda con ciclo activo de cualquier tipo puede recibir una inseminación
+    const getCiclosActivas = async (idPorcino) => {
+        if (!idPorcino) { setCiclosActivas([]); return }
         try {
-            const response = await apiAxios.get('/reproducciones/')
+            const response = await apiAxios.get('/ciclos/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
                 (r.activo || r.Activo || '').toUpperCase() === 'S'
             )
-            setReproduccionesActivas(activas)
-        } catch (error) { console.error('Error al obtener reproducciones:', error) }
+            setCiclosActivas(activas)
+        } catch (error) { console.error('Error al obtener ciclos:', error) }
     }
 
     const handlePorcinoChange = (e) => {
         const val = e.target.value
         setId_Porcino(val)
-        setId_Reproduccion('')
-        getReproduccionesActivas(val)
+        setId_Ciclo('')
+        getCiclosActivas(val)
     }
 
     const parsearResponsables = (valor) => {
@@ -84,7 +84,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         return isNaN(num) ? [] : [num]
     }
 
-    // ✅ FIX — ahora llama getReproduccionesActivas al editar para que el select se llene
+    // ✅ FIX — ahora llama getCiclosActivas al editar para que el select se llene
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
             setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
@@ -93,36 +93,36 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setId_colecta(rowToEdit.Id_colecta)
             setObservaciones(rowToEdit.Observaciones)
-            setId_Reproduccion(rowToEdit.Id_Reproduccion)
-            getReproduccionesActivas(rowToEdit.Id_Porcino) // ✅ carga repros para que el select no quede vacío
+            setId_Ciclo(rowToEdit.Id_Ciclo)
+            getCiclosActivas(rowToEdit.Id_Porcino) // ✅ carga repros para que el select no quede vacío
             setTextFormButton('Actualizar Inseminacion')
-        } else if (!preloaded.Id_Reproduccion) {
+        } else if (!preloaded.Id_Ciclo) {
             setFec_hora('')
             setId_Porcino('')
             setCantidad('')
             setId_Responsable([])
             setId_colecta('')
             setObservaciones('')
-            setId_Reproduccion('')
-            setReproduccionesActivas([])
+            setId_Ciclo('')
+            setCiclosActivas([])
             setTextFormButton('Agregar Inseminacion')
         }
     }, [rowToEdit]);
 
     useEffect(() => {
-        if (preloaded.Id_Reproduccion && preloadedRef.current !== preloaded.Id_Reproduccion) {
-            preloadedRef.current = preloaded.Id_Reproduccion
+        if (preloaded.Id_Ciclo && preloadedRef.current !== preloaded.Id_Ciclo) {
+            preloadedRef.current = preloaded.Id_Ciclo
             setId_Porcino(preloaded.Id_Porcino || '')
             setId_colecta(preloaded.Id_colecta || '')
-            setId_Reproduccion(preloaded.Id_Reproduccion || '')
+            setId_Ciclo(preloaded.Id_Ciclo || '')
             setFec_hora('')
             setCantidad('')
             setId_Responsable([])
             setObservaciones('')
             setTextFormButton('Agregar Inseminacion')
-            getReproduccionesActivas(preloaded.Id_Porcino)
+            getCiclosActivas(preloaded.Id_Porcino)
         }
-    }, [preloaded.Id_Reproduccion]);
+    }, [preloaded.Id_Ciclo]);
 
     const toggleResponsable = (id) => {
         setId_Responsable(prev =>
@@ -139,7 +139,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         const formData = {
             Fec_hora, Id_Porcino, cantidad,
             Id_Responsable: JSON.stringify(Id_Responsable),
-            Id_colecta, Observaciones, Id_Reproduccion,
+            Id_colecta, Observaciones, Id_Ciclo,
         };
         try {
             if (textFormButton === 'Agregar Inseminacion') {
@@ -153,13 +153,13 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             // ✅ Auto-crear o actualizar calendario con la primera fecha
             try {
                 const [calRes, montasRes, insemRes] = await Promise.all([
-                    apiAxios.get(`/calendario/reproduccion/${Id_Reproduccion}`).catch(() => ({ data: null })),
+                    apiAxios.get(`/calendario/ciclo/${Id_Ciclo}`).catch(() => ({ data: null })),
                     apiAxios.get('/monta').catch(() => ({ data: [] })),
                     apiAxios.get('/inseminacion').catch(() => ({ data: [] }))
                 ]);
 
-                const misMontas = montasRes.data.filter(m => m.Id_Reproduccion == Id_Reproduccion);
-                const misInsem = insemRes.data.filter(i => i.Id_Reproduccion == Id_Reproduccion);
+                const misMontas = montasRes.data.filter(m => m.Id_Ciclo == Id_Ciclo);
+                const misInsem = insemRes.data.filter(i => i.Id_Ciclo == Id_Ciclo);
 
                 const allDates = [
                     ...misMontas.map(m => m.Fec_hora?.split('T')[0]).filter(Boolean),
@@ -169,7 +169,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                 const minDate = allDates.length > 0 ? allDates.sort()[0] : Fec_hora;
                 
                 if (!calRes.data) {
-                    await apiAxios.post('/calendario/', { Id_Reproduccion, Fecha_Servicio: minDate });
+                    await apiAxios.post('/calendario/', { Id_Ciclo, Fecha_Servicio: minDate });
                 } else if (calRes.data.Fecha_Servicio?.split('T')[0] !== minDate) {
                     await apiAxios.put(`/calendario/${calRes.data.Id_Calendario}`, { Fecha_Servicio: minDate });
                 }
@@ -184,7 +184,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         }
     };
 
-    const esPrellenado = !!preloaded.Id_Reproduccion
+    const esPrellenado = !!preloaded.Id_Ciclo
     const esEdicion = !!rowToEdit?.Id_Inseminacion
 
     // Calcular pajillas disponibles en tiempo real para la colecta seleccionada
@@ -203,12 +203,12 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
             <div className="text-center mb-4">
                 <h5 className="fw-bold">💉 {esEdicion ? 'Editar Inseminación' : 'Registrar Inseminación'}</h5>
-                <small className="text-muted">Gestión del proceso reproductivo</small>
+                <small className="text-muted">Gestión del ciclo</small>
             </div>
 
             {esPrellenado && (
                 <div className="alert alert-primary py-2 mb-3 text-center">
-                    Cerda y reproducción asignadas automáticamente
+                    Cerda y ciclo asignados automáticamente
                 </div>
             )}
 
@@ -246,26 +246,26 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                     </select>
                 </div>
 
-                {/* REPRODUCCION — se muestra siempre, bloqueada si viene prellenada */}
+                {/* CICLO — se muestra siempre, bloqueada si viene prellenada */}
                 <div className="col-12">
-                    <label className="form-label fw-semibold">🔁 Reproducción activa</label>
+                    <label className="form-label fw-semibold">🔁 Ciclo activo</label>
                     <select
                         className="form-select shadow-sm"
-                        value={Id_Reproduccion}
-                        onChange={e => setId_Reproduccion(e.target.value)}
+                        value={Id_Ciclo}
+                        onChange={e => setId_Ciclo(e.target.value)}
                         disabled={esPrellenado}
                         required
                     >
                         <option value="">
                             {!Id_Porcino
                                 ? 'Primero seleccione una cerda'
-                                : reproduccionesActivas.length === 0
-                                    ? 'No hay reproducciones activas'
-                                    : 'Seleccione una reproducción'}
+                                : ciclosActivas.length === 0
+                                    ? 'No hay ciclos activos'
+                                    : 'Seleccione un ciclo'}
                         </option>
-                        {reproduccionesActivas.map(r => (
-                            <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                #{r.Id_Reproduccion} — {r.TipoReproduccion}
+                        {ciclosActivas.map(r => (
+                            <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
+                                #{r.Id_Ciclo} — {r.TipoCiclo}
                             </option>
                         ))}
                     </select>

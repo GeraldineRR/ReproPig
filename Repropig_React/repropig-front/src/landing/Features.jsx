@@ -9,7 +9,7 @@ function Features() {
     { nombre: "Colecta", ruta: "/colectas", icon: "🧪", color: "#E4F0FF", accent: "#A0B8E8", desc: "Gestión profesional del módulo de colecta con control y trazabilidad completa.", activo: true },
     { nombre: "Monta", ruta: "/montas", icon: "🐷", color: "#FFE8E0", accent: "#E8B0A0", desc: "Gestión profesional del módulo de monta con control y trazabilidad completa.", activo: true },
     { nombre: "Medicamentos", ruta: "/medicamentos", icon: "💊", color: "#E8F4E4", accent: "#A0C8A0", desc: "Gestión profesional del módulo de medicamentos con control y trazabilidad completa.", activo: true },
-    { nombre: "Reproducciones", ruta: "/reproducciones", icon: "🔬", color: "#FFF4E0", accent: "#E8C880", desc: "Gestión profesional del módulo de reproducciones con control y trazabilidad completa.", activo: true },
+    { nombre: "Ciclos", ruta: "/ciclos", icon: "🔬", color: "#FFF4E0", accent: "#E8C880", desc: "Gestión profesional del módulo de ciclos con control y trazabilidad completa.", activo: true },
     { nombre: "Responsables", ruta: "/responsables", icon: "👤", color: "#F0F4FF", accent: "#A0B0E8", desc: "Gestión de responsables y roles del sistema porcícola.", activo: true },
     { nombre: "Porcinos", ruta: "/porcinos", icon: "🐖", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro y seguimiento completo de los porcinos de la granja.", activo: true },
     { nombre: "Razas", ruta: "/razas", icon: "🧬", color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro de las razas de porcinos.", activo: true },

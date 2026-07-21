@@ -4,14 +4,16 @@ import { DataTypes } from "sequelize";
 const Seguimiento_CerdaModel = db.define('Seguimiento_Cerda', {
 
     Id_Seguimiento_Cerda: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    Id_parto: { type: DataTypes.INTEGER, allowNull: false },
-    Dia_Programado: { type: DataTypes.INTEGER, allowNull: false },
-    Fecha_Real: { type: DataTypes.DATE, allowNull: false },
-    Id_Responsable: { type: DataTypes.INTEGER, allowNull: false },
-    Id_Medicamento: { type: DataTypes.INTEGER, allowNull: true },
-    Observaciones: { type: DataTypes.STRING(255), allowNull: true },
+    Fecha: { type: DataTypes.DATE },
+    Hora: { type: DataTypes.TIME },
+    Observaciones: { type: DataTypes.STRING },
+    Id_Porcino: { type: DataTypes.INTEGER },
+    Id_Responsable: { type: DataTypes.INTEGER },
+    Id_Medicamento: { type: DataTypes.INTEGER },
+    Id_Ciclo: { type: DataTypes.INTEGER, allowNull: true },
 }, {
     freezeTableName: true,
+    timestamps: false
 })
 
 export default Seguimiento_CerdaModel;

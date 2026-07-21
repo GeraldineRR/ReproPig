@@ -22,10 +22,19 @@ const crudSeguimiento_Cerda = () => {
     }
 
     const columnsTable = [
+<<<<<<< HEAD
         { name: 'Día Seguimiento', selector: row => `Día ${row.Dia_Programado}` },
         { name: 'Fecha Programada', selector: row => calcularFechaProgramada(row.partos?.Fec_fin, row.Dia_Programado) },
         { name: 'Fecha Real', selector: row => row.Fecha_Real ? row.Fecha_Real.split('T')[0] : '—' },
         { name: 'Responsable', selector: row => row.Responsables ? `${row.Responsables.Nombres} ${row.Responsables.Apellidos || ''}` : '—' },
+=======
+        { name: 'Id', selector: row => row.Id_Seguimiento_Cerda, width: '70px' },
+        { name: 'Fecha', selector: row => row.Fecha },
+        { name: 'Hora', selector: row => row.Hora },
+        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
+        { name: 'Id Ciclo', selector: row => row.Id_Ciclo || '—' },
+        { name: 'Responsable', selector: row => row.Responsables?.Nombres || '—' },
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
         { name: 'Medicamento', selector: row => row.medicamentos?.Nombre || '—' },
         { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
         {
@@ -48,6 +57,7 @@ const crudSeguimiento_Cerda = () => {
 
     const newListSeguimiento_Cerda = Seguimiento_Cerda.filter(row => {
         const textToSearch = filterText.toLowerCase()
+<<<<<<< HEAD
         const Id = row.Id_Seguimiento_Cerda.toString().toLowerCase()
         const FechaReal = row.Fecha_Real ? row.Fecha_Real.toLowerCase() : ''
         const NomCerda = row.partos?.porcino?.Nom_Porcino ? row.partos.porcino.Nom_Porcino.toLowerCase() : ''
@@ -60,6 +70,14 @@ const crudSeguimiento_Cerda = () => {
         }
 
         return matchesText && matchesParto
+=======
+        const Id = String(Seguimiento_Cerda?.Id_Seguimiento_Cerda || '').toLowerCase()
+        const Fecha = String(Seguimiento_Cerda?.Fecha || '').toLowerCase()
+        return (
+            Id.includes(textToSearch) ||
+            Fecha.includes(textToSearch)
+        )
+>>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
     })
 
     const hideModal = () => {

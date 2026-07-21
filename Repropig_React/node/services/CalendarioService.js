@@ -1,5 +1,6 @@
 import CalendarioModel from "../models/CalendarioModel.js";
-import reproduccionesModel from "../models/reproduccionesModel.js";
+import ciclosModel from "../models/ciclosModel.js";
+import PorcinoModel from "../models/porcinoModel.js";
 
 function calcularEventos(fechaServicio) {
     const base = new Date(fechaServicio + 'T00:00:00');
@@ -24,8 +25,15 @@ class CalendarioService {
         return await CalendarioModel.findAll({
             include: [
                 {
-                    model: reproduccionesModel,
-                    as: 'reproduccion'
+                    model: ciclosModel,
+                    as: 'ciclo',
+                    include: [
+                        {
+                            model: PorcinoModel,
+                            as: 'porcino',
+                            attributes: ['Id_Porcino', 'Nom_Porcino']
+                        }
+                    ]
                 },
             ]
         })
@@ -35,23 +43,29 @@ class CalendarioService {
         const Calendario = await CalendarioModel.findByPk(id, {
             include: [
                 {
-                    model: reproduccionesModel,
-                    as: 'reproduccion'
+                    model: ciclosModel,
+                    as: 'ciclo',
+                    include: [
+                        {
+                            model: PorcinoModel,
+                            as: 'porcino',
+                            attributes: ['Id_Porcino', 'Nom_Porcino']
+                        }
+                    ]
                 }
             ]
         })
         if (!Calendario) throw new Error('Calendario no encontrado')
         return Calendario
-
     }
 
     async create(data) {
-        const { Id_Reproduccion, Fecha_Servicio } = data;
+        const { Id_Ciclo, Fecha_Servicio } = data;
 
         const eventos = calcularEventos(Fecha_Servicio);
 
         return await CalendarioModel.create({
-            Id_Reproduccion,
+            Id_Ciclo,
             Fecha_Servicio,
 
             rc1: eventos.rc1,
@@ -138,9 +152,22 @@ class CalendarioService {
         return await CalendarioModel.findByPk(id)
     }
 
-    async findByReproduccion(Id_Reproduccion) {
+    async findByCiclo(Id_Ciclo) {
         return await CalendarioModel.findOne({
-            where: { Id_Reproduccion }
+            where: { Id_Ciclo },
+            include: [
+                {
+                    model: ciclosModel,
+                    as: 'ciclo',
+                    include: [
+                        {
+                            model: PorcinoModel,
+                            as: 'porcino',
+                            attributes: ['Id_Porcino', 'Nom_Porcino']
+                        }
+                    ]
+                }
+            ]
         })
     }
 
