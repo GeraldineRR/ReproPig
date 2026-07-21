@@ -281,13 +281,7 @@ const CrudPorcinos = () => {
                                     <>
                                         <h5 className="mb-1 text-danger fw-bold">{porcinoQR.Nom_Porcino}</h5>
                                         <p className="text-muted small mb-3">Chapeta: {porcinoQR.Num_Chapeta}</p>
-<<<<<<< HEAD
-
                                         <div className="p-3 bg-white d-inline-block rounded shadow-sm border">
-                                            {/* Usamos window.location.origin para que el QR apunte al dominio/IP actual */}
-=======
-                                        <div className="p-3 bg-white d-inline-block rounded shadow-sm border">
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
                                             <QRCodeSVG
                                                 value={`${window.location.origin}/perfil-cerda/${porcinoQR.Id_Porcino}`}
                                                 size={200}

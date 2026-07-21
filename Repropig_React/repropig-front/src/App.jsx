@@ -39,36 +39,6 @@ function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* protegidas */}
-<<<<<<< HEAD
-      <Route element={<RutaProtegida><AppLayout /></RutaProtegida>}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/porcinos" element={<CrudPorcinos />} />
-        <Route path="/razas" element={<CrudRazas />} />
-        <Route path="/colectas" element={<CrudColecta />} />
-        <Route path="/montas" element={<CrudMonta />} />
-        <Route path="/inseminaciones" element={<CrudInseminacion />} />
-        <Route path="/medicamentos" element={<CrudMedicamentos />} />
-        <Route path="/reproducciones" element={<CrudReproducciones />} />
-        <Route
-          path="/responsables"
-          element={
-            <RutaProtegida rolesPermitidos={["instructor"]}>
-              <CrudResponsables />
-            </RutaProtegida>
-          }
-        />
-        <Route path="/partos" element={<CrudPartos />} />
-        <Route path="/crias" element={<CrudCrias />} />
-        <Route path="/crias/parto/:id" element={<CrudCrias />} />
-        <Route path="/segcamada" element={<CrudSegcamada />} />
-        <Route path="/segcamada/parto/:id" element={<CrudSegcamada />} />
-        <Route path="/Seguimiento_Cerda" element={<CrudSeguimiento_Cerda />} />
-        <Route path="/Seguimiento_Cerda/parto/:id" element={<CrudSeguimiento_Cerda />} />
-        <Route path="/Calendario" element={<CrudCalendario />} />
-        <Route path="/perfil-cerda/:id" element={<PerfilCerda />} />
-        <Route path="/mi-perfil" element={<MiPerfil />} />
-      
-=======
       <Route element={<RutaProtegida />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -89,7 +59,6 @@ function App() {
           <Route path="/mi-perfil" element={<MiPerfil />} />
           <Route path="/novedades" element={<CrudNovedades />} />
           <Route path="/actividades_camada" element={<CrudActividadesCamada />} />
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
 
           <Route element={<RutaProtegida rolesPermitidos={["instructor"]} />}>
             <Route path="/responsables" element={<CrudResponsables />} />

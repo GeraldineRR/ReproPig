@@ -10,12 +10,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
     const [Id_Ciclo, setId_Ciclo] = useState('')
     const [Id_Cerda, setId_Cerda] = useState('')
     const [Activo, setActivo] = useState('S')
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/ReproduccionesForm.jsx
-    const [TipoReproduccion, setTipoReproduccion] = useState('')
-    const [Fec_servicio, setFec_servicio] = useState('')
-=======
     const [TipoCiclo, setTipoCiclo] = useState('')
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/CiclosForm.jsx
     const [accionEdicion, setAccionEdicion] = useState('') // 'agregar_monta' | 'agregar_inseminacion' | ''
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
@@ -36,32 +31,18 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
     }
 
     useEffect(() => {
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/ReproduccionesForm.jsx
-        if (reproduccionEdit?.Id_Reproduccion) {
-            setId_Reproduccion(reproduccionEdit.Id_Reproduccion || '')
-            setId_Cerda(reproduccionEdit.Id_Cerda || reproduccionEdit.porcino?.Id_Porcino || '')
-            setActivo((reproduccionEdit.activo || 'S').toUpperCase())
-            setTipoReproduccion(reproduccionEdit.TipoReproduccion || '')
-            setFec_servicio(reproduccionEdit.Fec_servicio ? reproduccionEdit.Fec_servicio.split('T')[0] : '')
-=======
         if (cicloEdit?.Id_Ciclo) {
             setId_Ciclo(cicloEdit.Id_Ciclo || '')
             setId_Cerda(cicloEdit.Id_Cerda || cicloEdit.porcino?.Id_Porcino || '')
             setActivo((cicloEdit.activo || 'S').toUpperCase())
             setTipoCiclo(cicloEdit.TipoCiclo || '')
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/CiclosForm.jsx
             setAccionEdicion('')
             setTextFormButton("Actualizar")
         } else {
             setId_Ciclo('')
             setId_Cerda('')
             setActivo('S')
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/ReproduccionesForm.jsx
-            setTipoReproduccion('')
-            setFec_servicio('')
-=======
             setTipoCiclo('')
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/CiclosForm.jsx
             setAccionEdicion('')
             setTextFormButton("Enviar")
         }
@@ -106,12 +87,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                     const response = await apiAxios.post('/ciclos', {
                         Id_Cerda: Number(Id_Cerda),
                         Activo: 'S',
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/ReproduccionesForm.jsx
-                        TipoReproduccion,
-                        Fec_servicio: Fec_servicio || null
-=======
                         TipoCiclo
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/CiclosForm.jsx
                     })
                     const nuevaCiclo = response.data?.ciclos || response.data
 
@@ -155,12 +131,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                 await apiAxios.put(`/ciclos/${sanitizedId}`, {
                     Id_Cerda: Number(Id_Cerda),
                     Activo,
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/ReproduccionesForm.jsx
-                    TipoReproduccion: reproduccionEdit.TipoReproduccion,
-                    Fec_servicio: Fec_servicio || null
-=======
                     TipoCiclo: cicloEdit.TipoCiclo
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/CiclosForm.jsx
                 })
                 await MySwal.fire({ icon: 'success', title: 'Éxito', text: 'Ciclo actualizado correctamente' })
                 hideModal()

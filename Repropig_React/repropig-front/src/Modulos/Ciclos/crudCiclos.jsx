@@ -96,21 +96,6 @@ const CrudCiclos = () => {
             ? todasFechas.sort()[0].split('T')[0]
             : ''
 
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/crudReproducciones.jsx
-        const tieneMontas = row.montas?.length > 0
-        const tieneInseminaciones = row.inseminaciones?.length > 0
-        const tipo = tieneMontas && tieneInseminaciones ? 'Monta e Inseminación' : tieneMontas ? 'Monta' : tieneInseminaciones ? 'Inseminación' : row.TipoReproduccion || 'Monta'
-
-        setSelectedReproduccion({
-            nombreCerda: row.porcino?.Nom_Porcino || 'Sin nombre',
-            Id_Reproduccion: row.Id_Reproduccion,
-            tipoInicial: tipo,
-            estado: row.Estado || 'Activa',
-            fechaServicio: row.Fec_servicio || fecha
-        })
-
-        // ✅ Verificar si ya existe un calendario para esta reproducción
-=======
         const sanitizedId = cleanId(row.Id_Ciclo)
         if (!sanitizedId) {
             MySwal.fire({ icon: 'error', title: 'Error', text: 'Id de ciclo inválido para calendario' })
@@ -135,7 +120,6 @@ const CrudCiclos = () => {
         }
 
         // ✅ Verificar si ya existe un calendario para este ciclo
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/crudCiclos.jsx
         try {
             const calRes = await apiAxios.get(`/calendario/ciclo/${sanitizedId}`)
             if (calRes.data) {
@@ -243,33 +227,7 @@ const CrudCiclos = () => {
             name: 'Estado',
             width: '130px',
             cell: row => {
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/crudReproducciones.jsx
-                const estado = row.Estado || 'Activa';
-                let badgeClass = 'bg-secondary';
-                let icon = '';
-
-                switch (estado) {
-                    case 'Activa':
-                        badgeClass = 'bg-success';
-                        icon = '🤰';
-                        break;
-                    case 'Fallida':
-                        badgeClass = 'bg-danger';
-                        icon = '❌';
-                        break;
-                    case 'Lactante':
-                        badgeClass = 'bg-info';
-                        icon = '🍼';
-                        break;
-                    case 'Completado':
-                        badgeClass = 'bg-primary';
-                        icon = '✅';
-                        break;
-                }
-
-=======
                 const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/crudCiclos.jsx
                 return (
                     <span
                         className={`badge ${badgeClass}`}
@@ -395,53 +353,7 @@ const CrudCiclos = () => {
         cerrarModal(modalColectaInstanceRef)
     }
 
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/crudReproducciones.jsx
-    // Helper function to calculate gestation days
-    const calcularDiasGestacion = (row) => {
-        const fecServicio = row.Fec_servicio
-        if (!fecServicio) return '-'
-        const servicio = new Date(fecServicio.split('T')[0] + 'T00:00:00')
-
-        if (row.Estado === 'Fallida') {
-            if (row.calendario?.resultado_rc1 === 'recelo_detectado' && row.calendario?.real_rc1) {
-                const fin = new Date(row.calendario.real_rc1.split('T')[0] + 'T00:00:00')
-                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
-                return diff > 0 ? diff : 0
-            }
-            if (row.calendario?.resultado_rc2 === 'recelo_detectado' && row.calendario?.real_rc2) {
-                const fin = new Date(row.calendario.real_rc2.split('T')[0] + 'T00:00:00')
-                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
-                return diff > 0 ? diff : 0
-            }
-            return 0
-        }
-
-        if (row.Estado === 'Lactante' || row.Estado === 'Completado') {
-            if (row.calendario?.real_parto) {
-                const fin = new Date(row.calendario.real_parto.split('T')[0] + 'T00:00:00')
-                const diff = Math.floor((fin - servicio) / (1000 * 60 * 60 * 24))
-                return diff > 0 ? diff : 0
-            }
-            return 114
-        }
-
-        const hoy = new Date()
-        const diff = Math.floor((hoy - servicio) / (1000 * 60 * 60 * 24))
-        return diff > 0 ? diff : 0
-    }
-
-    // Helper function to calculate probable farrowing date (114 days gestation)
-    const calcularFechaProbableParto = (fecServicio) => {
-        if (!fecServicio) return '-'
-        const servicio = new Date(fecServicio)
-        servicio.setDate(servicio.getDate() + 114)
-        return servicio.toLocaleDateString('es-ES')
-    }
-
-    const filteredReproducciones = reproducciones.filter(rep => {
-=======
     const filteredCiclos = ciclos.filter(rep => {
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/crudCiclos.jsx
         const text = filterText.toLowerCase()
         return (
             rep.Id_Ciclo?.toString().includes(text) ||
@@ -501,13 +413,8 @@ const CrudCiclos = () => {
                 </div>
             </div>
             {/* Modal Calendario */}
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/Reproducciones/crudReproducciones.jsx
-            <div className="modal fade calendario-modal" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
-                <div className="modal-dialog modal-xl">
-=======
             <div className="modal fade" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/Ciclos/crudCiclos.jsx
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">
