@@ -9,6 +9,7 @@ export default function PerfilCerda() {
     const [porcino, setPorcino] = useState(null)
     const [ciclos, setCiclos] = useState([])
     const [partos, setPartos] = useState([])
+    const [novedades, setNovedades] = useState([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
@@ -32,6 +33,11 @@ export default function PerfilCerda() {
             const resPartos = await apiAxios.get('/partos/')
             const partosDeCerda = resPartos.data.filter(p => p.Id_Porcino == id)
             setPartos(partosDeCerda)
+
+            // Traer novedades
+            const resNovedades = await apiAxios.get('/novedades/')
+            const novedadesDeCerda = resNovedades.data.filter(n => n.Id_Porcino == id)
+            setNovedades(novedadesDeCerda)
 
         } catch (error) {
             console.error("Error al cargar perfil:", error)
@@ -222,8 +228,72 @@ export default function PerfilCerda() {
                                                 </div>
                                             </div>
                                             
+                                            <div className="flex-shrink-0 mt-4 sm:mt-0 sm:ml-4 flex justify-center">
+                                                <button onClick={() => navigate(`/actividades_camada/parto/${parto.Id_parto}`)} className="text-pink-500 hover:bg-pink-50 p-2 rounded-xl transition-colors" title="Ver Seguimiento de Camada">
+                                                    <i className="fa-solid fa-list-check"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Historial de Novedades */}
+                        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 mt-8">
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                                    <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center mr-3">
+                                        <i className="fa-solid fa-triangle-exclamation"></i>
+                                    </div>
+                                    Registro de Novedades
+                                </h3>
+                                <span className="bg-gray-100 text-gray-600 font-bold px-3 py-1 rounded-full text-sm">
+                                    {novedades.length} Total
+                                </span>
+                            </div>
+
+                            {novedades.length === 0 ? (
+                                <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                    <p className="text-gray-500 font-medium">No hay novedades registradas para este porcino.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {novedades.map(nov => {
+                                        let bgClass = 'bg-gray-50';
+                                        let textClass = 'text-gray-700';
+                                        let icon = 'fa-circle-info';
+                                        
+                                        if (nov.Tipo_Novedad === 'Muerte' || nov.Tipo_Novedad === 'Descarte') {
+                                            bgClass = 'bg-red-50'; textClass = 'text-red-700'; icon = 'fa-skull';
+                                        } else if (nov.Tipo_Novedad === 'Enfermedad' || nov.Tipo_Novedad === 'Lesión') {
+                                            bgClass = 'bg-yellow-50'; textClass = 'text-yellow-700'; icon = 'fa-briefcase-medical';
+                                        } else if (nov.Tipo_Novedad === 'Traslado') {
+                                            bgClass = 'bg-blue-50'; textClass = 'text-blue-700'; icon = 'fa-truck-fast';
+                                        }
+
+                                        return (
+                                            <div key={nov.Id_Novedad} className={`flex items-start ${bgClass} border border-gray-100 shadow-sm rounded-2xl p-4`}>
+                                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${textClass} bg-white mr-4 shadow-sm`}>
+                                                    <i className={`fa-solid ${icon}`}></i>
+                                                </div>
+                                                <div className="flex-grow">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h4 className={`font-bold ${textClass}`}>{nov.Tipo_Novedad}</h4>
+                                                        <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
+                                                            {nov.Fecha_Novedad?.split('T')[0]?.split('-').reverse().join('/')}
+                                                        </span>
+                                                    </div>
+                                                    {nov.Causa_Motivo && (
+                                                        <p className="text-sm font-semibold text-gray-700 mb-1">Causa: {nov.Causa_Motivo}</p>
+                                                    )}
+                                                    {nov.Observaciones && (
+                                                        <p className="text-sm text-gray-600 italic">"{nov.Observaciones}"</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>

@@ -62,8 +62,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino/')
-            // Solo hembras
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) {
             console.error('Error obteniendo porcinos:', error)
             setPorcinos([])

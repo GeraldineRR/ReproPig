@@ -31,8 +31,8 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     const nombreCerda = cData.nombreCerda || preloaded?.porcino?.Nom_Porcino || 'Sin nombre'
     const idCiclo = cData.Id_Ciclo || preloaded?.Id_Ciclo || calendario?.Id_Ciclo || ''
     const tipoCiclo = cData.TipoCiclo || preloaded?.TipoCiclo || 'Monta'
-    const activo = cData.activo ?? preloaded?.activo ?? 'S'
-    const estadoCiclo = activo === 'S' ? 'Activo' : 'Inactivo'
+    const activo = cData.Estado ?? preloaded?.Estado ?? 'Activo'
+    const estadoCiclo = activo === 'Activo' ? 'Activo' : 'Inactivo'
 
     const fechaServicioRaw = cData.fechaServicio || preloaded?.Fecha_Servicio || calendario?.Fecha_Servicio || ''
     const fechaServicio = fechaServicioRaw ? fechaServicioRaw.split('T')[0] : ''
@@ -325,7 +325,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
             return 'Fallida (Recelo detectado)'
         }
         if (calendario?.real_parto) return 'Completado (Parió)'
-        if (activo === 'S') return 'Activo (Gestante)'
+        if (activo === 'Activo') return 'Activo (Gestante)'
         return 'Inactivo'
     }
 

@@ -26,7 +26,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) { console.error("Error al obtener porcinos:", error) }
     }
 
@@ -34,14 +34,14 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
         if (cicloEdit?.Id_Ciclo) {
             setId_Ciclo(cicloEdit.Id_Ciclo || '')
             setId_Cerda(cicloEdit.Id_Cerda || cicloEdit.porcino?.Id_Porcino || '')
-            setActivo((cicloEdit.activo || 'S').toUpperCase())
+            setActivo(cicloEdit.Estado || 'Activo')
             setTipoCiclo(cicloEdit.TipoCiclo || '')
             setAccionEdicion('')
             setTextFormButton("Actualizar")
         } else {
             setId_Ciclo('')
             setId_Cerda('')
-            setActivo('S')
+            setActivo('Activo')
             setTipoCiclo('')
             setAccionEdicion('')
             setTextFormButton("Enviar")
@@ -65,7 +65,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
 
                 // Buscar ciclo activo de la misma cerda
                 const existente = todosCiclos.data.find(r =>
-                    String(r.Id_Cerda) === String(Id_Cerda) && (r.activo || '').toUpperCase() === 'S'
+                    String(r.Id_Cerda) === String(Id_Cerda) && (r.Estado || '').toUpperCase() === 'ACTIVO'
                 )
 
                 if (existente) {
@@ -86,7 +86,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                 } else {
                     const response = await apiAxios.post('/ciclos', {
                         Id_Cerda: Number(Id_Cerda),
-                        Activo: 'S',
+                        Estado: 'Activo',
                         TipoCiclo
                     })
                     const nuevaCiclo = response.data?.ciclos || response.data
@@ -130,7 +130,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                 // Solo actualizar estado
                 await apiAxios.put(`/ciclos/${sanitizedId}`, {
                     Id_Cerda: Number(Id_Cerda),
-                    Activo,
+                    Estado: Activo,
                     TipoCiclo: cicloEdit.TipoCiclo
                 })
                 await MySwal.fire({ icon: 'success', title: 'Éxito', text: 'Ciclo actualizado correctamente' })
@@ -175,8 +175,8 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                         <label className="form-label">Estado</label>
                         <select className="form-control" value={Activo}
                             onChange={(e) => { setActivo(e.target.value); setAccionEdicion('') }}>
-                            <option value="S">Activa</option>
-                            <option value="N">Inactiva</option>
+                            <option value="Activo">Activa</option>
+                            <option value="Inactivo">Inactiva</option>
                         </select>
                     </div>
 

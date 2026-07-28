@@ -64,7 +64,7 @@ const CrudCalendario = () => {
     const buildCicloData = (item) => ({
         Id_Ciclo: item.Id_Ciclo,
         TipoCiclo: item.ciclo?.TipoCiclo || 'Monta',
-        activo: item.ciclo?.activo ?? 'S',
+        Estado: item.ciclo?.Estado ?? 'Activo',
         nombreCerda: item.ciclo?.porcino?.Nom_Porcino || `Cerda #${item.ciclo?.Id_Cerda || ''}`,
         fechaServicio: item.Fecha_Servicio,
     })

@@ -34,8 +34,8 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
-            setMachos(response.data.filter(p => p.Gen_Porcino === 'M'))
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
+            setMachos(response.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) { console.error('Error al obtener porcinos:', error) }
     }
 

@@ -32,7 +32,7 @@ class ciclosService {
             console.log("📥 Datos recibidos:", data);
 
             const existeActiva = await ciclosModel.findOne({
-                where: { Id_Cerda: data.Id_Cerda, activo: 'S' }
+                where: { Id_Cerda: data.Id_Cerda, Estado: 'Activo' }
             });
 
             if (existeActiva) {
@@ -42,7 +42,7 @@ class ciclosService {
             const nueva = await ciclosModel.create({
                 Id_Cerda: data.Id_Cerda,
                 TipoCiclo: data.TipoCiclo,
-                activo: 'S'
+                Estado: 'Activo'
             });
             console.log("✅ Guardado con ID:", nueva.Id_Ciclo);
             return nueva;
@@ -56,29 +56,29 @@ class ciclosService {
         const ciclo = await ciclosModel.findByPk(id)
         if (!ciclo) throw new Error('Ciclo no encontrada')
         ciclo.Id_Cerda = data.Id_Cerda || ciclo.Id_Cerda
-        ciclo.activo = data.activo || data.Activo || ciclo.activo
+        ciclo.Estado = data.Estado || ciclo.Estado
         ciclo.TipoCiclo = data.TipoCiclo || ciclo.TipoCiclo
         await ciclo.save()
         return true
     }
 
-    async toggleActivo(id) {
+    async toggleEstado(id) {
         const ciclo = await ciclosModel.findByPk(id)
         if (!ciclo) throw new Error('Ciclo no encontrada')
 
-        const estadoActual = (ciclo.activo || 'N').toUpperCase()
-        const nuevoEstado = estadoActual === 'S' ? 'N' : 'S'
+        const estadoActual = ciclo.Estado || 'Inactivo'
+        const nuevoEstado = estadoActual === 'Activo' ? 'Inactivo' : 'Activo'
 
-        if (nuevoEstado === 'S') {
+        if (nuevoEstado === 'Activo') {
             const existeActiva = await ciclosModel.findOne({
-                where: { Id_Cerda: ciclo.Id_Cerda, activo: 'S' }
+                where: { Id_Cerda: ciclo.Id_Cerda, Estado: 'Activo' }
             });
             if (existeActiva) {
                 throw new Error('Esta cerda ya tiene un ciclo activo. Debes inactivarla antes de reactivar esta.');
             }
         }
 
-        ciclo.activo = nuevoEstado
+        ciclo.Estado = nuevoEstado
         await ciclo.save()
         return nuevoEstado
     }

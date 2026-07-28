@@ -32,14 +32,10 @@ PorcinoModel.hasMany(PartosModel, { foreignKey: 'Id_Porcino', as: 'partos' })
 PorcinoModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'parto' })
 PartosModel.hasMany(PorcinoModel, { foreignKey: 'Id_parto', as: 'lechones' })
 
-ActividadesCamadaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
-PorcinoModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Porcino', as: 'actividades_camada' })
 
 MedicamentosModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Medicamento', as: 'actividades_camada' })
 ActividadesCamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
-PartosModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Parto', as: 'actividades_camada' })
-ActividadesCamadaModel.belongsTo(PartosModel, { foreignKey: 'Id_Parto', as: 'parto' })
 
 NovedadesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 PorcinoModel.hasMany(NovedadesModel, { foreignKey: 'Id_Porcino', as: 'novedades' })
@@ -72,6 +68,15 @@ SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicament
 
 ciclosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Ciclo', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
+
+PorcinoModel.hasMany(segcamadaModel, { foreignKey: 'Id_Porcino', as: 'segcamadas' })
+segcamadaModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+
+MedicamentosModel.hasMany(segcamadaModel, { foreignKey: 'Id_Medicamento', as: 'segcamadas' })
+segcamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
+
+segcamadaModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_SegCamada', as: 'actividades_camada' })
+ActividadesCamadaModel.belongsTo(segcamadaModel, { foreignKey: 'Id_SegCamada', as: 'segcamada' })
 
 ciclosModel.hasMany(PartosModel, { foreignKey: 'Id_Ciclo', as: 'partos' })
 PartosModel.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })

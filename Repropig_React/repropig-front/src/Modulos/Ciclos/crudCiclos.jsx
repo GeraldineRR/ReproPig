@@ -84,7 +84,7 @@ const CrudCiclos = () => {
     // CALENDARIO
     // ========================
     const handleAgregarCalendario = async (row) => {
-        const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
+        const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
         setCalendarioIsInactive(!isActivo)
 
         const todasFechas = [
@@ -113,7 +113,7 @@ const CrudCiclos = () => {
         const cicloInfo = {
             Id_Ciclo: sanitizedId,
             TipoCiclo: tipoCiclo,
-            activo: row.activo || row.Activo || 'S',
+            activo: row.Estado || row.Estado || 'Activo',
             nombreCerda: row.porcino?.Nom_Porcino || `Cerda #${row.Id_Cerda || ''}`,
             fechaServicio: fecha,
         }
@@ -177,7 +177,7 @@ const CrudCiclos = () => {
     }
 
     const handleToggleActivo = async (row) => {
-        const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
+        const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
         const accion = isActivo ? 'inactivar' : 'activar'
         const result = await MySwal.fire({
             title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} ciclo?`,
@@ -225,7 +225,7 @@ const CrudCiclos = () => {
             name: 'Activo',
             width: '110px',
             cell: row => {
-                const isActivo = (row.activo || row.Activo || '').toUpperCase() === 'S';
+                const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
                 return (
                     <span
                         className={`badge ${isActivo ? 'bg-success' : 'bg-secondary'}`}
@@ -246,7 +246,7 @@ const CrudCiclos = () => {
                     className="badge bg-warning text-dark"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
                     title="Ver montas"
-                    onClick={() => navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.activo || row.Activo } })}
+                    onClick={() => navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
                 >
                     🐷 {row.montas?.length || 0}
                 </span>
@@ -260,7 +260,7 @@ const CrudCiclos = () => {
                     className="badge bg-primary"
                     style={{ cursor: 'pointer', fontSize: '13px' }}
                     title="Ver inseminaciones"
-                    onClick={() => navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.activo || row.Activo } })}
+                    onClick={() => navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
                 >
                     💉 {row.inseminaciones?.length || 0}
                 </span>
