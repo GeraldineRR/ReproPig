@@ -86,8 +86,8 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
     const getPorcinos = async () => {
         const res = await apiAxios.get('/porcino');
-        setHembras(res.data.filter(p => p.Gen_Porcino === 'H'));
-        setMachos(res.data.filter(p => p.Gen_Porcino === 'M'));
+        setHembras(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'));
+        setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
     };
 
     const getResponsables = async () => {

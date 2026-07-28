@@ -1,5 +1,5 @@
 import SegcamadaModel from "../models/segcamadaModel.js"
-import criaModel from "../models/criaModel.js"
+import PorcinoModel from "../models/porcinoModel.js"
 import MedicamentosModel from "../models/MedicamentosModel.js"
 import PartosModel from "../models/PartosModel.js"
 import db from "../database/db.js"
@@ -11,12 +11,13 @@ class SegcamadaService {
         return await SegcamadaModel.findAll({
             include: [
                 {
-                    model: criaModel,
-                    as: 'crias',
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    where: { Tipo_Cerdo: 'Lechon' },
                     include:
                     {
                         model: PartosModel,
-                        as: 'partos'
+                        as: 'parto'
                     }
 
                 },
@@ -33,8 +34,9 @@ class SegcamadaService {
 
             include: [
                 {
-                    model: criaModel,
-                    as: 'crias'
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    where: { Tipo_Cerdo: 'Lechon' }
                 },
                 {
                     model: MedicamentosModel,
@@ -58,7 +60,7 @@ class SegcamadaService {
         // Verificar si existe un seguimiento posterior para la misma cría
         const newerRecord = await SegcamadaModel.findOne({
             where: {
-                Id_Cria: currentRecord.Id_Cria,
+                Id_Porcino: currentRecord.Id_Porcino,
                 Dia_Programado: {
                     [Op.gt]: currentRecord.Dia_Programado
                 }
@@ -66,7 +68,7 @@ class SegcamadaService {
         });
 
         if (newerRecord) {
-            throw new Error('No se puede editar: Existe un seguimiento posterior para esta cría');
+            throw new Error('No se puede editar: Existe un seguimiento posterior para este cerdo');
         }
 
         const result = await SegcamadaModel.update(data, { where: { Id_SegCamada: id } })

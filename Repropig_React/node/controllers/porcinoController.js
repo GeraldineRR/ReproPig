@@ -11,6 +11,15 @@ export const getAllPorcinos = async (req, res) => {
     }
 }
 
+export const getLechonesByParto = async (req, res) => {
+    try {
+        const lechones = await PorcinoService.getLechonesByParto(req.params.idParto)
+        res.status(200).json(lechones)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
 
 export const getPorcino = async (req, res) => {
     try {
