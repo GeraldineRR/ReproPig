@@ -66,10 +66,6 @@ SeguimientoCerda_Model.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'par
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
-<<<<<<< HEAD
-reproduccionesModel.hasMany(PartosModel, { foreignKey: 'Id_Reproduccion', as: 'partos' })
-PartosModel.belongsTo(reproduccionesModel, { foreignKey: 'Id_Reproduccion', as: 'reproduccion' })
-=======
 ciclosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Ciclo', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
 
@@ -84,7 +80,6 @@ ActividadesCamadaModel.belongsTo(segcamadaModel, { foreignKey: 'Id_SegCamada', a
 
 ciclosModel.hasMany(PartosModel, { foreignKey: 'Id_Ciclo', as: 'partos' })
 PartosModel.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
 
 CalendarioModel.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
 ciclosModel.hasOne(CalendarioModel, { foreignKey: 'Id_Ciclo', as: 'calendario' })
@@ -155,21 +150,10 @@ async function migrateCalendario() {
 }
 
 try {
-<<<<<<< HEAD
-  await db.authenticate()
-  console.log('✅ Conexión a la base de datos exitosa')
-
-  await db.sync()
-  console.log('✅ Base de datos sincronizada')
-
-  await migrateCalendario()
-  console.log('✅ Migraciones de Calendario completadas')
-=======
     await db.authenticate()
     console.log('✅ Conexión a la base de datos exitosa')
     // await db.sync()
     console.log('✅ Base de datos sincronizada')
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
 } catch (error) {
     console.error('❌ Error al conectar a la base de datos:', error)
     process.exit(1)
