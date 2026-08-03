@@ -7,12 +7,19 @@ const ResponsablesModel = db.define('responsable', {
     Apellidos: { type: DataTypes.STRING },
     Documento: { type: DataTypes.STRING },
     Cargo: { type: DataTypes.ENUM('Gestor', 'Instructor', 'Pasante') },
-    Telefono: { type: DataTypes.STRING},
+    Telefono: { type: DataTypes.STRING },
     Email: { type: DataTypes.STRING },
-    Password: { type: DataTypes.STRING }, // ✅ campo contraseña
-    Estado: { type: DataTypes.ENUM('Activo', 'Inactivo') }
+    Password: { type: DataTypes.STRING },
+    Estado: { type: DataTypes.ENUM('Activo', 'Inactivo') },
+
+    // ─── Recuperación de contraseña ───────────────────────────────
+    ResetPasswordToken: { type: DataTypes.STRING, allowNull: true },
+    ResetPasswordExpires: { type: DataTypes.DATE, allowNull: true }
+    // ─────────────────────────────────────────────────────────────
+
 }, {
     freezeTableName: true,
+    timestamps: false
 })
 
 export default ResponsablesModel;

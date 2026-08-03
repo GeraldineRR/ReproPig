@@ -132,17 +132,9 @@ const CrudPartos = () => {
                 <div className="d-flex gap-2 flex-nowrap">
                     <button
                         className="btn btn-sm text-white"
-                        style={{ backgroundColor: '#362D34' }}
-                        title="Ver Crías"
-                        onClick={() => navigate(`/crias/parto/${row.Id_parto}`)}
-                    >
-                        🍼
-                    </button>
-                    <button
-                        className="btn btn-sm text-white"
                         style={{ backgroundColor: '#975737' }}
                         title="Ver Seguimiento"
-                        onClick={() => navigate(`/segcamada/parto/${row.Id_parto}`)}
+                        onClick={() => navigate(`/actividades_camada/parto/${row.Id_parto}`)}
                     >
                         📝
                     </button>

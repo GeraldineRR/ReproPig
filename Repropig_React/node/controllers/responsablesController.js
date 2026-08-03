@@ -1,4 +1,4 @@
-import ResponsablesService from "../services/ResponsablesService.js";
+import ResponsablesService from "../services/responsablesService.js";
 
 export const getAllResponsables = async (req, res) => {
     try {

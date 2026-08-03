@@ -4,19 +4,22 @@ import { DataTypes } from "sequelize";
 const PorcinoModel = db.define('porcinos', {
 
     Id_Porcino: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    Nom_Porcino: { type: DataTypes.STRING, allowNull: false },
-    Num_Chapeta: { type: DataTypes.INTEGER, allowNull: false },
+    Nom_Porcino: { type: DataTypes.STRING, allowNull: true },
+    Num_Chapeta: { type: DataTypes.INTEGER, allowNull: true },
     Plac_Sena_Porcino: { type: DataTypes.INTEGER, allowNull: true },
     Id_Raza: { type: DataTypes.INTEGER, allowNull: false },
     Gen_Porcino: { type: DataTypes.CHAR(1), allowNull: false },
+    Tipo_Cerdo: { type: DataTypes.ENUM('Adulto', 'Lechon'), allowNull: true },
     Proc_Porcino: { type: DataTypes.ENUM('Externo','Interno'), allowNull: true },
     Lug_Proc_Porcino: { type: DataTypes.STRING, allowNull: true },
     Fec_Nac_Porcino: { type: DataTypes.DATE, allowNull: false },
     Fec_Llegada: { type: DataTypes.DATE, allowNull: true },
     Peso_Llegada: { type: DataTypes.DECIMAL(10,2), allowNull: true },
     Estado: { type: DataTypes.CHAR(10), defaultValue: "Activo", allowNull: false},
+    Id_parto: { type: DataTypes.INTEGER, allowNull: true }
 }, {
     freezeTableName: true,
+    timestamps: false
 });
 
 export default PorcinoModel;

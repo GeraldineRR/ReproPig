@@ -2,7 +2,7 @@ import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import responsablesModel from "../models/responsablesModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
-import reproduccionesModel from "../models/reproduccionesModel.js";
+import ciclosModel from "../models/ciclosModel.js";
 
 class Seguimiento_CerdaService {
 
@@ -12,7 +12,7 @@ class Seguimiento_CerdaService {
                 { model: PorcinoModel, as: 'porcino' },
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
-                { model: reproduccionesModel, as: 'reproduccion' },
+                { model: ciclosModel, as: 'ciclo' },
             ]
         })
     }

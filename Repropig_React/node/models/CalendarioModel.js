@@ -4,7 +4,7 @@ import { DataTypes } from "sequelize";
 const CalendarioModel = db.define('Calendario', {
 
     Id_Calendario: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    Id_Reproduccion: { type: DataTypes.INTEGER },
+    Id_Ciclo: { type: DataTypes.INTEGER },
     Fecha_Servicio: { type: DataTypes.DATEONLY },
 
     rc1: { type: DataTypes.DATE },
@@ -19,8 +19,18 @@ const CalendarioModel = db.define('Calendario', {
     real_dia_107: { type: DataTypes.DATE, allowNull: true },
     real_parto: { type: DataTypes.DATE, allowNull: true },
 
+    resultado_rc1: { type: DataTypes.STRING(20), allowNull: true },
+    resultado_rc2: { type: DataTypes.STRING(20), allowNull: true },
+
+    observaciones_rc1: { type: DataTypes.TEXT, allowNull: true },
+    observaciones_rc2: { type: DataTypes.TEXT, allowNull: true },
+    observaciones_cambio: { type: DataTypes.TEXT, allowNull: true },
+    observaciones_107: { type: DataTypes.TEXT, allowNull: true },
+    observaciones_parto: { type: DataTypes.TEXT, allowNull: true },
+
 }, {
     freezeTableName: true,
+    timestamps: false
 })
 
 export default CalendarioModel;

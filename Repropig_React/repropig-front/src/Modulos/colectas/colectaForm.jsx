@@ -3,7 +3,7 @@ import apiAxios from "../../api/axiosConfig.js";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
 
-// ✅ Acepta onColectaCreada para flujo encadenado desde reproducciones
+// ✅ Acepta onColectaCreada para flujo encadenado desde ciclos
 const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada }) => {
     const MySwal = WithReactContent(Swal)
 
@@ -30,7 +30,7 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'M'))
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) {
             console.error('Error al obtener porcinos:', error);
         }
