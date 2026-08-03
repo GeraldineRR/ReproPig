@@ -55,8 +55,8 @@ export const updateciclos = async (req, res) => {
 export const toggleActivoCiclo = async (req, res) => {
     try {
         const id = validateId(req.params.id)
-        const nuevoEstado = await ciclosService.toggleActivo(id)
-        res.status(200).json({ message: "Estado actualizado", Activo: nuevoEstado })
+        const nuevoEstado = await ciclosService.toggleEstado(id)
+        res.status(200).json({ message: "Estado actualizado", Estado: nuevoEstado })
     } catch (error) {
         res.status(400).json({ message: error.message })
     }

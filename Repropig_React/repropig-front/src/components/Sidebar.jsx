@@ -44,7 +44,6 @@ export default function Sidebar({ isOpen }) {
               <NavLink to="/razas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
               <NavLink to="/porcinos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
               <NavLink to="/novedades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Novedades</NavLink>
-              {/* <NavLink to="/crias" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Crías</NavLink> */}
             </div>
           </div>
         </div>
@@ -64,13 +63,9 @@ export default function Sidebar({ isOpen }) {
               <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas</NavLink>
               <NavLink to="/inseminaciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
               <NavLink to="/partos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
-<<<<<<< HEAD
-              {/* <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink> */}
-              {/* <NavLink to="/segcamada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seg. Camada</NavLink> */}
-=======
               <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
-              <NavLink to="/actividades_camada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Actividades Camada</NavLink>
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807
+              <NavLink to="/actividades_camada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Camada</NavLink>
+              <NavLink to="/actividades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Todas las Actividades</NavLink>
             </div>
           </div>
         </div>

@@ -73,6 +73,7 @@ const CrudPorcinos = () => {
     const [porcinoEdit, setPorcinoEdit] = useState(null)
     const [porcinoQR, setPorcinoQR] = useState(null)
     const [filterText, setFilterText] = useState('')
+    const [filterTipo, setFilterTipo] = useState('Todos')
 
     const columnsTable = [
         { name: 'Nombre', selector: row => row.Nom_Porcino, },
@@ -92,6 +93,7 @@ const CrudPorcinos = () => {
                 return 'N/A'
             }
         },
+        { name: 'Tipo', selector: row => row.Tipo_Cerdo, },
 
         { name: 'Procedencia', selector: row => (<span className={`badge rounded-pill px-2 py-1 ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-success' : 'bg-primary'}`} > {row.Proc_Porcino} </span>), },
         { name: 'Lugar Proc.', selector: row => row.Lug_Proc_Porcino, },
@@ -176,7 +178,6 @@ const CrudPorcinos = () => {
     const getAllPorcinos = async () => {
         const response = await apiAxios.get('/porcino/')
         setPorcinos(response.data)
-        console.log(response.data)
     }
 
     const newListPorcinos = porcinos.filter(porcino => {
@@ -193,13 +194,19 @@ const CrudPorcinos = () => {
         else if (sexoBase === 'h') sexo = 'hembra'
         else sexo = sexoBase
 
-        return (
+        const pasaTexto = (
             chapeta.includes(textToSearch) ||
             nombre.includes(textToSearch) ||
             placa.includes(textToSearch) ||
             procedencia.includes(textToSearch) ||
             sexo.includes(textToSearch)
         )
+
+        const pasaTipo =
+            filterTipo === 'Todos' ||
+            porcino.Tipo_Cerdo?.trim().toLowerCase() === filterTipo.toLowerCase()
+
+        return pasaTexto && pasaTipo
     })
 
     const hideModal = () => {
@@ -225,7 +232,7 @@ const CrudPorcinos = () => {
 
             <div className="container mt-5">
 
-                <div className="row d-flex mb-3 justify-content-between">
+                <div className="row d-flex mb-3 justify-content-between align-items-center">
                     <div className="col-5">
                         <div className="input-group">
                             <span className="input-group-text">
@@ -235,7 +242,26 @@ const CrudPorcinos = () => {
                         </div>
                     </div>
 
-                    <div className="col-2">
+                    <div className="col-auto">
+                        <div className="btn-group" role="group" aria-label="Filtrar por tipo">
+                            {['Todos', 'Adulto', 'Lechon'].map(tipo => (
+                                <button
+                                    key={tipo}
+                                    type="button"
+                                    className={`btn ${
+                                        filterTipo === tipo
+                                            ? 'btn-dark'
+                                            : 'btn-outline-dark'
+                                    }`}
+                                    onClick={() => setFilterTipo(tipo)}
+                                >
+                                    {tipo === 'Todos' ? '🐷 Todos' : tipo === 'Adulto' ? '🐗 Adultos' : '🐽 Lechones'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="col-auto">
                         <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => setPorcinoEdit(null)}>
                             + Registrar porcino
                         </button>

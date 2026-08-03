@@ -34,7 +34,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
     const getPorcinos = async () => {
         try {
             const res = await apiAxios.get('/porcino/')
-            setPorcinos(res.data)
+            setPorcinos(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) {
             console.error(error)
         }

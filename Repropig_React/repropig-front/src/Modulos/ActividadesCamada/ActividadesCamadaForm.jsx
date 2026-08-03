@@ -9,67 +9,58 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     const [partoConfirmado, setPartoConfirmado] = useState(false);
     const [modoCorreccion, setModoCorreccion] = useState(false);
-    const [Id_Cria, setIdCria] = useState('');
-    const [numCria, setNumCria] = useState('');
-    const [crias, setCrias] = useState([]);
+    const [Id_Porcino, setIdPorcino] = useState('');
+    const [lechones, setLechones] = useState([]);
     const [Id_parto, setIdParto] = useState('');
     const [partos, setPartos] = useState([]);
     const [Dia_Programado, setDiaProgramado] = useState(0);
     const [Fecha_Real, setFechaReal] = useState('');
     const [Peso_Cria, setPesoCria] = useState('');
-    const [causaMuertePeso0, setCausaMuertePeso0] = useState('');
     const [Id_Medicamento, setIdMedicamento] = useState('');
     const [medicamentos, setMedicamentos] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
-    const [Fecha_Programada, setFechaProgramada] = useState('')
+    const [Fecha_Programada, setFechaProgramada] = useState('');
     const [textFormButton, setTextFormButton] = useState('Enviar');
     const { id: partoIdParams } = useParams();
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
-    // Calcula fecha programada según día y fecha del parto
     function calcularFechaProgramada(fechaParto, dia) {
         const [year, month, day] = fechaParto.split('-');
         const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
         return fecha.toISOString().split('T')[0];
     }
 
-    // Obtiene el siguiente día programado basado en registros existentes
-    const actualizarDiaYFecha = async (idCria) => {
-        if (!Id_parto || !idCria) return;
-
+    const actualizarDiaYFecha = async (idPorcino) => {
+        if (!Id_parto || !idPorcino) return;
         try {
-            const response = await apiAxios.get(`/segcamada/cria/${idCria}`);
+            const response = await apiAxios.get(`/segcamada/cria/${idPorcino}`);
             const registros = response.data;
-
             const ultimoDia = registros.length ? registros[registros.length - 1].Dia_Programado : 0;
             const nextDay = diasSeguimiento.find(d => d > ultimoDia) || diasSeguimiento[diasSeguimiento.length - 1];
             setDiaProgramado(nextDay);
-
             const fechaParto = partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin;
             if (fechaParto) {
                 const fechaProg = calcularFechaProgramada(fechaParto, nextDay);
                 setFechaProgramada(fechaProg);
                 setFechaReal(fechaProg);
             }
-
         } catch (error) {
             console.error("Error obteniendo registros previos:", error);
         }
     }
 
     useEffect(() => { getPartos() }, []);
-    useEffect(() => { if (Id_parto) getCriasPorParto(Id_parto) }, [Id_parto]);
+    useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
     useEffect(() => { getMedicamentos() }, []);
 
     useEffect(() => {
         if (!actividadEdit || modoCorreccion) {
-            if (Id_Cria && Id_parto) {
-                actualizarDiaYFecha(Id_Cria);
+            if (Id_Porcino && Id_parto) {
+                actualizarDiaYFecha(Id_Porcino);
             }
         }
-    }, [Id_Cria, Id_parto, partos, modoCorreccion])
-
+    }, [Id_Porcino, Id_parto, partos, modoCorreccion])
 
     const getPartos = async () => {
         try {
@@ -78,11 +69,11 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         } catch (error) { console.error("Error cargando partos:", error); }
     }
 
-    const getCriasPorParto = async (idParto) => {
+    const getLechonesPorParto = async (idParto) => {
         try {
-            const response = await apiAxios.get(`/cria/partos/${idParto}`);
-            setCrias(response.data);
-        } catch (error) { console.error("Error cargando crias:", error); }
+            const response = await apiAxios.get(`/porcino/lechones/parto/${idParto}`);
+            setLechones(response.data);
+        } catch (error) { console.error("Error cargando lechones:", error); }
     }
 
     const getMedicamentos = async () => {
@@ -94,21 +85,14 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     useEffect(() => {
         if (actividadEdit) {
-            setIdParto(actividadEdit.crias?.Id_parto ?? '');
+            setIdParto(actividadEdit.porcino?.Id_parto ?? '');
             setPartoConfirmado(true);
-            setIdCria(actividadEdit.Id_Cria ?? '');
-            setNumCria(actividadEdit.crias?.Num_Cria ?? '');
+            setIdPorcino(actividadEdit.Id_Porcino ?? '');
             setDiaProgramado(actividadEdit.Dia_Programado ?? '');
 
-            const parto = partos.find(
-                p => p.Id_parto === Number(actividadEdit.crias?.Id_parto)
-            );
-
+            const parto = partos.find(p => p.Id_parto === Number(actividadEdit.porcino?.Id_parto));
             if (parto?.Fec_fin && actividadEdit.Dia_Programado) {
-                const fechaProg = calcularFechaProgramada(
-                    parto.Fec_fin,
-                    actividadEdit.Dia_Programado
-                );
+                const fechaProg = calcularFechaProgramada(parto.Fec_fin, actividadEdit.Dia_Programado);
                 setFechaProgramada(fechaProg);
             }
 
@@ -127,11 +111,10 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     }, [actividadEdit, partos, partoIdParams]);
 
     const resetForm = () => {
-        setIdCria('');
+        setIdPorcino('');
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
-        setCausaMuertePeso0('');
         setIdMedicamento('');
         setObservaciones('');
         setTextFormButton("Enviar");
@@ -140,7 +123,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const huboCambios = () => {
         if (!actividadEdit) return true;
         return !(
-            Number(Id_Cria) === Number(actividadEdit.Id_Cria) &&
+            Number(Id_Porcino) === Number(actividadEdit.Id_Porcino) &&
             Number(Dia_Programado) === Number(actividadEdit.Dia_Programado) &&
             Fecha_Real === actividadEdit.Fecha_Real?.split('T')[0] &&
             Number(Peso_Cria) === Number(actividadEdit.Peso_Cria) &&
@@ -149,60 +132,37 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         );
     }
 
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/segcamada/camadaForm.jsx
-    // Verifica si el peso es 0 y marca la cría como muerta con la causa seleccionada
-=======
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/ActividadesCamada/ActividadesCamadaForm.jsx
     const verificarPesoCero = async () => {
         if (Number(Peso_Cria) === 0) {
-            if (!causaMuertePeso0) {
-                MySwal.fire({
-                    icon: 'warning',
-                    title: 'Causa de muerte requerida',
-                    text: 'Si el peso es 0, debes seleccionar una causa de muerte antes de continuar.'
-                });
-                return 'error';
-            }
-
-            const causaMap = {
-                'Enfermo': 'Peso 0: Enfermo',
-                'Aplastado': 'Peso 0: Aplastado',
-                'Inanición': 'Peso 0: Inanición'
-            };
-
             const result = await MySwal.fire({
                 icon: 'warning',
                 title: 'Peso igual a 0',
-                html: `<p>Has ingresado un peso de <strong>0 kg</strong> para esta cría.</p>
-                       <p>Causa seleccionada: <strong>${causaMuertePeso0}</strong></p>
-                       <p>La cría será marcada como <strong>Muerta</strong> automáticamente.</p>
-                       <p>¿Deseas continuar?</p>`,
+                html: `<p>Has ingresado un peso de <strong>0 kg</strong> para este lechón.</p>
+                       <p><strong>Peso 0 indica posible muerte o problema grave.</strong></p>
+                       <p>¿Deseas registrar una novedad automáticamente?</p>`,
                 showCancelButton: true,
-                confirmButtonText: 'Sí, continuar',
-                cancelButtonText: 'No, cancelar',
+                confirmButtonText: 'Sí, registrar novedad',
+                cancelButtonText: 'No, solo guardar',
                 reverseButtons: true,
                 focusCancel: true
             });
 
             if (result.isConfirmed) {
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/segcamada/camadaForm.jsx
-                // Marcar la cría como muerta en la base de datos con la causa seleccionada
-=======
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/ActividadesCamada/ActividadesCamadaForm.jsx
                 try {
-                    await apiAxios.put(`/cria/${Id_Cria}`, {
-                        Estado: 'Muerto',
-                        Causa_Muerte: causaMap[causaMuertePeso0],
-                        Fecha_Muerte: Fecha_Real || new Date().toISOString().split('T')[0]
+                    await apiAxios.post('/novedades/', {
+                        Tipo_Novedad: 'Muerte',
+                        Fecha_Novedad: Fecha_Real || new Date().toISOString().split('T')[0],
+                        Causa_Motivo: 'Registrado por peso 0 en seguimiento de camada',
+                        Id_Porcino: Id_Porcino
                     });
+                    // Marcar el porcino como Muerto
+                    await apiAxios.put(`/porcino/${Id_Porcino}`, { Estado: 'Muerto' });
                 } catch (error) {
-                    console.error("Error actualizando estado de cría:", error);
-                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo actualizar el estado de la cría a Muerto.' });
+                    console.error("Error registrando novedad automática:", error);
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo registrar la novedad de muerte.' });
                     return 'error';
                 }
                 return 'muerto';
-            } else {
-                return 'cancelar';
             }
         }
         return 'ok';
@@ -212,10 +172,10 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         e.preventDefault();
 
         const resultadoPeso = await verificarPesoCero();
-        if (resultadoPeso === 'cancelar' || resultadoPeso === 'error') return;
+        if (resultadoPeso === 'error') return;
 
         const data = {
-            Id_Cria,
+            Id_Porcino,
             Dia_Programado,
             Fecha_Real,
             Peso_Cria,
@@ -229,10 +189,10 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                 await reload();
 
                 if (resultadoPeso === 'muerto') {
-                    if (Id_parto) await getCriasPorParto(Id_parto);
+                    if (Id_parto) await getLechonesPorParto(Id_parto);
                     await MySwal.fire({
                         title: 'Registro guardado',
-                        html: `El seguimiento fue guardado y la cría fue marcada como <strong>Muerta</strong> automáticamente.`,
+                        html: `El seguimiento fue guardado y se registró la novedad de <strong>Muerte</strong> automáticamente.`,
                         icon: 'info',
                         confirmButtonText: 'Entendido'
                     });
@@ -245,7 +205,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
                 const result = await MySwal.fire({
                     title: 'Registro exitoso',
-                    html: `¿Deseas registrar otra cría de este parto?`,
+                    html: `¿Deseas registrar otro lechón de este parto?`,
                     icon: 'success',
                     showCancelButton: true,
                     confirmButtonText: 'Sí, registrar',
@@ -264,15 +224,14 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
             } else {
                 try {
-                    const res = await apiAxios.get(`/segcamada/cria/${Id_Cria}`);
+                    const res = await apiAxios.get(`/segcamada/cria/${Id_Porcino}`);
                     const registros = res.data;
                     const hasNewer = registros.some(item => item.Dia_Programado > actividadEdit.Dia_Programado);
-
                     if (hasNewer) {
                         MySwal.fire({
                             icon: "error",
                             title: "Operación no permitida",
-                            text: "No se puede editar este registro porque ya existe un seguimiento posterior para esta cría."
+                            text: "No se puede editar porque ya existe un seguimiento posterior para este lechón."
                         });
                         hideModal();
                         return;
@@ -290,10 +249,10 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                 await reload();
 
                 if (resultadoPeso === 'muerto') {
-                    if (Id_parto) await getCriasPorParto(Id_parto);
+                    if (Id_parto) await getLechonesPorParto(Id_parto);
                     MySwal.fire({
                         title: 'Actualizado',
-                        html: 'Seguimiento actualizado y la cría fue marcada como <strong>Muerta</strong> automáticamente.',
+                        html: 'Seguimiento actualizado y se registró la novedad de <strong>Muerte</strong> automáticamente.',
                         icon: 'info'
                     });
                 } else {
@@ -309,7 +268,6 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     const handleSelectParto = async (id) => {
         if (!id) return;
-
         const result = await MySwal.fire({
             title: "¿Confirmar parto?",
             text: `¿Seguro que deseas trabajar con el parto #${id}?`,
@@ -318,7 +276,6 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
             confirmButtonText: "Sí, continuar",
             cancelButtonText: "Cancelar"
         });
-
         if (result.isConfirmed) {
             setIdParto(id);
             setPartoConfirmado(true);
@@ -328,17 +285,16 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const activarCorreccion = async () => {
         const result = await MySwal.fire({
             icon: "warning",
-            title: "Cambiar cría o parto",
+            title: "Cambiar lechón o parto",
             text: "Se reiniciará el cálculo del seguimiento actual.",
             showCancelButton: true,
             confirmButtonText: "Sí, continuar",
             cancelButtonText: "Cancelar"
         });
-
         if (result.isConfirmed) {
             setModoCorreccion(true);
             setPartoConfirmado(false);
-            setIdCria('');
+            setIdPorcino('');
             setDiaProgramado('');
             setFechaProgramada('');
         }
@@ -347,7 +303,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
-            {/* DE PARTO */}
+            {/* PARTO */}
             {actividadEdit && !modoCorreccion ? (
                 <>
                     <div className="row mb-3">
@@ -357,22 +313,17 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                                 type="text"
                                 className="form-control"
                                 style={{ backgroundColor: "#E3E3E3" }}
-                                value={`Parto # ${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcino?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin.split('T')[0] || ''}`}
+                                value={`Parto # ${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcino?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin?.split('T')[0] || ''}`}
                                 readOnly
                             />
                         </div>
-
-<<<<<<< HEAD:Repropig_React/repropig-front/src/Modulos/segcamada/camadaForm.jsx
-                        {/* Día Seguimiento */}
-=======
->>>>>>> 5a0c75096e67e3b037cfc3d8d69627148b93c807:Repropig_React/repropig-front/src/Modulos/ActividadesCamada/ActividadesCamadaForm.jsx
                         <div className="col-6">
-                            <label className="form-label">Día Seguimiento</label>
+                            <label className="form-label">Día Programado</label>
                             <input
                                 type="text"
                                 className="form-control py-2"
-                                style={{ backgroundColor: "#E3E3E3" }}
-                                value={`Día N° ${Dia_Programado}`}
+                                style={{ backgroundColor: "#d1ecf1" }}
+                                value={`N° ${Dia_Programado}`}
                                 readOnly
                             />
                         </div>
@@ -380,35 +331,29 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
                     <div className="row mb-3">
                         <div className="col-6">
-                            <label className="form-label">Cría</label>
+                            <label className="form-label">Lechón</label>
                             <input
                                 type="text"
                                 className="form-control"
                                 style={{ backgroundColor: "#E3E3E3" }}
-                                value={`Cría # ${numCria}`}
+                                value={actividadEdit.porcino?.Nom_Porcino || `Lechón #${Id_Porcino}`}
                                 readOnly
                             />
                         </div>
-
                         <div className="col-6">
                             <label className="form-label">Fecha Programada</label>
                             <input
                                 type="date"
                                 className="form-control"
-                                style={{ backgroundColor: "#E3E3E3" }}
+                                style={{ backgroundColor: "#d1ecf1" }}
                                 value={Fecha_Programada}
                                 readOnly
                             />
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        className="btn mb-3"
-                        style={{ backgroundColor: "#ffe100b1", borderColor: "#ffe100d6" }}
-                        onClick={activarCorreccion}
-                    >
-                        Cambiar cría / parto
+                    <button type="button" className="btn btn-warning mb-3" onClick={activarCorreccion}>
+                        Cambiar lechón / parto
                     </button>
                 </>
             ) : (
@@ -424,59 +369,56 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                         <option value="">Selecciona...</option>
                         {partos.map((parto) => (
                             <option key={parto.Id_parto} value={parto.Id_parto}>
-                                Parto #{parto.Id_parto} - {parto.porcino?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin.split('T')[0] || ''}
+                                Parto #{parto.Id_parto} - {parto.porcino?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin?.split('T')[0] || ''}
                             </option>
                         ))}
                     </select>
                 </div>
             )}
 
-            {/* CRÍA — solo en modo creación/corrección */}
-            {!actividadEdit || modoCorreccion ? (
+            {/* LECHÓN — solo en modo creación/corrección */}
+            {(!actividadEdit || modoCorreccion) ? (
                 (Id_parto || actividadEdit) && (
                     <>
                         <div className="mb-3">
-                            <label className="form-label">Cría</label>
-                            {crias.filter(cria => cria.Estado !== 'Muerto').length === 0 ? (
+                            <label className="form-label">Lechón</label>
+                            {lechones.length === 0 ? (
                                 <div className="alert alert-info mb-0">
                                     <i className="bi bi-info-circle"></i>
-                                    {crias.length === 0
-                                        ? 'No hay crías registradas para este parto. Registra crías primero.'
-                                        : 'Todas las crías de este parto están marcadas como muertas. No hay crías disponibles para seguimiento.'}
+                                    {' '}No hay lechones disponibles para este parto. Registra primero los lechones en el módulo de Porcinos.
                                 </div>
                             ) : (
                                 <select
                                     className="form-control"
-                                    value={Id_Cria}
-                                    onChange={(e) => setIdCria(e.target.value)}
+                                    value={Id_Porcino}
+                                    onChange={(e) => setIdPorcino(e.target.value)}
                                     required
                                 >
                                     <option value="">Selecciona...</option>
-                                    {crias.filter(cria => cria.Estado !== 'Muerto').map((cria) => (
-                                        <option key={cria.Id_Cria} value={cria.Id_Cria}>
-                                            Cría #{cria.Num_Cria}
+                                    {lechones.map((lechon) => (
+                                        <option key={lechon.Id_Porcino} value={lechon.Id_Porcino}>
+                                            {lechon.Nom_Porcino || `Lechón #${lechon.Id_Porcino}`} — Chapeta {lechon.Num_Chapeta || 'S/N'}
                                         </option>
                                     ))}
                                 </select>
                             )}
                         </div>
 
-                        {Id_Cria && (
+                        {Id_Porcino && (
                             <>
                                 <div className="mb-3">
-                                    <label className="form-label">Día Seguimiento</label>
+                                    <label className="form-label">Día Programado</label>
                                     <input
                                         type="text"
                                         className="form-control py-2"
                                         style={{ backgroundColor: "#d1ecf1" }}
-                                        value={`Día N° ${Dia_Programado}`}
+                                        value={`N° ${Dia_Programado}`}
                                         readOnly
                                     />
                                     <small className="text-muted">
-                                        Este valor corresponde al día de seguimiento basado en la fecha del parto y los registros previos.
+                                        Calculado automáticamente según registros previos.
                                     </small>
                                 </div>
-
                                 <div className="mb-3">
                                     <label className="form-label">Fecha Programada</label>
                                     <input
@@ -487,7 +429,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                                         readOnly
                                     />
                                     <small className="text-muted">
-                                        Este valor corresponde a la fecha programada para el seguimiento según la fecha del parto.
+                                        Fecha según la fecha de cierre del parto.
                                     </small>
                                 </div>
                             </>
@@ -497,89 +439,31 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
             ) : null}
 
             {/* CAMPOS COMUNES */}
-            {(Id_parto || actividadEdit) && (actividadEdit && !modoCorreccion || crias.filter(cria => cria.Estado !== 'Muerto').length > 0) && (
+            {(Id_parto || actividadEdit) && (actividadEdit && !modoCorreccion || lechones.length > 0) && (
                 <>
                     <div className="mb-3">
                         <label className="form-label">Fecha Real</label>
-                        <input
-                            type="date"
-                            className="form-control"
-                            value={Fecha_Real}
-                            onChange={(e) => setFechaReal(e.target.value)}
-                            required
-                        />
+                        <input type="date" className="form-control" value={Fecha_Real} onChange={(e) => setFechaReal(e.target.value)} required />
                     </div>
-
                     <div className="mb-3">
-                        <label className="form-label">Peso Cría (kg)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            className="form-control"
-                            value={Peso_Cria}
-                            onChange={(e) => {
-                                setPesoCria(e.target.value);
-                                if (Number(e.target.value) !== 0) {
-                                    setCausaMuertePeso0('');
-                                }
-                            }}
-                            required
-                        />
+                        <label className="form-label">Peso Lechón (kg)</label>
+                        <input type="number" step="0.01" className="form-control" value={Peso_Cria} onChange={(e) => setPesoCria(e.target.value)} required />
                     </div>
-
-                    {/* Causa de muerte — solo visible cuando el peso es 0 */}
-                    {Peso_Cria !== '' && Number(Peso_Cria) === 0 && (
-                        <div className="mb-3">
-                            <label className="form-label">Causa de muerte</label>
-                            <select
-                                className="form-control border-danger"
-                                value={causaMuertePeso0}
-                                onChange={(e) => setCausaMuertePeso0(e.target.value)}
-                                required
-                            >
-                                <option value="">Selecciona la causa...</option>
-                                <option value="Enfermo">Enfermo</option>
-                                <option value="Aplastado">Aplastado</option>
-                                <option value="Inanición">Inanición</option>
-                            </select>
-                            <small className="text-danger">
-                                Peso 0 = Cría muerta. Selecciona la causa de muerte.
-                            </small>
-                        </div>
-                    )}
-
                     <div className="mb-3">
                         <label className="form-label">Medicamento</label>
-                        <select
-                            className="form-control"
-                            value={Id_Medicamento}
-                            onChange={(e) => setIdMedicamento(e.target.value)}
-                        >
-                            <option value="">Selecciona...</option>
+                        <select className="form-control" value={Id_Medicamento} onChange={(e) => setIdMedicamento(e.target.value)}>
+                            <option value="">Sin medicamento</option>
                             {medicamentos.map((med) => (
-                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>
-                                    {med.Nombre}
-                                </option>
+                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>{med.Nombre}</option>
                             ))}
                         </select>
                     </div>
-
                     <div className="mb-3">
                         <label className="form-label">Observaciones</label>
-                        <textarea
-                            className="form-control"
-                            value={Observaciones}
-                            onChange={(e) => setObservaciones(e.target.value)}
-                            rows="3"
-                        />
+                        <textarea className="form-control" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} rows="3" />
                     </div>
-
                     <div className="mb-3">
-                        <input
-                            type="submit"
-                            className="btn btn-primary"
-                            value={textFormButton}
-                        />
+                        <input type="submit" className="btn btn-primary" value={textFormButton} />
                     </div>
                 </>
             )}

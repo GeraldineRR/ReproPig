@@ -1,5 +1,6 @@
 import PorcinoModel from "../models/porcinoModel.js"
 import RazaModel from "../models/razaModel.js"
+import { Op } from "sequelize"
 
 class PorcinoService {
 
@@ -12,6 +13,18 @@ class PorcinoService {
                 },
             ],
             order: [['Id_Porcino', 'DESC']]
+        })
+    }
+
+    async getLechonesByParto(idParto) {
+        return await PorcinoModel.findAll({
+            where: {
+                Tipo_Cerdo: 'Lechon',
+                Id_parto: idParto,
+                Estado: { [Op.ne]: 'Muerto' }
+            },
+            include: [{ model: RazaModel, as: 'raza' }],
+            order: [['Id_Porcino', 'ASC']]
         })
     }
 
