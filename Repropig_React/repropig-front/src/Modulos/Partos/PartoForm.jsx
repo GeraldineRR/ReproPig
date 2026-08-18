@@ -3,6 +3,7 @@ import apiAxios from "../../api/axiosConfig.js"
 
 import Swal from "sweetalert2"
 import withReactContent from "sweetalert2-react-content"
+import CriaForm from "../crias/criaForm.jsx"
 
 const MySwal = withReactContent(Swal)
 
@@ -20,6 +21,11 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
     const [Hor_final, setHor_final] = useState('')
     const [porcinos, setPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
+
+    // Estado para el flujo post-registro de lechones
+    const [mostrarCriaForm, setMostrarCriaForm] = useState(false)
+    const [partoRegistrado, setPartoRegistrado] = useState(null)  // { id, porcinoNombre }
+    const [totalLechonesRegistrados, setTotalLechonesRegistrados] = useState(0)
 
     // 🔹 Cargar datos si se edita
     useEffect(() => {
@@ -43,6 +49,9 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         setObservaciones("")
         setPes_camada("")
         setTextFormButton("Enviar")
+        setMostrarCriaForm(false)
+        setPartoRegistrado(null)
+        setTotalLechonesRegistrados(0)
     }
 
     // 🔹 Obtener porcinos
@@ -104,13 +113,40 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
 
             if (textFormButton === "Enviar") {
 
-                await apiAxios.post("/partos/", datos)
+                const response = await apiAxios.post("/partos/", datos)
+
+                // Obtener el id del parto recién creado
+                const partoId = response.data?.Partos?.Id_parto
+                const porcinoNombre = porcinos.find(p => p.Id_Porcino === Number(Id_Porcino))?.Nom_Porcino || ''
 
                 await MySwal.fire({
-                    title: "Registro exitoso",
-                    text: "Parto creado correctamente",
-                    icon: "success"
+                    title: "✅ Parto registrado",
+                    text: "El parto fue creado correctamente.",
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
                 })
+
+                // Preguntar si quiere registrar lechones
+                const result = await MySwal.fire({
+                    title: "¿Registrar lechones?",
+                    html: `<p>¿Deseas registrar los lechones del parto de <strong>${porcinoNombre}</strong>?</p>`,
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Sí, registrar lechones",
+                    cancelButtonText: "No, cerrar",
+                    confirmButtonColor: "#28a745",
+                    cancelButtonColor: "#6c757d"
+                })
+
+                if (result.isConfirmed && partoId) {
+                    setPartoRegistrado({ id: partoId, porcinoNombre })
+                    setTotalLechonesRegistrados(0)
+                    setMostrarCriaForm(true)
+                } else {
+                    hideModal()
+                    resetForm()
+                }
 
             } else {
 
@@ -121,10 +157,10 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
                     text: "Parto actualizado correctamente",
                     icon: "success"
                 })
-            }
 
-            hideModal()
-            resetForm()
+                hideModal()
+                resetForm()
+            }
 
         } catch (error) {
 
@@ -138,6 +174,60 @@ const PartosForm = ({ hideModal, rowToEdit = {} }) => {
         }
     }
 
+    // 🔹 Cuando se registra un lechón correctamente
+    const onLechonRegistrado = async () => {
+        const nuevoTotal = totalLechonesRegistrados + 1
+        setTotalLechonesRegistrados(nuevoTotal)
+
+        const result = await MySwal.fire({
+            title: `🐷 Lechón #${nuevoTotal} registrado`,
+            html: `<p>¿Deseas registrar otro lechón del parto de <strong>${partoRegistrado.porcinoNombre}</strong>?</p>`,
+            icon: "success",
+            showCancelButton: true,
+            confirmButtonText: "Sí, registrar otro",
+            cancelButtonText: "Terminar",
+            confirmButtonColor: "#28a745",
+            cancelButtonColor: "#6c757d"
+        })
+
+        if (!result.isConfirmed) {
+            resetForm()
+            hideModal()
+        }
+    }
+
+    // 🔹 Cancelar registro de lechones
+    const cancelarLechones = () => {
+        resetForm()
+        hideModal()
+    }
+
+    // ─── Render: modo registro de lechones ───────────────────────────────────
+    if (mostrarCriaForm && partoRegistrado) {
+        return (
+            <div>
+                {/* Encabezado del flujo de lechones */}
+                <div className="alert alert-success py-2 mb-3">
+                    <strong>🐷 Registrando lechones</strong> — Parto de <strong>{partoRegistrado.porcinoNombre}</strong>
+                    <br />
+                    <small>
+                        Lechones registrados en esta sesión:
+                        <span className="badge bg-success ms-2 fs-6">{totalLechonesRegistrados}</span>
+                    </small>
+                </div>
+
+                <CriaForm
+                    key={`cria-parto-${partoRegistrado.id}-${totalLechonesRegistrados}`}
+                    hideModal={cancelarLechones}
+                    criaEdit={null}
+                    reload={onLechonRegistrado}
+                    partoFijo={partoRegistrado.id}
+                />
+            </div>
+        )
+    }
+
+    // ─── Render: formulario de parto ─────────────────────────────────────────
     return (
         <form onSubmit={gestionarForm} className="col-12 col-md-12">
 

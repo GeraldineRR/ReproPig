@@ -12,6 +12,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
     const [Nombre, setNombre] = useState('')
     const [Tipo, setTipo] = useState('')
     const [Presentacion, setPresentacion] = useState('')
+    const [Cantidad, setCantidad] = useState('')
     const [Observaciones, setObservaciones] = useState('')
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
@@ -21,6 +22,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             setNombre(medicamentoEdit.Nombre ?? '')
             setTipo(medicamentoEdit.Tipo ?? '')
             setPresentacion(medicamentoEdit.Presentacion ?? '')
+            setCantidad(medicamentoEdit.Cantidad ?? '')
             setObservaciones(medicamentoEdit.Observaciones ?? '')
             setTextFormButton("Actualizar")
         } else {
@@ -28,6 +30,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             setNombre('')
             setTipo('')
             setPresentacion('')
+            setCantidad('')
             setObservaciones('')
             setTextFormButton("Enviar")
         }
@@ -40,6 +43,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             Nombre,
             Tipo,
             Presentacion,
+            Cantidad: Cantidad !== '' ? Number(Cantidad) : null,
             Observaciones
         }
 
@@ -113,6 +117,17 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
                     value={Presentacion}
                     onChange={(e) => setPresentacion(e.target.value)}
                     required
+                />
+            </div>
+
+            <div className="mb-3">
+                <label className="form-label">Cantidad</label>
+                <input
+                    type="number"
+                    min="0"
+                    className="form-control"
+                    value={Cantidad}
+                    onChange={(e) => setCantidad(e.target.value)}
                 />
             </div>
 

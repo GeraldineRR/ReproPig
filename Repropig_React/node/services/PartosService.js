@@ -27,13 +27,6 @@ class PartosService {
         return parto
     }
 
-    async getById(id) {
-
-        const Partos = await PartosModel.findByPk(id)
-        if (!Partos) throw new Error("Partos no encontrada")
-        return Partos
-    }
-
     async create(data) {
         return await PartosModel.create(data)
     }

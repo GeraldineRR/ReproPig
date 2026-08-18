@@ -15,6 +15,7 @@ const CrudMedicamentos = () =>{
         { name: 'Nombre', selector: row => row.Nombre},
         { name: 'Tipo', selector: row => row.Tipo},
         { name: 'Presentacion', selector: row => row.Presentacion},
+        { name: 'Cantidad', selector: row => row.Cantidad ?? '—'},
         { name: 'Observaciones', selector: row => row.Observaciones},
         { name: 'Acciones', cell: row => (
         <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}><i className="fa-solid fa-pencil"></i></button>

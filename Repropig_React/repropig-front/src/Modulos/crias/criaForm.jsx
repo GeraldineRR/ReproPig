@@ -4,7 +4,7 @@ import apiAxios from "../../api/axiosConfig"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
-const CriaForm = ({ hideModal, criaEdit, reload}) => {
+const CriaForm = ({ hideModal, criaEdit, reload, partoFijo }) => {
     const MySwal = withReactContent(Swal)
 
     const [Id_parto, setIdParto] = useState('')
@@ -39,6 +39,13 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
     useEffect(() => {
         Partos()
     }, [])
+
+    // Si viene partoFijo (desde formulario de Partos), pre-llenar y calcular número de cría
+    useEffect(() => {
+        if (partoFijo && !criaEdit) {
+            handlePartoChange(String(partoFijo))
+        }
+    }, [partoFijo])
 
     const Partos = async () => {
         try {
@@ -147,12 +154,21 @@ const CriaForm = ({ hideModal, criaEdit, reload}) => {
 
             <div className="mb-3">
                 <label htmlFor="Id_parto" className="form-label">Parto</label>
-                <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange (e.target.value)} required>
-                    <option value="">Selecciona...</option>
-                    {partos.map((parto) => (
-                        <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}</option>
-                    ))}
-                </select>
+                {partoFijo ? (
+                    <input
+                        type="text"
+                        className="form-control bg-light"
+                        value={`Parto #${partoFijo}`}
+                        readOnly
+                    />
+                ) : (
+                    <select id="Id_parto" className="form-control" value={Id_parto} onChange={(e) => handlePartoChange(e.target.value)} required>
+                        <option value="">Selecciona...</option>
+                        {partos.map((parto) => (
+                            <option key={parto.Id_parto} value={parto.Id_parto}>Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}</option>
+                        ))}
+                    </select>
+                )}
             </div>
 
             {Id_parto && Num_Cria && (

@@ -139,10 +139,10 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const huboCambios = () => {
         if (!segcamadaEdit) return true;
         return !(
-            Number(Id_Cria) === Number(segcamadaEdit.Id_Cria) &&
+        Number(Id_Cria) === Number(segcamadaEdit.Id_Cria) &&
             Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
             Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
-            Number(Peso_Cria) === Number(segcamadaEdit.Peso_Cria) &&
+            parseFloat(Peso_Cria).toFixed(2) === parseFloat(segcamadaEdit.Peso_Cria).toFixed(2) &&
             Number(Id_Medicamento || 0) === Number(segcamadaEdit.Id_Medicamento || 0) &&
             Observaciones === (segcamadaEdit.Observaciones || '')
         );
