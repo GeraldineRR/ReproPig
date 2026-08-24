@@ -8,6 +8,7 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 const CrudPartos = () => {
 
     const [partos, setPartos] = useState([]);
+    const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState("");
     const [partoEdit, setPartoEdit] = useState(null);
     const [loadingId, setLoadingId] = useState(null);
@@ -15,6 +16,7 @@ const CrudPartos = () => {
 
     useEffect(() => {
         getAllPartos();
+        getResponsables();
     }, []);
 
     const getAllPartos = async () => {
@@ -22,8 +24,37 @@ const CrudPartos = () => {
             const res = await apiAxios.get("/Partos/");
             setPartos(res.data);
         } catch (error) {
-            console.error(error);
+            console.error("Error cargando partos:", error);
         }
+    };
+
+    const getResponsables = async () => {
+        try {
+            const res = await apiAxios.get('/responsables/');
+            setResponsables(res.data);
+        } catch (error) {
+            console.error("Error cargando responsables:", error);
+        }
+    };
+
+    const parsearIDs = (valor) => {
+        if (!valor) return []
+        if (Array.isArray(valor)) return valor.map(Number)
+        if (typeof valor === 'string' && valor.startsWith('[')) {
+            try { return JSON.parse(valor).map(Number) } catch { return [] }
+        }
+        const num = Number(valor)
+        return isNaN(num) ? [] : [num]
+    };
+
+    const getNombresResponsables = (val) => {
+        const ids = parsearIDs(val)
+        if (ids.length === 0) return '—'
+        const nombres = ids.map(id => {
+            const r = responsables.find(resp => Number(resp.Id_Responsable) === Number(id))
+            return r ? `${r.Nombres} ${r.Apellidos || ''}`.trim() : `#${id}`
+        })
+        return nombres.join(', ')
     };
 
     // Función para alternar el estado del porcino 
@@ -100,8 +131,13 @@ const CrudPartos = () => {
                     : '—'
         },
         {
+            name: "Responsables",
+            selector: row => getNombresResponsables(row.Id_Responsable),
+            wrap: true
+        },
+        {
             name: "Observaciones",
-            selector: row => row.Observaciones
+            selector: row => row.Observaciones || '—'
         },
         {
             name: "Fin",
@@ -159,12 +195,14 @@ const CrudPartos = () => {
         const fechaFin = row.Fec_fin
             ? new Date(row.Fec_fin).toLocaleDateString()
             : "";
+        const resps = getNombresResponsables(row.Id_Responsable).toLowerCase().trim();
 
         return (
             row.Id_parto?.toString().includes(text) ||
             porcino.includes(text) ||
             observaciones.includes(text) ||
-            fechaFin.includes(text)
+            fechaFin.includes(text) ||
+            resps.includes(text)
         );
     });
 
@@ -180,7 +218,7 @@ const CrudPartos = () => {
                             </span>
                             <input
                                 className="form-control"
-                                placeholder="Buscar..."
+                                placeholder="Buscar por porcino, responsable, observaciones..."
                                 value={filterText}
                                 onChange={(e) => setFilterText(e.target.value)}
                             />

@@ -17,7 +17,9 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
     const [Observaciones, setObservaciones] = useState('')
     const [Fec_fin, setFec_fin] = useState('')
     const [Hor_final, setHor_final] = useState('')
+    const [Id_Responsable, setId_Responsable] = useState([])
     const [porcinos, setPorcinos] = useState([])
+    const [responsables, setResponsables] = useState([])
     const [textFormButton, setTextFormButton] = useState('Registrar')
 
     // 🔢 Total automático
@@ -28,6 +30,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
 
     useEffect(() => {
         getPorcinos()
+        getResponsables()
     }, [])
 
     const getPorcinos = async () => {
@@ -35,8 +38,27 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             const res = await apiAxios.get('/porcino/')
             setPorcinos(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) {
-            console.error(error)
+            console.error("Error al obtener porcinos:", error)
         }
+    }
+
+    const getResponsables = async () => {
+        try {
+            const res = await apiAxios.get('/responsables/')
+            setResponsables(res.data)
+        } catch (error) {
+            console.error("Error al obtener responsables:", error)
+        }
+    }
+
+    const parsearResponsables = (valor) => {
+        if (!valor) return []
+        if (Array.isArray(valor)) return valor.map(Number)
+        if (typeof valor === 'string' && valor.startsWith('[')) {
+            try { return JSON.parse(valor).map(Number) } catch { return [] }
+        }
+        const num = Number(valor)
+        return isNaN(num) ? [] : [num]
     }
 
     useEffect(() => {
@@ -51,6 +73,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             setObservaciones(rowToEdit.Observaciones || '')
             setFec_fin(rowToEdit.Fec_fin?.split('T')[0] || '')
             setHor_final(rowToEdit.Hor_final || '')
+            setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setTextFormButton("Actualizar")
         } else {
             resetForm()
@@ -68,7 +91,15 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
         setObservaciones('')
         setFec_fin('')
         setHor_final('')
+        setId_Responsable([])
         setTextFormButton("Registrar")
+    }
+
+    const toggleResponsable = (id) => {
+        const numId = Number(id)
+        setId_Responsable(prev =>
+            prev.includes(numId) ? prev.filter(r => r !== numId) : [...prev, numId]
+        )
     }
 
     const gestionarForm = async (e) => {
@@ -100,19 +131,16 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             Pes_camada,
             Observaciones,
             Fec_fin,
-            Hor_final
+            Hor_final,
+            Id_Responsable: Id_Responsable.length > 0 ? JSON.stringify(Id_Responsable) : null
         }
 
         try {
-
             if (rowToEdit?.Id_parto) {
                 await apiAxios.put(`/partos/${rowToEdit.Id_parto}`, data)
-
                 MySwal.fire("Actualizado", "Parto actualizado correctamente", "success")
-
             } else {
                 await apiAxios.post("/partos/", data)
-
                 MySwal.fire("Registrado", "Parto creado correctamente", "success")
             }
 
@@ -122,11 +150,10 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
 
         } catch (error) {
             console.error(error)
-
             MySwal.fire({
                 icon: "error",
                 title: "Error",
-                text: "No se pudo guardar el parto"
+                text: error.response?.data?.message || error.message || "No se pudo guardar el parto"
             })
         }
     }
@@ -136,7 +163,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
 
             {/* Porcino */}
             <div className="mb-3">
-                <label>Porcino</label>
+                <label className="form-label fw-semibold">Porcino</label>
                 <select
                     className="form-control"
                     value={Id_Porcino}
@@ -153,33 +180,64 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             </div>
 
             {/* Inicio */}
-            <div className="mb-3">
-                <label>Fecha inicio</label>
-                <input type="date" className="form-control" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
+            <div className="row mb-3">
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Fecha inicio</label>
+                    <input type="date" className="form-control" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
+                </div>
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Hora inicio</label>
+                    <input type="time" className="form-control" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
+                </div>
             </div>
 
+            {/* Responsables */}
             <div className="mb-3">
-                <label>Hora inicio</label>
-                <input type="time" className="form-control" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
+                <label className="form-label fw-semibold d-block">
+                    👨‍🌾 Responsables ({Id_Responsable.length})
+                </label>
+                <div className="d-flex flex-wrap gap-2">
+                    {responsables.length === 0 ? (
+                        <span className="text-muted small">No hay responsables registrados</span>
+                    ) : (
+                        responsables.map(r => {
+                            const activo = Id_Responsable.includes(Number(r.Id_Responsable))
+                            return (
+                                <span
+                                    key={r.Id_Responsable}
+                                    onClick={() => toggleResponsable(r.Id_Responsable)}
+                                    className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                        activo
+                                            ? "bg-success text-white shadow-sm fw-bold"
+                                            : "bg-white border text-secondary"
+                                    }`}
+                                    style={{ cursor: "pointer", fontSize: "13px" }}
+                                >
+                                    {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos || ''}
+                                </span>
+                            )
+                        })
+                    )}
+                </div>
             </div>
 
             {/* Nacimientos */}
             <div className="row">
                 <div className="col">
-                    <label>Vivos</label>
+                    <label className="form-label fw-semibold">Vivos</label>
                     <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} />
                 </div>
                 <div className="col">
-                    <label>Muertos</label>
+                    <label className="form-label fw-semibold">Muertos</label>
                     <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} />
                 </div>
                 <div className="col">
-                    <label>Momias</label>
+                    <label className="form-label fw-semibold">Momias</label>
                     <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} />
                 </div>
             </div>
 
-            {/* 🔥 Total automático */}
+            {/* Total automático */}
             <div className="mt-2">
                 <span className="badge bg-dark">
                     Total nacidos: {totalNacidos}
@@ -188,28 +246,29 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
 
             {/* Peso */}
             <div className="mb-3 mt-3">
-                <label>Peso camada (kg)</label>
+                <label className="form-label fw-semibold">Peso camada (kg)</label>
                 <input type="number" step="0.01" className="form-control" value={Pes_camada} onChange={(e) => setPes_camada(e.target.value)} />
             </div>
 
             {/* Observaciones */}
             <div className="mb-3">
-                <label>Observaciones</label>
+                <label className="form-label fw-semibold">Observaciones</label>
                 <textarea className="form-control" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
 
             {/* Fin */}
-            <div className="mb-3">
-                <label>Fecha fin</label>
-                <input type="date" className="form-control" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} required />
+            <div className="row mb-3">
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Fecha fin</label>
+                    <input type="date" className="form-control" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} required />
+                </div>
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Hora fin</label>
+                    <input type="time" className="form-control" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} required />
+                </div>
             </div>
 
-            <div className="mb-3">
-                <label>Hora fin</label>
-                <input type="time" className="form-control" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} required />
-            </div>
-
-            <button className="btn btn-primary w-100">
+            <button className="btn btn-primary w-100 shadow-sm fw-bold py-2">
                 {textFormButton}
             </button>
 

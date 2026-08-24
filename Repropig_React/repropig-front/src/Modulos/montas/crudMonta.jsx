@@ -3,11 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
-import Swal from "sweetalert2";
-import WithReactContent from "sweetalert2-react-content";
 
 const CrudMonta = () => {
-    const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
     const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
@@ -17,6 +14,7 @@ const CrudMonta = () => {
     const [ciclos, setCiclos] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
+    const [loadingId, setLoadingId] = useState(null);
 
     const hideModal = () => {
         document.getElementById('closeModal').click()
@@ -38,27 +36,23 @@ const CrudMonta = () => {
         } catch { return Id_Responsable }
     }
 
-    const handleDelete = async (row) => {
-        const result = await MySwal.fire({
-            title: '¿Estás seguro?',
-            text: `Se eliminará la monta #${row.Id_Monta} permanentemente.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        })
-        if (result.isConfirmed) {
-            try {
-                await apiAxios.delete('/monta/' + row.Id_Monta)
-                MySwal.fire({ icon: 'success', title: 'Eliminado', text: 'Monta eliminada correctamente' })
-                getAllMontas()
-            } catch (error) {
-                MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
-            }
+    const toggleEstado = async (id) => {
+        setLoadingId(id);
+        try {
+            const res = await apiAxios.put(`/monta/${id}/toggle-estado`);
+            setMontas(prev =>
+                prev.map(m =>
+                    m.Id_Monta === id
+                        ? { ...m, estado: res.data.estado }
+                        : m
+                )
+            );
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingId(null);
         }
-    }
+    };
 
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Monta, width: '70px' },
@@ -66,8 +60,21 @@ const CrudMonta = () => {
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
         { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
-        { name: 'Observaciones', selector: row => row.Observaciones },
+        { name: 'Observaciones', selector: row => row.Observaciones || '—' },
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
+        {
+            name: 'Estado',
+            selector: row => (
+                <button
+                    className={`badge border-0 ${row.estado === 'Inactivo' ? 'bg-danger' : 'bg-success'}`}
+                    onClick={() => toggleEstado(row.Id_Monta)}
+                    disabled={loadingId === row.Id_Monta}
+                    title="Haz clic para cambiar estado"
+                >
+                    {loadingId === row.Id_Monta ? '...' : (row.estado || 'Activo')}
+                </button>
+            )
+        },
         {
             name: 'Acciones', cell: row => {
                 let isInactive = false;
@@ -88,12 +95,6 @@ const CrudMonta = () => {
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : "Editar"}>
                             <i className="fa-solid fa-pencil"></i>
-                        </button>
-                        <button className="btn btn-sm btn-danger"
-                            onClick={() => handleDelete(row)}
-                            disabled={isInactive}
-                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
-                            <i className="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 );
@@ -141,8 +142,9 @@ const CrudMonta = () => {
         const text = filterText.toLowerCase().trim();
         const fecha = item.Fec_hora?.toString().toLowerCase() || '';
         const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || '';
-        const resps = getNombresResponsables(item.Id_Responsable).toLowerCase()
-        return fecha.includes(text) || porcino.includes(text) || resps.includes(text);
+        const resps = getNombresResponsables(item.Id_Responsable).toLowerCase();
+        const est = (item.estado || 'Activo').toLowerCase();
+        return fecha.includes(text) || porcino.includes(text) || resps.includes(text) || est.includes(text);
     });
 
     return (
@@ -165,7 +167,7 @@ const CrudMonta = () => {
 
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
-                    <input className="form-control" placeholder="🔍 Buscar..."
+                    <input className="form-control" placeholder="🔍 Buscar por cerda, responsable, estado..."
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">

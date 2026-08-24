@@ -58,6 +58,11 @@ const PartosModel = db.define("partos", {
   Id_Ciclo: {
     type: DataTypes.INTEGER,
     allowNull: true,
+  },
+
+  Id_Responsable: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   }
 
 }, {
