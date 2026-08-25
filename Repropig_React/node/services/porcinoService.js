@@ -1,5 +1,6 @@
 import PorcinoModel from "../models/porcinoModel.js"
 import RazaModel from "../models/razaModel.js"
+import { Op } from "sequelize"
 
 class PorcinoService {
 
@@ -8,10 +9,22 @@ class PorcinoService {
             include: [
                 {
                     model: RazaModel,
-                    as: 'razas'
+                    as: 'raza'
                 },
             ],
-            order: [['Createdat', 'DESC']]
+            order: [['Id_Porcino', 'DESC']]
+        })
+    }
+
+    async getLechonesByParto(idParto) {
+        return await PorcinoModel.findAll({
+            where: {
+                Tipo_Cerdo: 'Lechon',
+                Id_parto: idParto,
+                Estado: { [Op.ne]: 'Muerto' }
+            },
+            include: [{ model: RazaModel, as: 'raza' }],
+            order: [['Id_Porcino', 'ASC']]
         })
     }
 
@@ -19,7 +32,7 @@ class PorcinoService {
         const porcino = await PorcinoModel.findByPk(id,{
             include: [
                 {model : RazaModel, 
-                as: 'razas'
+                as: 'raza'
             }
             ]
         })

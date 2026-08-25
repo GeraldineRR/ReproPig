@@ -11,7 +11,6 @@ export const getAllCalendario = async (req, res) => {
     }
 }
 
-
 export const getCalendario = async (req, res) => {
     try {
         const Calendario = await CalendarioService.getById(req.params.id)
@@ -22,17 +21,32 @@ export const getCalendario = async (req, res) => {
     }
 }
 
-
 export const createCalendario = async (req, res) => {
     try {
-        const Calendario = await CalendarioService.create(req.body)
-        res.status(201).json({ message: 'Calendario creado', Calendario })
+        const { Id_Ciclo } = req.body
+
+        if (!Id_Ciclo) {
+            return res.status(400).json({
+                message: "Id_Ciclo es obligatorio"
+            })
+        }
+
+        const existe = await CalendarioService.findByCiclo(Id_Ciclo)
+
+        if (existe) {
+            return res.status(400).json({
+                message: "Ya existe calendario para este ciclo"
+            })
+        }
+
+        const data = await CalendarioService.create(req.body)
+        res.status(201).json(data)
 
     } catch (error) {
-        res.status(400).json({ message: error.message })
+        console.error(error)
+        res.status(500).json({ message: error.message })
     }
 }
-
 
 export const updateCalendario = async (req, res) => {
     try {
@@ -44,6 +58,36 @@ export const updateCalendario = async (req, res) => {
     }
 }
 
+export const registerRevision = async (req, res) => {
+    try {
+        const { evento, fecha_revision, resultado, observaciones } = req.body
+
+        if (!evento) {
+            return res.status(400).json({ message: "El campo 'evento' es obligatorio" })
+        }
+
+        const updated = await CalendarioService.registerRevision(
+            req.params.id,
+            evento,
+            { fecha_revision, resultado, observaciones }
+        )
+
+        res.status(200).json(updated)
+
+    } catch (error) {
+        console.error(error)
+        res.status(400).json({ message: error.message })
+    }
+}
+
+export const getCalendarioByCiclo = async (req, res) => {
+    try {
+        const calendario = await CalendarioService.findByCiclo(req.params.idCiclo)
+        res.status(200).json(calendario) // devuelve null si no existe
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
 
 export const deleteCalendario = async (req, res) => {
     try {
@@ -53,4 +97,4 @@ export const deleteCalendario = async (req, res) => {
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
-} 
+}

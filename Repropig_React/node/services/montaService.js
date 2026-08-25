@@ -10,6 +10,10 @@ class montaService {
                 model: PorcinoModel,
                 as: 'porcino',
                 attributes: ['Nom_Porcino']
+            }, {
+                model: PorcinoModel,
+                as: 'cerdo',
+                attributes: ['Nom_Porcino']
             }]
             // ❌ Quitado include de responsable
         })

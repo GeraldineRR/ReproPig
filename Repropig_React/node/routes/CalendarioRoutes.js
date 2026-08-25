@@ -1,12 +1,14 @@
 import express from 'express';
-import { getAllCalendario, getCalendario, createCalendario, updateCalendario, deleteCalendario } from '../controllers/CalendarioController.js';
+import { getAllCalendario, getCalendario, createCalendario, updateCalendario, deleteCalendario, getCalendarioByCiclo, registerRevision } from '../controllers/CalendarioController.js';
 
 const router = express.Router();
 
 router.get('/', getAllCalendario);
+router.get('/ciclo/:idCiclo', getCalendarioByCiclo);
 router.get('/:id', getCalendario);
 router.post('/', createCalendario);
 router.put('/:id', updateCalendario);
+router.patch('/:id/revision', registerRevision);
 router.delete('/:id', deleteCalendario);
 
 export default router;

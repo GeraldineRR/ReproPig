@@ -9,11 +9,13 @@ import WithReactContent from "sweetalert2-react-content";
 const CrudInseminacion = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
-    const location = useLocation() // ✅ agregar
-    const filtroDesdeReproduccion = location.state || null // ✅ { Id_Reproduccion, Id_Porcino }
+    const location = useLocation()
+    const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
 
     const [inseminaciones, setInseminaciones] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [colectas, setColectas] = useState([]);
+    const [ciclos, setCiclos] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -65,42 +67,77 @@ const CrudInseminacion = () => {
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
         { name: 'Cantidad', selector: row => row.cantidad },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
-        { name: 'Id Colecta', selector: row => row.Id_colecta },
+        { 
+            name: 'Cerdo (Colecta)', 
+            selector: row => {
+                if (!row.Id_colecta) return '—';
+                const col = colectas.find(c => c.Id_colecta == row.Id_colecta);
+                return col ? `${col.porcino?.Nom_Porcino || `Cerdo #${col.Id_Porcino}`} (#${row.Id_colecta})` : `#${row.Id_colecta}`;
+            }
+        },
         { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
+        { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
-            name: 'Acciones', cell: row => (
-                <div className="d-flex gap-1">
-                    <button className="btn btn-sm btn-info"
-                        onClick={() => setRowToEdit(row)}
-                        data-bs-toggle="modal" data-bs-target="#exampleModal">
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
-                    <button className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button>
-                    {row.Id_colecta && (
-                        <button className="btn btn-sm btn-success"
-                            title="Ver Colecta"
-                            onClick={() => navigate('/colectas')}>
-                            🧪
+            name: 'Acciones', cell: row => {
+                let isInactive = false;
+                if (filtroDesdeCiclo) {
+                    isInactive = (filtroDesdeCiclo.Activo || filtroDesdeCiclo.activo || '').toUpperCase() === 'N';
+                } else {
+                    const rep = ciclos.find(r => String(r.Id_Ciclo) === String(row.Id_Ciclo));
+                    if (rep) {
+                        isInactive = (rep.activo || '').toUpperCase() === 'N';
+                    }
+                }
+
+                return (
+                    <div className="d-flex gap-1">
+                        <button className="btn btn-sm btn-info"
+                            onClick={() => setRowToEdit(row)}
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            disabled={isInactive}
+                            title={isInactive ? "El ciclo está inactivo" : "Editar"}>
+                            <i className="fa-solid fa-pencil"></i>
                         </button>
-                    )}
-                </div>
-            )
+                        <button className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(row)}
+                            disabled={isInactive}
+                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
+                            <i className="fa-solid fa-trash"></i>
+                        </button>
+                        {row.Id_colecta && (
+                            <button className="btn btn-sm btn-success"
+                                title="Ver Colecta"
+                                onClick={() => navigate('/colectas', { state: { Id_colecta: row.Id_colecta } })}>
+                                🧪
+                            </button>
+                        )}
+                    </div>
+                );
+            }
         }
     ];
 
     useEffect(() => {
         getAllInseminaciones();
         getResponsables();
+        getColectas();
+        getCiclos();
     }, []);
 
     const getAllInseminaciones = async () => {
         const response = await apiAxios.get('/inseminacion');
-        setInseminaciones(response.data);
+        const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
+        setInseminaciones(sortedData);
     };
+
+    const getColectas = async () => {
+        try {
+            const response = await apiAxios.get('/colectas')
+            setColectas(response.data)
+        } catch (error) {
+            console.error('Error al obtener colectas:', error)
+        }
+    }
 
     const getResponsables = async () => {
         try {
@@ -111,9 +148,18 @@ const CrudInseminacion = () => {
         }
     }
 
-    // ✅ Primero filtra por reproducción si viene desde Reproducciones
-    const inseminacionesFiltradas = filtroDesdeReproduccion
-        ? inseminaciones.filter(i => i.Id_Reproduccion == filtroDesdeReproduccion.Id_Reproduccion)
+    const getCiclos = async () => {
+        try {
+            const response = await apiAxios.get('/ciclos');
+            setCiclos(response.data);
+        } catch (error) {
+            console.error('Error al obtener ciclos:', error);
+        }
+    }
+
+    // ✅ Primero filtra por ciclo si viene desde Ciclos
+    const inseminacionesFiltradas = filtroDesdeCiclo
+        ? inseminaciones.filter(i => i.Id_Ciclo == filtroDesdeCiclo.Id_Ciclo)
         : inseminaciones
 
     // ✅ Luego aplica el buscador sobre lo ya filtrado
@@ -128,17 +174,17 @@ const CrudInseminacion = () => {
     return (
         <div className="container mt-5">
 
-            {/* ✅ Banner de filtro activo */}
-            {filtroDesdeReproduccion && (
+            {/* Banner de filtro activo */}
+            {filtroDesdeCiclo && (
                 <div className="alert alert-primary d-flex justify-content-between align-items-center py-2 mb-3">
                     <span>
-                        💉 Mostrando inseminaciones de la reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                        💉 Inseminaciones de <strong>{filtroDesdeCiclo.Nom_Porcino || `Cerda #${filtroDesdeCiclo.Id_Porcino}`}</strong>
+                        {' '}— Ciclo <strong>#{filtroDesdeCiclo.Id_Ciclo}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-dark"
-                        onClick={() => window.history.replaceState({}, '', window.location.pathname)
-                            || window.location.reload()}>
-                        ✖ Ver todas
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Ciclos
                     </button>
                 </div>
             )}
@@ -149,11 +195,17 @@ const CrudInseminacion = () => {
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Inseminación
-                    </button>
+                    {(!filtroDesdeCiclo || filtroDesdeCiclo.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Inseminación
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="El ciclo está inactivo">
+                            Nueva Inseminación
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -164,7 +216,7 @@ const CrudInseminacion = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5">Nueva Inseminación</h1>
+                            <h1 className="modal-title fs-5">{rowToEdit.Id_Inseminacion ? 'Editar Inseminación' : 'Nueva Inseminación'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>
@@ -174,7 +226,7 @@ const CrudInseminacion = () => {
                                 hideModal={hideModal}
                                 rowToEdit={rowToEdit}
                                 refreshTable={getAllInseminaciones}
-                                preloaded={filtroDesdeReproduccion || {}}
+                                preloaded={filtroDesdeCiclo || {}}
                             />
                         </div>
                     </div>

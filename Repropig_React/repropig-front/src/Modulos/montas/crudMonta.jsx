@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom"; // ✅ agregar
+import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
@@ -8,11 +8,13 @@ import WithReactContent from "sweetalert2-react-content";
 
 const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
-    const location = useLocation() // ✅ agregar
-    const filtroDesdeReproduccion = location.state || null // ✅ { Id_Reproduccion, Id_Porcino }
+    const navigate = useNavigate()
+    const location = useLocation()
+    const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
 
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [ciclos, setCiclos] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
 
@@ -62,35 +64,53 @@ const CrudMonta = () => {
         { name: 'Id', selector: row => row.Id_Monta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fec_hora?.split('T')[0] || row.Fec_hora },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
+        { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Id Reproduccion', selector: row => row.Id_Reproduccion },
+        { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
-            name: 'Acciones', cell: row => (
-                <div className="d-flex gap-1">
-                    <button className="btn btn-sm btn-info"
-                        onClick={() => setRowToEdit(row)}
-                        data-bs-toggle="modal" data-bs-target="#exampleModal">
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
-                    <button className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button>
-                </div>
-            )
+            name: 'Acciones', cell: row => {
+                let isInactive = false;
+                if (filtroDesdeCiclo) {
+                    isInactive = (filtroDesdeCiclo.Activo || filtroDesdeCiclo.activo || '').toUpperCase() === 'N';
+                } else {
+                    const rep = ciclos.find(r => String(r.Id_Ciclo) === String(row.Id_Ciclo));
+                    if (rep) {
+                        isInactive = (rep.activo || '').toUpperCase() === 'N';
+                    }
+                }
+
+                return (
+                    <div className="d-flex gap-1">
+                        <button className="btn btn-sm btn-info"
+                            onClick={() => setRowToEdit(row)}
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            disabled={isInactive}
+                            title={isInactive ? "El ciclo está inactivo" : "Editar"}>
+                            <i className="fa-solid fa-pencil"></i>
+                        </button>
+                        <button className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(row)}
+                            disabled={isInactive}
+                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
+                            <i className="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                );
+            }
         }
     ];
 
     useEffect(() => {
         getAllMontas();
         getResponsables();
+        getCiclos();
     }, []);
 
     const getAllMontas = async () => {
         const response = await apiAxios.get('/monta/')
-        setMontas(response.data)
-        console.log(response.data)
+        const sortedData = response.data.sort((a, b) => new Date(b.Fec_hora || 0) - new Date(a.Fec_hora || 0))
+        setMontas(sortedData)
     }
 
     const getResponsables = async () => {
@@ -102,9 +122,18 @@ const CrudMonta = () => {
         }
     }
 
-    // ✅ Primero filtra por reproducción si viene desde Reproducciones
-    const montasFiltradas = filtroDesdeReproduccion
-        ? montas.filter(m => m.Id_Reproduccion == filtroDesdeReproduccion.Id_Reproduccion)
+    const getCiclos = async () => {
+        try {
+            const response = await apiAxios.get('/ciclos');
+            setCiclos(response.data);
+        } catch (error) {
+            console.error('Error al obtener ciclos:', error);
+        }
+    }
+
+    // ✅ Primero filtra por reproducción si viene desde Ciclos
+    const montasFiltradas = filtroDesdeCiclo
+        ? montas.filter(m => m.Id_Ciclo == filtroDesdeCiclo.Id_Ciclo)
         : montas
 
     // ✅ Luego aplica el buscador sobre lo ya filtrado
@@ -119,17 +148,17 @@ const CrudMonta = () => {
     return (
         <div className="container mt-5">
 
-            {/* ✅ Banner de filtro activo */}
-            {filtroDesdeReproduccion && (
+            {/* Banner de filtro activo */}
+            {filtroDesdeCiclo && (
                 <div className="alert alert-warning d-flex justify-content-between align-items-center py-2 mb-3">
                     <span>
-                        🐷 Mostrando montas de la reproducción <strong>#{filtroDesdeReproduccion.Id_Reproduccion}</strong>
+                        🐷 Montas de <strong>{filtroDesdeCiclo.Nom_Porcino || `Cerda #${filtroDesdeCiclo.Id_Porcino}`}</strong>
+                        {' '}— Ciclo <strong>#{filtroDesdeCiclo.Id_Ciclo}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-dark"
-                        onClick={() => window.history.replaceState({}, '', window.location.pathname)
-                            || window.location.reload()}>
-                        ✖ Ver todas
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Ciclos
                     </button>
                 </div>
             )}
@@ -140,11 +169,17 @@ const CrudMonta = () => {
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">
-                    <button type="button" className="btn btn-primary"
-                        data-bs-toggle="modal" data-bs-target="#exampleModal"
-                        onClick={() => setRowToEdit({})}>
-                        Nueva Monta
-                    </button>
+                    {(!filtroDesdeCiclo || filtroDesdeCiclo.Activo !== 'N') ? (
+                        <button type="button" className="btn btn-primary"
+                            data-bs-toggle="modal" data-bs-target="#exampleModal"
+                            onClick={() => setRowToEdit({})}>
+                            Nueva Monta
+                        </button>
+                    ) : (
+                        <button type="button" className="btn btn-secondary" disabled title="El ciclo está inactivo">
+                            Nueva Monta
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -155,7 +190,7 @@ const CrudMonta = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5">Nueva Monta</h1>
+                            <h1 className="modal-title fs-5">{rowToEdit.Id_Monta ? 'Editar Monta' : 'Nueva Monta'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" id="closeModal"></button>
                         </div>
@@ -165,7 +200,7 @@ const CrudMonta = () => {
                                 hideModal={hideModal}
                                 rowToEdit={rowToEdit}
                                 refreshTable={getAllMontas}
-                                preloaded={filtroDesdeReproduccion || {}}
+                                preloaded={filtroDesdeCiclo || {}}
                             />
                         </div>
                     </div>

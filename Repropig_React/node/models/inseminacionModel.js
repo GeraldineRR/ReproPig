@@ -7,10 +7,11 @@ const inseminacionModel = db.define('inseminacion', {
     Id_Porcino: { type: DataTypes.INTEGER },
     cantidad: { type: DataTypes.INTEGER },
     Id_Responsable: { type: DataTypes.STRING },
-    Id_colecta: { type: DataTypes.INTEGER},
+    Id_colecta: { type: DataTypes.INTEGER },
     Observaciones: { type: DataTypes.STRING },
-    Id_Reproduccion: { type: DataTypes.INTEGER },
+    Id_Ciclo: { type: DataTypes.INTEGER },
 }, {
-    freezeTableName: true
+    freezeTableName: true,
+    timestamps: false
 })
 export default inseminacionModel;

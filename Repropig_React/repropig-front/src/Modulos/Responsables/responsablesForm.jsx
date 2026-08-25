@@ -15,8 +15,9 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
     const [Cargo, setCargo] = useState('');
     const [Telefono, setTelefono] = useState('');
     const [Email, setEmail] = useState('');
+    const [Password, setPassword] = useState('');
 
-    // 🔥 LIMPIAR FORMULARIO
+
     const limpiarFormulario = () => {
         setId_Responsable('');
         setNombres('');
@@ -25,9 +26,9 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
         setCargo('');
         setTelefono('');
         setEmail('');
+        setPassword('');
     };
 
-    // 🔥 CARGAR DATOS  EDITAR
     useEffect(() => {
         if (rowToEdit && rowToEdit.Id_Responsable) {
             setId_Responsable(rowToEdit.Id_Responsable || '');
@@ -54,32 +55,12 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
             Documento,
             Cargo,
             Telefono,
-            Email
+            Email,
+            Password
         };
 
-        // 🔹 CREAR
-        if (textformbutton === 'Crear Responsable') {
-            try {
-
-                await apiAxios.post('/responsables', formData);
-
-                MySwal.fire({
-                    title: 'Creado',
-                    text: 'Responsable creado correctamente',
-                    icon: 'success',
-                });
-
-                limpiarFormulario();
-                hidemodal();
-
-            } catch (error) {
-                console.error('Error al crear:', error);
-                alert(error.message);
-            }
-        }
-
         // 🔹 ACTUALIZAR
-        else if (textformbutton === 'Actualizar Responsable') {
+        if (textformbutton === 'Actualizar Responsable') {
             try {
 
                 await apiAxios.put(
@@ -168,6 +149,24 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                         className="form-control"
                         value={Email || ''}
                         onChange={(e) => setEmail(e.target.value)}
+                    />
+                </div>
+
+                <div className="mb-3">
+                    <label className="form-label">
+                        Contraseña 
+                        {textformbutton === 'Actualizar Responsable' && (
+                            <span className="text-muted ms-2" style={{ fontSize: '0.8em' }}>
+                                (Déjalo en blanco si no quieres cambiarla)
+                            </span>
+                        )}
+                    </label>
+                    <input
+                        type="password"
+                        className="form-control"
+                        placeholder={textformbutton === 'Actualizar Responsable' ? "Nueva contraseña..." : "Escribe una contraseña"}
+                        value={Password || ''}
+                        onChange={(e) => setPassword(e.target.value)}
                     />
                 </div>
 

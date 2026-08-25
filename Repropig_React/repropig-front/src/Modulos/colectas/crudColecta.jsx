@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import ColectaForm from "./colectaForm.jsx";
@@ -7,6 +8,9 @@ import WithReactContent from "sweetalert2-react-content";
 
 const CrudColecta = () => {
     const MySwal = WithReactContent(Swal)
+    const navigate = useNavigate()
+    const location = useLocation()
+    const filtroDesdeInseminacion = location.state || null // { Id_colecta }
     const [colecta, setColecta] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
@@ -59,6 +63,23 @@ const CrudColecta = () => {
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_colecta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
+        {
+            name: 'Vigencia', cell: row => {
+                if (row.Tipo !== 'Interno') return <span className="badge bg-secondary">N/A</span>;
+                if (!row.Fecha) return <span className="badge bg-secondary">—</span>;
+                
+                const fechaColecta = new Date(row.Fecha);
+                const expirationDate = new Date(fechaColecta);
+                expirationDate.setDate(expirationDate.getDate() + 3);
+                const today = new Date();
+                
+                const diffTime = expirationDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 0) return <span className="badge bg-danger">Vencida</span>;
+                return <span className="badge bg-warning text-dark">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
+            }
+        },
         { name: 'Uso', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
         { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' }, 
@@ -101,7 +122,8 @@ const CrudColecta = () => {
 
     const getAllColectas = async () => {
         const response = await apiAxios.get('/colectas');
-        setColecta(response.data);
+        const sortedData = response.data.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
+        setColecta(sortedData);
     };
 
     const getResponsables = async () => {
@@ -129,6 +151,20 @@ const CrudColecta = () => {
 
     return (
         <div className="container mt-5">
+
+            {/* Banner de filtro activo */}
+            {filtroDesdeInseminacion && (
+                <div className="alert alert-success d-flex justify-content-between align-items-center py-2 mb-3">
+                    <span>
+                        🧪 Mostrando colecta <strong>#{filtroDesdeInseminacion.Id_colecta}</strong>
+                    </span>
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => navigate(-1)}>
+                        ← Volver a Inseminaciones
+                    </button>
+                </div>
+            )}
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
                     <input className="form-control" placeholder="🔍 Buscar..."
@@ -143,7 +179,10 @@ const CrudColecta = () => {
                 </div>
             </div>
 
-            <DataTable title="Colectas" columns={columnsTable} data={newListcolecta}
+            <DataTable title="Colectas" columns={columnsTable}
+                data={newListcolecta.filter(c =>
+                    !filtroDesdeInseminacion || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
+                )}
                 keyField="Id_colecta" pagination highlightOnHover striped />
 
             <div className="modal fade" id="exampleModal" tabIndex="-1"
@@ -151,7 +190,7 @@ const CrudColecta = () => {
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
-                            <h1 className="modal-title fs-5" id="exampleModalLabel">Nueva Colecta</h1>
+                            <h1 className="modal-title fs-5" id="exampleModalLabel">{rowToEdit.Id_colecta ? 'Editar Colecta' : 'Nueva Colecta'}</h1>
                             <button type="button" className="btn-close"
                                 data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
                         </div>

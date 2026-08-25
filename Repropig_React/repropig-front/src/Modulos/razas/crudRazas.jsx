@@ -7,8 +7,31 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 const CrudRazas = () => {
 
     const [razas, setRazas] = useState([])
+    const [loadingId, setLoadingId] = useState(null);
     const [razaEdit, setRazaEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
+
+    // Función para alternar el estado de la raza
+    const toggleEstado = async (id) => {
+        setLoadingId(id);
+
+        try {
+            const res = await apiAxios.put(`/raza/${id}/toggle-estado`);
+
+            setRazas(prev =>
+                prev.map(p =>
+                    p.Id_Raza === id
+                        ? { ...p, Estado: res.data.Estado }
+                        : p
+                )
+            );
+
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingId(null);
+        }
+    };
 
     const columnsTable = [
         {
@@ -20,6 +43,20 @@ const CrudRazas = () => {
             name: 'Nombre de la Raza',
             selector: row => row.Nom_Raza,
             sortable: true
+        },
+        {
+            name: 'Estado',
+            selector: row => (
+                <button
+                    className={`badge border-0 ${row.Estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
+                    onClick={() => toggleEstado(row.Id_Raza)}
+                    disabled={loadingId === row.Id_Raza}
+                >
+                    {loadingId === row.Id_Raza
+                        ? '...'
+                        : row.Estado}
+                </button>
+            )
         },
         {
             name: 'Acciones',
@@ -69,13 +106,18 @@ const CrudRazas = () => {
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
                     <div className="d-flex gap-2">
-                        <input
-                            className="form-control"
-                            style={{ width: '290px' }}
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            placeholder="🔍 Buscar raza..."
-                        />
+                        <div className="input-group">
+                            <span className="input-group-text">
+                                🔍
+                            </span>
+                            <input
+                                className="form-control"
+                                style={{ width: '290px' }}
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                placeholder="Buscar raza..."
+                            />
+                        </div>
                     </div>
 
                     <div className="d-flex gap-2">
@@ -91,19 +133,19 @@ const CrudRazas = () => {
                     </div>
                 </div>
 
-                
-                            <div className="card-body px-9">
-                                <DataTable
-                                    title="Razas"
-                                    columns={columnsTable}
-                                    data={newListRazas}
-                                    keyField="Id_Raza"
-                                    pagination
-                                    highlightOnHover
-                                    pointerOnHover
-                                    striped
-                                />
-                
+
+                <div className="card-body px-9">
+                    <DataTable
+                        title="Razas"
+                        columns={columnsTable}
+                        data={newListRazas}
+                        keyField="Id_Raza"
+                        pagination
+                        highlightOnHover
+                        pointerOnHover
+                        striped
+                    />
+
                 </div>
 
                 <div

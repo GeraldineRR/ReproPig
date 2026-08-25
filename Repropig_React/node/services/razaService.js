@@ -4,7 +4,7 @@ class RazaService {
 
     async getAll() {
         return await RazaModel.findAll({
-            order: [['Createdat', 'DESC']]
+            order: [['Id_Raza', 'DESC']]
         });
     }
 

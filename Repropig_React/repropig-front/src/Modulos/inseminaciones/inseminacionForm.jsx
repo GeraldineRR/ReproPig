@@ -14,12 +14,14 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const [Id_Responsable, setId_Responsable] = useState([]);
     const [Id_colecta, setId_colecta] = useState('');
     const [Observaciones, setObservaciones] = useState('');
-    const [Id_Reproduccion, setId_Reproduccion] = useState('');
+    const [Id_Ciclo, setId_Ciclo] = useState('');
     const [porcinos, setPorcinos] = useState([]);
+    const [machos, setMachos] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [colectas, setColectas] = useState([]);
-    const [reproduccionesActivas, setReproduccionesActivas] = useState([]);
+    const [ciclosActivas, setCiclosActivas] = useState([]);
     const [textFormButton, setTextFormButton] = useState('Agregar Inseminacion');
+    const [filtroCerdo, setFiltroCerdo] = useState('');
 
     const preloadedRef = useRef(null)
 
@@ -32,7 +34,8 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H'))
+            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
+            setMachos(response.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) { console.error('Error al obtener porcinos:', error) }
     }
 
@@ -50,24 +53,25 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         } catch (error) { console.error('Error al obtener colectas:', error) }
     }
 
-    const getReproduccionesActivas = async (idPorcino) => {
-        if (!idPorcino) { setReproduccionesActivas([]); return }
+    // ✅ FIX — se quitó el filtro de TipoCiclo === 'Inseminacion'
+    // Una cerda con ciclo activo de cualquier tipo puede recibir una inseminación
+    const getCiclosActivas = async (idPorcino) => {
+        if (!idPorcino) { setCiclosActivas([]); return }
         try {
-            const response = await apiAxios.get('/reproducciones/')
+            const response = await apiAxios.get('/ciclos/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
-                r.Activo === 'Si' &&
-                r.TipoReproduccion === 'Inseminacion'
+                (r.activo || r.Activo || '').toUpperCase() === 'S'
             )
-            setReproduccionesActivas(activas)
-        } catch (error) { console.error('Error al obtener reproducciones:', error) }
+            setCiclosActivas(activas)
+        } catch (error) { console.error('Error al obtener ciclos:', error) }
     }
 
     const handlePorcinoChange = (e) => {
         const val = e.target.value
         setId_Porcino(val)
-        setId_Reproduccion('')
-        getReproduccionesActivas(val)
+        setId_Ciclo('')
+        getCiclosActivas(val)
     }
 
     const parsearResponsables = (valor) => {
@@ -80,6 +84,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         return isNaN(num) ? [] : [num]
     }
 
+    // ✅ FIX — ahora llama getCiclosActivas al editar para que el select se llene
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
             setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
@@ -88,35 +93,36 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setId_colecta(rowToEdit.Id_colecta)
             setObservaciones(rowToEdit.Observaciones)
-            setId_Reproduccion(rowToEdit.Id_Reproduccion)
-            getReproduccionesActivas(rowToEdit.Id_Porcino)
+            setId_Ciclo(rowToEdit.Id_Ciclo)
+            getCiclosActivas(rowToEdit.Id_Porcino) // ✅ carga repros para que el select no quede vacío
             setTextFormButton('Actualizar Inseminacion')
-        } else if (!preloaded.Id_Reproduccion) {
+        } else if (!preloaded.Id_Ciclo) {
             setFec_hora('')
             setId_Porcino('')
             setCantidad('')
             setId_Responsable([])
             setId_colecta('')
             setObservaciones('')
-            setId_Reproduccion('')
-            setReproduccionesActivas([])
+            setId_Ciclo('')
+            setCiclosActivas([])
             setTextFormButton('Agregar Inseminacion')
         }
     }, [rowToEdit]);
 
     useEffect(() => {
-        if (preloaded.Id_Reproduccion && preloadedRef.current !== preloaded.Id_Reproduccion) {
-            preloadedRef.current = preloaded.Id_Reproduccion
+        if (preloaded.Id_Ciclo && preloadedRef.current !== preloaded.Id_Ciclo) {
+            preloadedRef.current = preloaded.Id_Ciclo
             setId_Porcino(preloaded.Id_Porcino || '')
             setId_colecta(preloaded.Id_colecta || '')
-            setId_Reproduccion(preloaded.Id_Reproduccion || '')
+            setId_Ciclo(preloaded.Id_Ciclo || '')
             setFec_hora('')
             setCantidad('')
             setId_Responsable([])
             setObservaciones('')
             setTextFormButton('Agregar Inseminacion')
+            getCiclosActivas(preloaded.Id_Porcino)
         }
-    }, [preloaded.Id_Reproduccion]);
+    }, [preloaded.Id_Ciclo]);
 
     const toggleResponsable = (id) => {
         setId_Responsable(prev =>
@@ -133,7 +139,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         const formData = {
             Fec_hora, Id_Porcino, cantidad,
             Id_Responsable: JSON.stringify(Id_Responsable),
-            Id_colecta, Observaciones, Id_Reproduccion,
+            Id_colecta, Observaciones, Id_Ciclo,
         };
         try {
             if (textFormButton === 'Agregar Inseminacion') {
@@ -143,6 +149,34 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                 await apiAxios.put('/inseminacion/' + rowToEdit.Id_Inseminacion, formData)
                 MySwal.fire({ title: "Actualización exitosa", text: "Inseminacion actualizada con éxito", icon: "success" })
             }
+
+            // ✅ Auto-crear o actualizar calendario con la primera fecha
+            try {
+                const [calRes, montasRes, insemRes] = await Promise.all([
+                    apiAxios.get(`/calendario/ciclo/${Id_Ciclo}`).catch(() => ({ data: null })),
+                    apiAxios.get('/monta').catch(() => ({ data: [] })),
+                    apiAxios.get('/inseminacion').catch(() => ({ data: [] }))
+                ]);
+
+                const misMontas = montasRes.data.filter(m => m.Id_Ciclo == Id_Ciclo);
+                const misInsem = insemRes.data.filter(i => i.Id_Ciclo == Id_Ciclo);
+
+                const allDates = [
+                    ...misMontas.map(m => m.Fec_hora?.split('T')[0]).filter(Boolean),
+                    ...misInsem.map(i => i.Fec_hora?.split('T')[0]).filter(Boolean)
+                ];
+                
+                const minDate = allDates.length > 0 ? allDates.sort()[0] : Fec_hora;
+                
+                if (!calRes.data) {
+                    await apiAxios.post('/calendario/', { Id_Ciclo, Fecha_Servicio: minDate });
+                } else if (calRes.data.Fecha_Servicio?.split('T')[0] !== minDate) {
+                    await apiAxios.put(`/calendario/${calRes.data.Id_Calendario}`, { Fecha_Servicio: minDate });
+                }
+            } catch (calErr) {
+                console.error('Error al sincronizar calendario:', calErr);
+            }
+
             hideModal()
             refreshTable()
         } catch (error) {
@@ -150,20 +184,31 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         }
     };
 
-    const esPrellenado = !!preloaded.Id_Reproduccion
+    const esPrellenado = !!preloaded.Id_Ciclo
+    const esEdicion = !!rowToEdit?.Id_Inseminacion
+
+    // Calcular pajillas disponibles en tiempo real para la colecta seleccionada
+    const colectaSeleccionada = colectas.find(c => c.Id_colecta == Id_colecta)
+    let pajillasDisponibles = 0
+    if (colectaSeleccionada) {
+        pajillasDisponibles = (colectaSeleccionada.cant_generada || 0) - (colectaSeleccionada.cant_utilizada || 0)
+        // Si estamos editando y seleccionamos la misma colecta original, sumamos la cantidad que ya tenía para no restarla doble
+        if (esEdicion && colectaSeleccionada.Id_colecta == rowToEdit.Id_colecta) {
+            pajillasDisponibles += Number(rowToEdit.cantidad || 0)
+        }
+    }
 
     return (
         <form onSubmit={gestionarForm} className="w-100">
 
-            {/* HEADER */}
             <div className="text-center mb-4">
-                <h5 className="fw-bold">💉 Registrar Inseminación</h5>
-                <small className="text-muted">Gestión del proceso reproductivo</small>
+                <h5 className="fw-bold">💉 {esEdicion ? 'Editar Inseminación' : 'Registrar Inseminación'}</h5>
+                <small className="text-muted">Gestión del ciclo</small>
             </div>
 
             {esPrellenado && (
                 <div className="alert alert-primary py-2 mb-3 text-center">
-                    Cerda y reproducción asignadas automáticamente
+                    Cerda y ciclo asignados automáticamente
                 </div>
             )}
 
@@ -177,6 +222,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
                         required
                     />
                 </div>
@@ -188,7 +234,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         className="form-select shadow-sm"
                         value={Id_Porcino}
                         onChange={handlePorcinoChange}
-                        disabled={esPrellenado}
+                        disabled={esPrellenado || esEdicion}
                         required
                     >
                         <option value="">Seleccione</option>
@@ -200,66 +246,134 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                     </select>
                 </div>
 
-                {/* REPRODUCCION */}
-                {!esPrellenado && (
-                    <div className="col-12">
-                        <label className="form-label fw-semibold">🔁 Reproducción activa</label>
-                        <select
-                            className="form-select shadow-sm"
-                            value={Id_Reproduccion}
-                            onChange={e => setId_Reproduccion(e.target.value)}
-                            required
-                        >
-                            <option value="">
-                                {!Id_Porcino
-                                    ? 'Primero seleccione una cerda'
-                                    : reproduccionesActivas.length === 0
-                                        ? 'No hay reproducciones activas'
-                                        : 'Seleccione una reproducción'}
+                {/* CICLO — se muestra siempre, bloqueada si viene prellenada */}
+                <div className="col-12">
+                    <label className="form-label fw-semibold">🔁 Ciclo activo</label>
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_Ciclo}
+                        onChange={e => setId_Ciclo(e.target.value)}
+                        disabled={esPrellenado}
+                        required
+                    >
+                        <option value="">
+                            {!Id_Porcino
+                                ? 'Primero seleccione una cerda'
+                                : ciclosActivas.length === 0
+                                    ? 'No hay ciclos activos'
+                                    : 'Seleccione un ciclo'}
+                        </option>
+                        {ciclosActivas.map(r => (
+                            <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
+                                #{r.Id_Ciclo} — {r.TipoCiclo}
                             </option>
+                        ))}
+                    </select>
+                </div>
 
-                            {reproduccionesActivas.map(r => (
-                                <option key={r.Id_Reproduccion} value={r.Id_Reproduccion}>
-                                    #{r.Id_Reproduccion}
-                                </option>
-                            ))}
-                        </select>
+                {/* COLECTA */}
+                <div className="col-12">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                        <label className="form-label fw-semibold mb-0">📦 Colecta</label>
+                        <div className="d-flex align-items-center gap-2">
+                            <small className="text-muted">Filtrar por cerdo:</small>
+                            <select
+                                className="form-select form-select-sm"
+                                style={{ width: 'auto', minWidth: '160px' }}
+                                value={filtroCerdo}
+                                onChange={e => { setFiltroCerdo(e.target.value); setId_colecta('') }}
+                                disabled={!!preloaded.Id_colecta}
+                            >
+                                <option value="">🐗 Todos los cerdos</option>
+                                {machos.map(m => (
+                                    <option key={m.Id_Porcino} value={m.Id_Porcino}>
+                                        {m.Nom_Porcino}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                )}
+                    <select
+                        className="form-select shadow-sm"
+                        value={Id_colecta}
+                        onChange={e => setId_colecta(e.target.value)}
+                        disabled={!!preloaded.Id_colecta || !Fec_hora}
+                        required
+                    >
+                        <option value="">
+                            {!Fec_hora ? 'Primero seleccione la fecha de inseminación' : 'Seleccione una colecta'}
+                        </option>
+                        {(() => {
+                            const opcionesFiltradas = colectas.filter(c => {
+                                if (filtroCerdo && c.Id_Porcino != filtroCerdo) return false;
+                                if (c.Id_colecta == Id_colecta) return true; // Siempre mostrar la ya seleccionada
+                                if (!Fec_hora || !c.Fecha) return false;
+                                
+                                const tInsem = new Date(Fec_hora + 'T00:00:00').getTime();
+                                const tCol = new Date(c.Fecha.split('T')[0] + 'T00:00:00').getTime();
+                                const diasDif = Math.round((tInsem - tCol) / (1000 * 60 * 60 * 24));
+
+                                if (diasDif < 0) return false; // Colecta posterior a la fecha de inseminación
+                                if (c.Tipo === 'Interno' && diasDif !== 0) return false; // Interna: solo el mismo día
+                                if (c.Tipo === 'Externo' && diasDif > 3) return false; // Externa: hasta 3 días
+
+                                return true;
+                            });
+
+                            if (Fec_hora && opcionesFiltradas.length === 0 && !Id_colecta) {
+                                return <option value="" disabled>No hay colectas válidas o vigentes para esta fecha</option>;
+                            }
+
+                            return opcionesFiltradas.map(c => {
+                                const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
+                                
+                                // Para mostrar mensaje visual si es la seleccionada pero no cumple las reglas (datos viejos)
+                                let mensajeVencida = "";
+                                if (Fec_hora && c.Fecha) {
+                                    const tInsem = new Date(Fec_hora + 'T00:00:00').getTime();
+                                    const tCol = new Date(c.Fecha.split('T')[0] + 'T00:00:00').getTime();
+                                    const diasDif = Math.round((tInsem - tCol) / (1000 * 60 * 60 * 24));
+                                    if (c.Tipo === 'Interno' && diasDif !== 0) mensajeVencida = " (Vencida)";
+                                    if (c.Tipo === 'Externo' && diasDif > 3) mensajeVencida = " (Vencida)";
+                                }
+
+                                return (
+                                    <option key={c.Id_colecta} value={c.Id_colecta} disabled={disponibles <= 0 && c.Id_colecta != Id_colecta}>
+                                        #{c.Id_colecta} — {c.porcino?.Nom_Porcino || `Cerdo #${c.Id_Porcino}`} — {disponibles} disponibles {mensajeVencida}
+                                    </option>
+                                )
+                            });
+                        })()}
+                    </select>
+                </div>
 
                 {/* CANTIDAD */}
                 <div className="col-md-6">
                     <label className="form-label fw-semibold">🧪 Cantidad</label>
                     <input
                         type="number"
-                        className="form-control shadow-sm"
+                        className={`form-control shadow-sm ${Id_colecta && cantidad > pajillasDisponibles ? 'is-invalid' : ''}`}
                         value={cantidad}
-                        onChange={e => setCantidad(e.target.value)}
+                        onChange={e => {
+                            let val = e.target.value;
+                            // Automáticamente restringir si se pasa del máximo
+                            if (Id_colecta && val > pajillasDisponibles) val = pajillasDisponibles;
+                            setCantidad(val);
+                        }}
+                        min="1"
+                        max={Id_colecta ? pajillasDisponibles : undefined}
+                        disabled={!Id_colecta}
                         required
                     />
-                </div>
-
-                {/* COLECTA */}
-                <div className="col-md-6">
-                    <label className="form-label fw-semibold">📦 Colecta</label>
-                    <select
-                        className="form-select shadow-sm"
-                        value={Id_colecta}
-                        onChange={e => setId_colecta(e.target.value)}
-                        disabled={!!preloaded.Id_colecta}
-                        required
-                    >
-                        <option value="">Seleccione</option>
-
-                        {colectas.map(c => {
-                            const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
-                            return (
-                                <option key={c.Id_colecta} value={c.Id_colecta} disabled={disponibles <= 0}>
-                                    #{c.Id_colecta} - {disponibles} disponibles
-                                </option>
-                            )
-                        })}
-                    </select>
+                    {Id_colecta && (
+                        <small className={cantidad > pajillasDisponibles ? "text-danger fw-bold" : "text-muted"}>
+                            Disponibles: {pajillasDisponibles} pajillas
+                            {cantidad > pajillasDisponibles && " (Excede el límite)"}
+                        </small>
+                    )}
+                    {!Id_colecta && (
+                        <small className="text-muted">Seleccione una colecta primero</small>
+                    )}
                 </div>
 
             </div>
@@ -269,31 +383,23 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                 <label className="form-label fw-semibold">
                     👨‍🌾 Responsables ({Id_Responsable.length})
                 </label>
-
                 <div className="d-flex flex-wrap gap-2">
-
                     {responsables.map(r => {
                         const activo = Id_Responsable.includes(r.Id_Responsable)
-
                         return (
                             <span
                                 key={r.Id_Responsable}
                                 onClick={() => toggleResponsable(r.Id_Responsable)}
                                 className={`px-3 py-2 rounded-pill ${activo
-                                        ? "bg-primary text-white shadow"
-                                        : "bg-light border"
+                                    ? "bg-primary text-white shadow"
+                                    : "bg-light border"
                                     }`}
-                                style={{
-                                    cursor: "pointer",
-                                    fontSize: "13px",
-                                    transition: "0.2s"
-                                }}
+                                style={{ cursor: "pointer", fontSize: "13px", transition: "0.2s" }}
                             >
                                 {r.Nombres}
                             </span>
                         )
                     })}
-
                 </div>
             </div>
 
