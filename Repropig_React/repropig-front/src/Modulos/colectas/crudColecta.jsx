@@ -63,6 +63,23 @@ const CrudColecta = () => {
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_colecta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
+        {
+            name: 'Vigencia', cell: row => {
+                if (row.Tipo !== 'Interno') return <span className="badge bg-secondary">N/A</span>;
+                if (!row.Fecha) return <span className="badge bg-secondary">—</span>;
+                
+                const fechaColecta = new Date(row.Fecha);
+                const expirationDate = new Date(fechaColecta);
+                expirationDate.setDate(expirationDate.getDate() + 3);
+                const today = new Date();
+                
+                const diffTime = expirationDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 0) return <span className="badge bg-danger">Vencida</span>;
+                return <span className="badge bg-warning text-dark">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
+            }
+        },
         { name: 'Uso', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
         { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' }, 

@@ -1,13 +1,32 @@
 import colectaservice from "../services/colectaService.js";
+import colectaModel from "../models/colectaModel.js";
 
 // obtener todas las colectas
 export const getAllcolecta = async (req, res) => {
     try {
-        const colecta = await colectaservice.getAll()
-        console.log(colecta.data)
-        res.status(200).json(colecta)
+        let colectas = await colectaservice.getAll()
         
-        // console.log(JSON.stringify(colecta, null, 2))
+        const today = new Date();
+        let changed = false;
+        
+        for (let col of colectas) {
+            if (col.Tipo === 'Interno' && col.Uso_colecta === 'Si' && col.Fecha) {
+                const fechaColecta = new Date(col.Fecha);
+                const expirationDate = new Date(fechaColecta);
+                expirationDate.setDate(expirationDate.getDate() + 3);
+                
+                if (today > expirationDate) {
+                    await colectaModel.update({ Uso_colecta: 'No' }, { where: { Id_colecta: col.Id_colecta } });
+                    changed = true;
+                }
+            }
+        }
+        
+        if (changed) {
+            colectas = await colectaservice.getAll();
+        }
+
+        res.status(200).json(colectas)
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
