@@ -16,18 +16,22 @@ import './models/CalendarioModel.js';
 import './models/novedadesModel.js';
 import './models/segcamadaModel.js';
 
-// Relaciones
-import './app.js'; // Ejecuta las relaciones y la inicialización, pero podemos solo sincronizar
+import './app.js'; 
 
 async function syncDatabase() {
     try {
-        console.log("Iniciando sincronización de la base de datos...");
+        console.log("Iniciando sincronización forzada...");
         await db.authenticate();
-        console.log("Conectado a la BD.");
         
-        // El alter: true modifica las tablas para que coincidan con los modelos sin borrar datos
+        // Desactivamos chequeos de llaves foráneas temporalmente para que MySQL no se queje
+        await db.query('SET FOREIGN_KEY_CHECKS = 0', { raw: true });
+        
         await db.sync({ alter: true });
-        console.log("¡Sincronización completada! Todas las columnas faltantes fueron agregadas.");
+        
+        // Volvemos a activar
+        await db.query('SET FOREIGN_KEY_CHECKS = 1', { raw: true });
+        
+        console.log("¡Sincronización completada con éxito!");
         process.exit(0);
     } catch (error) {
         console.error("Error sincronizando la BD:", error);
