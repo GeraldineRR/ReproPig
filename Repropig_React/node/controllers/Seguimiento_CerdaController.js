@@ -44,6 +44,8 @@ export const updateSeguimiento_Cerda = async (req, res) => {
 }
 
 
+import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
+
 export const deleteSeguimiento_Cerda = async (req, res) => {
     try {
         await Seguimiento_CerdaService.delete(req.params.id)
@@ -51,5 +53,18 @@ export const deleteSeguimiento_Cerda = async (req, res) => {
 
     } catch (error) {
         res.status(400).json({ message: error.message })
+    }
+}
+
+export const toggleEstadoSeguimiento_Cerda = async (req, res) => {
+    try {
+        const item = await Seguimiento_CerdaModel.findByPk(req.params.id);
+        if (!item) return res.status(404).json({ message: "Seguimiento de cerda no encontrado" });
+
+        const nuevoEstado = (item.Estado === 'Inactivo' || item.Estado === 'I') ? 'Activo' : 'Inactivo';
+        await item.update({ Estado: nuevoEstado });
+        res.status(200).json({ message: `Estado cambiado a ${nuevoEstado}`, Estado: nuevoEstado });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 }

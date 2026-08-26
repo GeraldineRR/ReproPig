@@ -16,8 +16,10 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const [Dia_Programado, setDiaProgramado] = useState(0);
     const [Fecha_Real, setFechaReal] = useState('');
     const [Peso_Cria, setPesoCria] = useState('');
-    const [Id_Medicamento, setIdMedicamento] = useState('');
+    const [Id_Medicamento, setIdMedicamento] = useState([]);
     const [medicamentos, setMedicamentos] = useState([]);
+    const [Id_Responsable, setIdResponsable] = useState([]);
+    const [responsables, setResponsables] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
     const [Fecha_Programada, setFechaProgramada] = useState('');
     const [textFormButton, setTextFormButton] = useState('Enviar');
@@ -52,7 +54,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     useEffect(() => { getPartos() }, []);
     useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
-    useEffect(() => { getMedicamentos() }, []);
+    useEffect(() => { getMedicamentos(); getResponsables(); }, []);
 
     useEffect(() => {
         if (!actividadEdit || modoCorreccion) {
@@ -83,6 +85,22 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         } catch (error) { console.error("Error cargando medicamentos:", error); }
     }
 
+    const getResponsables = async () => {
+        try {
+            const response = await apiAxios.get('/responsables/');
+            setResponsables(response.data);
+        } catch (error) { console.error("Error cargando responsables:", error); }
+    }
+
+    const parsearMultiples = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(String);
+        if (typeof val === 'string' && val.startsWith('[')) {
+            try { return JSON.parse(val).map(String); } catch { return []; }
+        }
+        return [String(val)];
+    };
+
     useEffect(() => {
         if (actividadEdit) {
             setIdParto(actividadEdit.porcino?.Id_parto ?? '');
@@ -98,7 +116,8 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
             setFechaReal(actividadEdit.Fecha_Real?.split('T')[0] ?? '');
             setPesoCria(actividadEdit.Peso_Cria ?? '');
-            setIdMedicamento(actividadEdit.Id_Medicamento ?? '');
+            setIdMedicamento(parsearMultiples(actividadEdit.Id_Medicamento));
+            setIdResponsable(parsearMultiples(actividadEdit.Id_Responsable));
             setObservaciones(actividadEdit.Observaciones ?? '');
             setTextFormButton("Actualizar");
         } else {
@@ -115,7 +134,8 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
-        setIdMedicamento('');
+        setIdMedicamento([]);
+        setIdResponsable([]);
         setObservaciones('');
         setTextFormButton("Enviar");
     }
@@ -174,12 +194,21 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         const resultadoPeso = await verificarPesoCero();
         if (resultadoPeso === 'error') return;
 
+        const formatMultiField = (val) => {
+            if (!val || (Array.isArray(val) && val.length === 0)) return null;
+            if (Array.isArray(val)) {
+                return val.length === 1 ? Number(val[0]) : JSON.stringify(val.map(Number));
+            }
+            return Number(val);
+        };
+
         const data = {
             Id_Porcino,
             Dia_Programado,
             Fecha_Real,
             Peso_Cria,
-            Id_Medicamento: Id_Medicamento || null,
+            Id_Medicamento: formatMultiField(Id_Medicamento),
+            Id_Responsable: formatMultiField(Id_Responsable),
             Observaciones
         }
 
@@ -450,13 +479,40 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                         <input type="number" step="0.01" className="form-control" value={Peso_Cria} onChange={(e) => setPesoCria(e.target.value)} required />
                     </div>
                     <div className="mb-3">
-                        <label className="form-label">Medicamento</label>
-                        <select className="form-control" value={Id_Medicamento} onChange={(e) => setIdMedicamento(e.target.value)}>
-                            <option value="">Sin medicamento</option>
+                        <label className="form-label fw-semibold">👨‍🌾 Responsables (puedes elegir varios)</label>
+                        <select
+                            multiple
+                            className="form-select shadow-sm"
+                            style={{ height: '110px' }}
+                            value={Array.isArray(Id_Responsable) ? Id_Responsable.map(String) : (Id_Responsable ? [String(Id_Responsable)] : [])}
+                            onChange={(e) => {
+                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                setIdResponsable(selected);
+                            }}
+                        >
+                            {responsables.map((resp) => (
+                                <option key={resp.Id_Responsable} value={resp.Id_Responsable}>{resp.Nombres} {resp.Apellidos}</option>
+                            ))}
+                        </select>
+                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
+                    </div>
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold">💊 Medicamentos (puedes elegir varios)</label>
+                        <select
+                            multiple
+                            className="form-select shadow-sm"
+                            style={{ height: '110px' }}
+                            value={Array.isArray(Id_Medicamento) ? Id_Medicamento.map(String) : (Id_Medicamento ? [String(Id_Medicamento)] : [])}
+                            onChange={(e) => {
+                                const selected = Array.from(e.target.selectedOptions, option => option.value);
+                                setIdMedicamento(selected);
+                            }}
+                        >
                             {medicamentos.map((med) => (
                                 <option key={med.Id_Medicamento} value={med.Id_Medicamento}>{med.Nombre}</option>
                             ))}
                         </select>
+                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
                     </div>
                     <div className="mb-3">
                         <label className="form-label">Observaciones</label>

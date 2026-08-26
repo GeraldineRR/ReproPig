@@ -10,6 +10,7 @@ const SegcamadaModel = db.define ('segcamada', {
     Peso_Cria: { type: DataTypes.DECIMAL(5,2), allowNull: false },
     Id_Medicamento: { type: DataTypes.INTEGER, allowNull: true },
     Observaciones: { type: DataTypes.CHAR(255), allowNull: true },
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
 }, {
     freezeTableName: true,
     timestamps: false

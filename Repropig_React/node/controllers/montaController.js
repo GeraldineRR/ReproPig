@@ -40,6 +40,8 @@ export const updatemonta = async (req, res) => {
   }
 }
 
+import montaModel from '../models/montaModel.js'
+
 // eliminar una monta
 export const deletemonta = async (req, res) => {
   try {
@@ -47,5 +49,19 @@ export const deletemonta = async (req, res) => {
     res.status(204).send()
   } catch (error) {
     res.status(400).json({ message: error.message })
+  }
+}
+
+// toggle estado monta
+export const toggleEstadomonta = async (req, res) => {
+  try {
+    const item = await montaModel.findByPk(req.params.id);
+    if (!item) return res.status(404).json({ message: "Monta no encontrada" });
+
+    const nuevoEstado = (item.Estado === 'Inactivo' || item.Estado === 'I') ? 'Activo' : 'Inactivo';
+    await item.update({ Estado: nuevoEstado });
+    res.status(200).json({ message: `Estado cambiado a ${nuevoEstado}`, Estado: nuevoEstado });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 }

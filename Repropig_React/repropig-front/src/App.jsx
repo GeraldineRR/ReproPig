@@ -36,6 +36,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/perfil-cerda/:id" element={<PerfilCerda />} />
 
       {/* protegidas */}
       <Route element={<RutaProtegida />}>
@@ -52,7 +53,6 @@ function App() {
           <Route path="/actividades_camada/parto/:id" element={<CrudActividadesCamada />} />
           <Route path="/seguimiento_cerda" element={<CrudSeguimiento_Cerda />} />
           <Route path="/calendario" element={<CrudCalendario />} />
-          <Route path="/perfil-cerda/:id" element={<PerfilCerda />} />
           <Route path="/mi-perfil" element={<MiPerfil />} />
           <Route path="/novedades" element={<CrudNovedades />} />
           <Route path="/actividades_camada" element={<CrudActividadesCamada />} />

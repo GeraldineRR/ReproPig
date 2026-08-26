@@ -7,7 +7,8 @@ const MedicamentosModel = db.define( "medicamentos", {
     Nombre: { type: DataTypes.STRING, allowNull: false},
     Tipo: { type: DataTypes.ENUM('Vacuna','Vitamina','Antibiotico','Analgesico','Antiparasitario','Antiinflamatorio'), allowNull: false},
     Presentacion: { type: DataTypes.STRING,allowNull: false},
-    Observaciones: { type: DataTypes.TEXT }
+    Observaciones: { type: DataTypes.TEXT },
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
   },{
     freezeTableName: true,
     timestamps: false

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
-import RazaForm from "./RazaForm.jsx"
+import RazaForm from "./razaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import Swal from 'sweetalert2'
+import WithReactContent from 'sweetalert2-react-content'
 
 const CrudRazas = () => {
 
@@ -11,25 +13,41 @@ const CrudRazas = () => {
     const [razaEdit, setRazaEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
 
-    // Función para alternar el estado de la raza
-    const toggleEstado = async (id) => {
-        setLoadingId(id);
+    const MySwal = WithReactContent(Swal)
 
-        try {
-            const res = await apiAxios.put(`/raza/${id}/toggle-estado`);
+    // Función para alternar el estado de la raza con confirmación SweetAlert
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
 
-            setRazas(prev =>
-                prev.map(p =>
-                    p.Id_Raza === id
-                        ? { ...p, Estado: res.data.Estado }
-                        : p
-                )
-            );
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} esta raza?`,
+            text: `La raza ${row.Nom_Raza} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
 
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoadingId(null);
+        if (result.isConfirmed) {
+            setLoadingId(row.Id_Raza);
+            try {
+                const res = await apiAxios.put(`/raza/${row.Id_Raza}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                setRazas(prev =>
+                    prev.map(p =>
+                        p.Id_Raza === row.Id_Raza
+                            ? { ...p, Estado: res.data.Estado }
+                            : p
+                    )
+                );
+            } catch (error) {
+                MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado de la raza.' });
+            } finally {
+                setLoadingId(null);
+            }
         }
     };
 
@@ -46,27 +64,40 @@ const CrudRazas = () => {
         },
         {
             name: 'Estado',
-            selector: row => (
-                <button
-                    className={`badge border-0 ${row.Estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
-                    onClick={() => toggleEstado(row.Id_Raza)}
-                    disabled={loadingId === row.Id_Raza}
-                >
-                    {loadingId === row.Id_Raza
-                        ? '...'
-                        : row.Estado}
-                </button>
-            )
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        disabled={loadingId === row.Id_Raza}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {loadingId === row.Id_Raza ? '...' : (esActivo ? 'Activo' : 'Inactivo')}
+                    </button>
+                );
+            }
         },
         {
             name: 'Acciones',
             cell: row => (
-                <button
-                    className="btn btn-sm bg-info"
-                    onClick={() => handleEdit(row)}
-                >
-                    <i className="fa-solid fa-pencil"></i>
-                </button>
+                <div className="d-flex gap-1">
+                    <button
+                        className="btn btn-sm bg-info"
+                        onClick={() => handleEdit(row)}
+                        title="Editar"
+                    >
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                    <button
+                        className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
+                        onClick={() => toggleEstado(row)}
+                        disabled={loadingId === row.Id_Raza}
+                    >
+                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
+                    </button>
+                </div>
             )
         }
     ]

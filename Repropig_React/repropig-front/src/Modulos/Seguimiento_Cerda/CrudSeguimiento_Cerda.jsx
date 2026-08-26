@@ -3,6 +3,8 @@ import { useState, useEffect } from "react"
 import DataTable from 'react-data-table-component'
 import Seguimiento_CerdaForm from "./Seguimiento_CerdaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import Swal from 'sweetalert2'
+import WithReactContent from 'sweetalert2-react-content'
 
 
 const crudSeguimiento_Cerda = () => {
@@ -10,6 +12,41 @@ const crudSeguimiento_Cerda = () => {
     const [Seguimiento_CerdaEdit, setSeguimiento_CerdaEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
     const [modalKey, setModalKey] = useState(0)  // ← AGREGADO
+
+    const MySwal = WithReactContent(Swal)
+
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
+
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} este seguimiento de cerda?`,
+            text: `El seguimiento #${row.Id_Seguimiento_Cerda} pasará a estar ${esActivo ? 'Inactivo' : 'Activo'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.put(`/Seguimiento_Cerda/${row.Id_Seguimiento_Cerda}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                getAllSeguimiento_Cerda();
+            } catch (error) {
+                try {
+                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
+                    await apiAxios.put(`/Seguimiento_Cerda/${row.Id_Seguimiento_Cerda}`, { ...row, Estado: nuevoEstado });
+                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                    getAllSeguimiento_Cerda();
+                } catch (err) {
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
+                }
+            }
+        }
+    };
 
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Seguimiento_Cerda, width: '70px' },
@@ -21,10 +58,32 @@ const crudSeguimiento_Cerda = () => {
         { name: 'Medicamento', selector: row => row.medicamentos?.Nombre || '—' },
         { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
         {
+            name: 'Estado',
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {esActivo ? 'Activo' : 'Inactivo'}
+                    </button>
+                );
+            }
+        },
+        {
             name: 'Acciones', cell: row => (
-                <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
-                    <i className="fa-solid fa-pencil"></i>
-                </button>
+                <div className="d-flex gap-1">
+                    <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)} title="Editar">
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                    <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                        onClick={() => toggleEstado(row)}
+                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}>
+                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
+                    </button>
+                </div>
             )
         }
     ]
@@ -34,7 +93,7 @@ const crudSeguimiento_Cerda = () => {
     }, [])
 
     const getAllSeguimiento_Cerda = async () => {
-        const response = await apiAxios.get('/Seguimiento_Cerda/')
+        const response = await apiAxios.get('/Seguimiento_Cerda')
         setSeguimiento_Cerda(response.data)
     }
 

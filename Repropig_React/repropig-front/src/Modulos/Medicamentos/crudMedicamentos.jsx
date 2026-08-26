@@ -3,6 +3,8 @@ import { useState, useEffect } from "react"
 import DataTable from 'react-data-table-component'
 import MedicamentosForm from "./MedicamentosForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import Swal from 'sweetalert2'
+import WithReactContent from 'sweetalert2-react-content'
 
 
 const CrudMedicamentos = () =>{
@@ -10,12 +12,63 @@ const CrudMedicamentos = () =>{
     const [medicamentoEdit, setmedicamentoEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
 
+    const MySwal = WithReactContent(Swal)
+
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
+
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} este medicamento?`,
+            text: `El medicamento ${row.Nombre} pasará a estar ${esActivo ? 'Inactivo' : 'Activo'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.put(`/medicamentos/${row.Id_Medicamento}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                getAllMedicamentos();
+            } catch (error) {
+                try {
+                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
+                    await apiAxios.put(`/medicamentos/${row.Id_Medicamento}`, { ...row, Estado: nuevoEstado });
+                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                    getAllMedicamentos();
+                } catch (err) {
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
+                }
+            }
+        }
+    };
+
     const columnsTable = [
         { name: 'Id_Medicamento', selector: row => row.Id_Medicamento},
         { name: 'Nombre', selector: row => row.Nombre},
         { name: 'Tipo', selector: row => row.Tipo},
         { name: 'Presentacion', selector: row => row.Presentacion},
+        { name: 'Cantidad', selector: row => row.Cantidad ?? '—'},
         { name: 'Observaciones', selector: row => row.Observaciones},
+        {
+            name: 'Estado',
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {esActivo ? 'Activo' : 'Inactivo'}
+                    </button>
+                );
+            }
+        },
         { name: 'Acciones', cell: row => (
         <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}><i className="fa-solid fa-pencil"></i></button>
         )
@@ -31,7 +84,7 @@ const CrudMedicamentos = () =>{
 
 
     const getAllMedicamentos = async () =>{
-        const response = await apiAxios.get('/medicamentos/')
+        const response = await apiAxios.get('/medicamentos')
         setMedicamentos(response.data)
         console.log(response.data)
     }

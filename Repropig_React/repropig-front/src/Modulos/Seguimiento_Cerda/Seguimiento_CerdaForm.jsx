@@ -118,8 +118,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             Hora,
             Observaciones,
             Id_Porcino,
-            Id_Responsable,
-            Id_Medicamento,
+            Id_Responsable: Array.isArray(Id_Responsable) ? (Id_Responsable.length ? (Id_Responsable.length === 1 ? Id_Responsable[0] : JSON.stringify(Id_Responsable)) : null) : (Id_Responsable || null),
+            Id_Medicamento: Array.isArray(Id_Medicamento) ? (Id_Medicamento.length ? Id_Medicamento[0] : null) : (Id_Medicamento || null),
             Id_Ciclo: Id_Ciclo || null
         }
 
@@ -229,14 +229,17 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
                 {/* RESPONSABLE */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">👨‍🌾 Responsable</label>
+                    <label className="form-label fw-semibold">👨‍🌾 Responsables (puedes elegir varios)</label>
                     <select
+                        multiple
                         className="form-select shadow-sm"
-                        value={Id_Responsable}
-                        onChange={(e) => setId_Responsable(e.target.value)}
-                        required
+                        style={{ height: '110px' }}
+                        value={Array.isArray(Id_Responsable) ? Id_Responsable : (Id_Responsable ? [String(Id_Responsable)] : [])}
+                        onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value);
+                            setId_Responsable(selected);
+                        }}
                     >
-                        <option value="">Seleccione</option>
                         {responsables.map((responsable) => (
                             <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
                                 {responsable.Nombres} {responsable.Apellidos}
@@ -247,14 +250,17 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
                 {/* MEDICAMENTO */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">💊 Medicamento</label>
+                    <label className="form-label fw-semibold">💊 Medicamentos (puedes elegir varios)</label>
                     <select
+                        multiple
                         className="form-select shadow-sm"
-                        value={Id_Medicamento}
-                        onChange={(e) => setId_Medicamento(e.target.value)}
-                        required
+                        style={{ height: '110px' }}
+                        value={Array.isArray(Id_Medicamento) ? Id_Medicamento : (Id_Medicamento ? [String(Id_Medicamento)] : [])}
+                        onChange={(e) => {
+                            const selected = Array.from(e.target.selectedOptions, option => option.value);
+                            setId_Medicamento(selected);
+                        }}
                     >
-                        <option value="">Seleccione</option>
                         {medicamentos.map((medicamento) => (
                             <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
                                 {medicamento.Nombre}

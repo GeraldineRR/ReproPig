@@ -12,7 +12,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
     const [Nom_Porcino, setNombre] = useState('')
     const [Fec_Nac_Porcino, setFecNacimiento] = useState('')
     const [Gen_Porcino, setGenero] = useState('')
-    const [Tipo_Cerdo, setTipoCerdo] = useState('')
+    const [Tipo_Cerdo, setTipoCerdo] = useState('Adulto')
     const [Plac_Sena_Porcino, setPlacaSena] = useState('')
     const [Proc_Porcino, setProcedencia] = useState('')
     const [Lug_Proc_Porcino, setLugarProc] = useState('')
@@ -96,7 +96,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
             setNombre(porcinoEdit.Nom_Porcino ?? '')
             setFecNacimiento(porcinoEdit.Fec_Nac_Porcino?.split('T')[0] ?? '')
             setGenero(porcinoEdit.Gen_Porcino ?? '')
-            setTipoCerdo(porcinoEdit.Tipo_Cerdo ?? '')
+            setTipoCerdo(porcinoEdit.Tipo_Cerdo ?? 'Adulto')
             setPlacaSena(porcinoEdit.Plac_Sena_Porcino ?? '')
             setProcedencia(porcinoEdit.Proc_Porcino ?? '')
             setLugarProc(porcinoEdit.Lug_Proc_Porcino ?? '')
@@ -115,7 +115,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
         setNombre('')
         setFecNacimiento('')
         setGenero('')
-        setTipoCerdo('')
+        setTipoCerdo('Adulto')
         setPlacaSena('')
         setProcedencia('')
         setLugarProc('')
@@ -252,15 +252,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
                     <option value="">Selecciona...</option>
                     <option value="H">Hembra</option>
                     <option value="M">Macho</option>
-                </select>
-            </div>
-
-            <div className="mb-3">
-                <label htmlFor="Tipo_Cerdo" className="form-label">Tipo de Cerdo</label>
-                <select id="Tipo_Cerdo" className="form-control" value={Tipo_Cerdo} onChange={(e) => setTipoCerdo(e.target.value)} required>
-                    <option value="">Selecciona...</option>
-                    <option value="Adulto">Adulto</option>
-                    <option value="Lechon">Lechón</option>
                 </select>
             </div>
 

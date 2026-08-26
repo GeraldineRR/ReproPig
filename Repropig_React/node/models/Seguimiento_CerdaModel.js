@@ -11,6 +11,7 @@ const Seguimiento_CerdaModel = db.define('Seguimiento_Cerda', {
     Id_Responsable: { type: DataTypes.INTEGER },
     Id_Medicamento: { type: DataTypes.INTEGER },
     Id_Ciclo: { type: DataTypes.INTEGER, allowNull: true },
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
 }, {
     freezeTableName: true,
     timestamps: false

@@ -70,3 +70,16 @@ export const deleteSegcamada = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+export const toggleEstadoSegcamada = async (req, res) => {
+    try {
+        const item = await SegCamadaModel.findByPk(req.params.id);
+        if (!item) return res.status(404).json({ message: "Seguimiento de camada no encontrado" });
+
+        const nuevoEstado = (item.Estado === 'Inactivo' || item.Estado === 'I') ? 'Activo' : 'Inactivo';
+        await item.update({ Estado: nuevoEstado });
+        res.status(200).json({ message: `Estado cambiado a ${nuevoEstado}`, Estado: nuevoEstado });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}

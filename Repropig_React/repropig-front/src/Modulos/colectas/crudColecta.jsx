@@ -10,7 +10,7 @@ const CrudColecta = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
-    const filtroDesdeInseminacion = location.state || null // { Id_colecta }
+    const filtroDesdeInseminacion = (location.state && location.state.Id_colecta) ? location.state : null // { Id_colecta }
     const [colecta, setColecta] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
@@ -60,9 +60,60 @@ const CrudColecta = () => {
         }
     }
 
+    // 🔹 Toggle Estado Colecta con confirmación SweetAlert
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
+
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} esta colecta?`,
+            text: `La colecta #${row.Id_colecta} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.put(`/colectas/${row.Id_colecta}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                getAllColectas();
+            } catch (error) {
+                try {
+                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
+                    await apiAxios.put(`/colectas/${row.Id_colecta}`, { ...row, Estado: nuevoEstado });
+                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                    getAllColectas();
+                } catch (err) {
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
+                }
+            }
+        }
+    };
+
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_colecta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
+        {
+            name: 'Vigencia', cell: row => {
+                if (row.Tipo !== 'Interno') return <span className="badge bg-secondary">N/A</span>;
+                if (!row.Fecha) return <span className="badge bg-secondary">—</span>;
+                
+                const fechaColecta = new Date(row.Fecha);
+                const expirationDate = new Date(fechaColecta);
+                expirationDate.setDate(expirationDate.getDate() + 3);
+                const today = new Date();
+                
+                const diffTime = expirationDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 0) return <span className="badge bg-danger">Vencida</span>;
+                return <span className="badge bg-warning text-dark">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
+            }
+        },
         { name: 'Uso', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
         { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' }, 
@@ -80,6 +131,21 @@ const CrudColecta = () => {
         },
         { name: 'Observaciones', selector: row => row.Observaciones },
         {
+            name: 'Estado',
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {esActivo ? 'Activo' : 'Inactivo'}
+                    </button>
+                );
+            }
+        },
+        {
             name: 'Acciones', cell: row => (
                 <div className="d-flex gap-1">
                     {/* Editar */}
@@ -88,10 +154,11 @@ const CrudColecta = () => {
                         data-bs-toggle="modal" data-bs-target="#exampleModal">
                         <i className="fa-solid fa-pencil"></i>
                     </button>
-                    {/* ✅ Eliminar */}
-                    <button className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
+                    {/* ✅ Toggle Estado con confirmación */}
+                    <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
+                        onClick={() => toggleEstado(row)}>
+                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
                     </button>
                 </div>
             )
@@ -104,9 +171,15 @@ const CrudColecta = () => {
     }, []);
 
     const getAllColectas = async () => {
-        const response = await apiAxios.get('/colectas');
-        const sortedData = response.data.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
-        setColecta(sortedData);
+        try {
+            const response = await apiAxios.get('/colectas');
+            const data = Array.isArray(response.data) ? response.data : (response.data?.colectas || []);
+            const sortedData = data.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
+            setColecta(sortedData);
+        } catch (error) {
+            console.error("Error al obtener colectas:", error);
+            setColecta([]);
+        }
     };
 
     const getResponsables = async () => {
@@ -164,7 +237,7 @@ const CrudColecta = () => {
 
             <DataTable title="Colectas" columns={columnsTable}
                 data={newListcolecta.filter(c =>
-                    !filtroDesdeInseminacion || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
+                    !filtroDesdeInseminacion || !filtroDesdeInseminacion.Id_colecta || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
                 )}
                 keyField="Id_colecta" pagination highlightOnHover striped />
 

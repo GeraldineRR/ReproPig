@@ -9,6 +9,7 @@ const montaModel = db.define('monta', {
     Id_Responsable: { type: DataTypes.TEXT },
     Observaciones: { type: DataTypes.STRING },
     Id_Ciclo: { type: DataTypes.INTEGER },
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
 }, {
     freezeTableName: true,
     timestamps: false
