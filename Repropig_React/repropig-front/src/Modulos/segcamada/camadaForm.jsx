@@ -8,9 +8,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
     const [partoConfirmado, setPartoConfirmado] = useState(false);
     const [modoCorreccion, setModoCorreccion] = useState(false);
-    const [Id_Cria, setIdCria] = useState('');
-    const [numCria, setNumCria] = useState('');
-    const [crias, setCrias] = useState([]);
+    const [Id_Porcino, setIdPorcino] = useState('');
+    const [lechones, setLechones] = useState([]);
     const [Id_parto, setIdParto] = useState('');
     const [partos, setPartos] = useState([]);
     const [Dia_Programado, setDiaProgramado] = useState(0);
@@ -19,7 +18,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const [Id_Medicamento, setIdMedicamento] = useState('');
     const [medicamentos, setMedicamentos] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
-    const [Fecha_Programada, setFechaProgramada] = useState('')
+    const [Fecha_Programada, setFechaProgramada] = useState('');
     const [textFormButton, setTextFormButton] = useState('Enviar');
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
@@ -31,23 +30,18 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         return fecha.toISOString().split('T')[0];
     }
 
-    // Obtiene el siguiente día programado basado en registros existentes
-    const actualizarDiaYFecha = async (idCria) => {
-        if (!Id_parto || !idCria) return;
+    // Obtiene el siguiente día programado basado en registros existentes para el porcino
+    const actualizarDiaYFecha = async (idPorcino) => {
+        if (!Id_parto || !idPorcino) return;
 
         try {
-            // Trae los registros de seguimiento ya guardados para esta cría
-            const response = await apiAxios.get(`/segcamada/cria/${idCria}`);
-            const registros = response.data; // array de registros
+            const response = await apiAxios.get(`/segcamada/porcino/${idPorcino}`);
+            const registros = response.data;
 
-            // Encuentra el último día registrado
             const ultimoDia = registros.length ? registros[registros.length - 1].Dia_Programado : 0;
-
-            // Encuentra el siguiente día disponible
             const nextDay = diasSeguimiento.find(d => d > ultimoDia) || diasSeguimiento[diasSeguimiento.length - 1];
             setDiaProgramado(nextDay);
 
-            // Calcula la fecha basada en el parto
             const fechaParto = partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin;
             if (fechaParto) {
                 const fechaProg = calcularFechaProgramada(fechaParto, nextDay);
@@ -61,17 +55,16 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     }
 
     useEffect(() => { getPartos() }, []);
-    useEffect(() => { if (Id_parto) getCriasPorParto(Id_parto) }, [Id_parto]);
+    useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
     useEffect(() => { getMedicamentos() }, []);
 
     useEffect(() => {
         if (!segcamadaEdit || modoCorreccion) {
-            if (Id_Cria && Id_parto) {
-                actualizarDiaYFecha(Id_Cria);
+            if (Id_Porcino && Id_parto) {
+                actualizarDiaYFecha(Id_Porcino);
             }
         }
-    }, [Id_Cria, Id_parto, partos, modoCorreccion])
-
+    }, [Id_Porcino, Id_parto, partos, modoCorreccion]);
 
     const getPartos = async () => {
         try {
@@ -80,11 +73,15 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         } catch (error) { console.error("Error cargando partos:", error); }
     }
 
-    const getCriasPorParto = async (idParto) => {
+    const getLechonesPorParto = async (idParto) => {
         try {
-            const response = await apiAxios.get(`/cria/partos/${idParto}`);
-            setCrias(response.data);
-        } catch (error) { console.error("Error cargando crias:", error); }
+            // Traemos los porcinos de tipo Lechon asociados al parto
+            const response = await apiAxios.get(`/porcino/lechones/parto/${idParto}`);
+            setLechones(response.data);
+        } catch (error) {
+            console.error("Error cargando lechones:", error);
+            setLechones([]);
+        }
     }
 
     const getMedicamentos = async () => {
@@ -98,14 +95,13 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         if (segcamadaEdit) {
             console.log("EDIT DATA:", segcamadaEdit);
 
-            setIdParto(segcamadaEdit.crias?.Id_parto ?? '');
+            setIdParto(segcamadaEdit.porcino?.Id_parto ?? '');
             setPartoConfirmado(true);
-            setIdCria(segcamadaEdit.Id_Cria ?? '');
-            setNumCria(segcamadaEdit.crias?.Num_Cria ?? '');
+            setIdPorcino(segcamadaEdit.Id_Porcino ?? '');
             setDiaProgramado(segcamadaEdit.Dia_Programado ?? '');
 
             const parto = partos.find(
-                p => p.Id_parto === Number(segcamadaEdit.crias?.Id_parto)
+                p => p.Id_parto === Number(segcamadaEdit.porcino?.Id_parto)
             );
 
             if (parto?.Fec_fin && segcamadaEdit.Dia_Programado) {
@@ -127,7 +123,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     }, [segcamadaEdit, partos]);
 
     const resetForm = () => {
-        setIdCria('');
+        setIdPorcino('');
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
@@ -139,7 +135,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const huboCambios = () => {
         if (!segcamadaEdit) return true;
         return !(
-        Number(Id_Cria) === Number(segcamadaEdit.Id_Cria) &&
+            Number(Id_Porcino) === Number(segcamadaEdit.Id_Porcino) &&
             Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
             Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
             parseFloat(Peso_Cria).toFixed(2) === parseFloat(segcamadaEdit.Peso_Cria).toFixed(2) &&
@@ -152,7 +148,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         e.preventDefault();
 
         const data = {
-            Id_Cria,
+            Id_Porcino,
             Dia_Programado,
             Fecha_Real,
             Peso_Cria,
@@ -167,7 +163,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
                 const result = await MySwal.fire({
                     title: 'Registro exitoso',
-                    html: `¿Deseas registrar otra cría de este parto?`,
+                    html: `¿Deseas registrar seguimiento de otro lechón de este parto?`,
                     icon: 'success',
                     showCancelButton: true,
                     confirmButtonText: 'Sí, registrar',
@@ -176,10 +172,10 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
                 if (result.isConfirmed) resetForm();
                 else {
-                    resetForm() // limpia todo
-                    setPartoConfirmado(false) // permite elegir otro parto después
-                    setIdParto('')
-                    hideModal()
+                    resetForm();
+                    setPartoConfirmado(false);
+                    setIdParto('');
+                    hideModal();
                 }
 
             } else {
@@ -207,7 +203,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             MySwal.fire({
                 icon: "error",
                 title: "Error",
-                text: "No se pudo guardar el registro."
+                text: error.response?.data?.message || "No se pudo guardar el registro."
             });
         }
     }
@@ -233,7 +229,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const activarCorreccion = async () => {
         const result = await MySwal.fire({
             icon: "warning",
-            title: "Cambiar cría o parto",
+            title: "Cambiar lechón o parto",
             text: "Se reiniciará el cálculo del seguimiento actual.",
             showCancelButton: true,
             confirmButtonText: "Sí, continuar",
@@ -243,31 +239,34 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         if (result.isConfirmed) {
             setModoCorreccion(true);
             setPartoConfirmado(false);
-
-            setIdCria('');
+            setIdPorcino('');
             setDiaProgramado('');
             setFechaProgramada('');
         }
     }
 
+    // Nombre del lechón seleccionado para mostrar en modo edición
+    const lechoNombreEdicion = () => {
+        const p = segcamadaEdit?.porcino;
+        if (!p) return '';
+        return `Lechón #${p.Id_Porcino}${p.Nom_Porcino ? ' - ' + p.Nom_Porcino : ''}`;
+    }
+
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
-
-            {/* DE PARTO */}
+            {/* PARTO */}
             <div className="mb-3">
                 <label className="form-label">Parto</label>
 
                 {segcamadaEdit && !modoCorreccion ? (
-                    // MODO EDICIÓN BLOQUEADO
                     <input
                         type="text"
                         className="form-control"
-                        value={`Parto # ${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcinos?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin || ''}`}
+                        value={`Parto #${Id_parto} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.porcino?.Nom_Porcino || 'Sin nombre'} - ${partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin || ''}`}
                         readOnly
                     />
                 ) : (
-                    // MODO CREACIÓN Y CORRECCIÓN
                     <select
                         className="form-control"
                         value={Id_parto}
@@ -278,39 +277,37 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         <option value="">Selecciona...</option>
                         {partos.map((parto) => (
                             <option key={parto.Id_parto} value={parto.Id_parto}>
-                                Parto #{parto.Id_parto} - {parto.porcinos?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}
+                                Parto #{parto.Id_parto} - {parto.porcino?.Nom_Porcino || 'Sin nombre'} - {parto.Fec_fin}
                             </option>
                         ))}
                     </select>
                 )}
             </div>
 
-            {/* CRÍA Y FORMULARIO */}
+            {/* LECHÓN Y FORMULARIO */}
             {(Id_parto || segcamadaEdit) && (
                 <>
                     <div className="mb-3">
-                        <label className="form-label">Cría</label>
+                        <label className="form-label">Lechón</label>
 
                         {segcamadaEdit && !modoCorreccion ? (
-                            // MODO EDICIÓN BLOQUEADO
                             <input
                                 type="text"
                                 className="form-control"
-                                value={`Cría # ${numCria}`}
+                                value={lechoNombreEdicion()}
                                 readOnly
                             />
                         ) : (
-                            // MODO CREACIÓN Y CORRECCIÓN
                             <select
                                 className="form-control"
-                                value={Id_Cria}
-                                onChange={(e) => setIdCria(e.target.value)}
+                                value={Id_Porcino}
+                                onChange={(e) => setIdPorcino(e.target.value)}
                                 required
                             >
                                 <option value="">Selecciona...</option>
-                                {crias.map((cria) => (
-                                    <option key={cria.Id_Cria} value={cria.Id_Cria}>
-                                        Cría #{cria.Num_Cria}
+                                {lechones.map((lechon) => (
+                                    <option key={lechon.Id_Porcino} value={lechon.Id_Porcino}>
+                                        Lechón #{lechon.Id_Porcino}{lechon.Nom_Porcino ? ` - ${lechon.Nom_Porcino}` : ''} ({lechon.Estado})
                                     </option>
                                 ))}
                             </select>
@@ -323,7 +320,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             className="btn btn-warning mb-3"
                             onClick={activarCorreccion}
                         >
-                            Cambiar cría / parto
+                            Cambiar lechón / parto
                         </button>
                     )}
 
@@ -359,7 +356,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Peso Cría (kg)</label>
+                        <label className="form-label">Peso Lechón (kg)</label>
                         <input
                             type="number"
                             step="0.01"
