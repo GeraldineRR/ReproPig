@@ -5,7 +5,8 @@ import {
     createPartos, 
     updatePartos, 
     deletePartos,
-    toggleEstadoParto
+    toggleEstadoParto,
+    checkSeguimiento
 } from '../controllers/PartosController.js'
 
 import multer from 'multer'
@@ -27,6 +28,7 @@ const almacenamiento = multer.diskStorage({
 const upload = multer({ storage: almacenamiento })
 
 router.get('/', getALLPartos)
+router.get('/:id/tiene-seguimiento', checkSeguimiento)
 router.get('/:id', getPartos)
 router.post('/', createPartos)
 

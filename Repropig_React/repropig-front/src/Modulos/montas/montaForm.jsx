@@ -258,6 +258,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                 <div className="col-md-6">
                     <label className="form-label fw-semibold">🐗 Cerdo</label>
                     <select
+                    
                         className="form-select shadow-sm"
                         value={Id_Cerdo}
                         onChange={e => setId_Cerdo(e.target.value)}

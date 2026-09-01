@@ -21,6 +21,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [textFormButton, setTextFormButton] = useState('Registrar')
+    const [tieneSeguimiento, setTieneSeguimiento] = useState(false)
 
     // 🔢 Total automático
     const totalNacidos =
@@ -75,8 +76,10 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             setHor_final(rowToEdit.Hor_final || '')
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setTextFormButton("Actualizar")
+            checkTieneSeguimiento(rowToEdit.Id_parto)
         } else {
             resetForm()
+            setTieneSeguimiento(false)
         }
     }, [rowToEdit])
 
@@ -93,6 +96,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
         setHor_final('')
         setId_Responsable([])
         setTextFormButton("Registrar")
+        setTieneSeguimiento(false)
     }
 
     const toggleResponsable = (id) => {

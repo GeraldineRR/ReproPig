@@ -60,8 +60,8 @@ ciclosModel.hasMany(inseminacionModel, { foreignKey: 'Id_Ciclo', as: 'inseminaci
 responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
 
-PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
-SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
+PartosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_parto', as: 'seguimiento_cerda' })
+SeguimientoCerda_Model.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
 
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
@@ -125,6 +125,29 @@ app.use('/api/segcamada', segcamadaRoutes)
 app.get('/', (req, res) => {
     res.send('Hola mundo ADSO')
 })
+
+async function migrateCalendario() {
+  const columns = [
+    { name: 'resultado_rc1', type: 'VARCHAR(20) NULL' },
+    { name: 'resultado_rc2', type: 'VARCHAR(20) NULL' },
+    { name: 'observaciones_rc1', type: 'TEXT NULL' },
+    { name: 'observaciones_rc2', type: 'TEXT NULL' },
+    { name: 'observaciones_cambio', type: 'TEXT NULL' },
+    { name: 'observaciones_107', type: 'TEXT NULL' },
+    { name: 'observaciones_parto', type: 'TEXT NULL' }
+  ];
+
+  for (const col of columns) {
+    try {
+      await db.query(`ALTER TABLE \`Calendario\` ADD COLUMN \`${col.name}\` ${col.type};`);
+      console.log(`✅ Columna ${col.name} agregada a Calendario`);
+    } catch (err) {
+      if (err.parent?.code !== 'ER_DUP_COLUMNNAME') {
+        console.error(`⚠️ Error al agregar columna ${col.name}:`, err.message);
+      }
+    }
+  }
+}
 
 try {
     await db.authenticate()

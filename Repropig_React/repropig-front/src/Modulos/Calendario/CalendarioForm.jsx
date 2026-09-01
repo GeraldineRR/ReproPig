@@ -400,6 +400,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                             : ' Registra primero una monta o inseminación para obtener la fecha de servicio.'}
                     </span>
                 </div>
+
             )}
 
             {/* ── Events Table ──────────────────────── */}
