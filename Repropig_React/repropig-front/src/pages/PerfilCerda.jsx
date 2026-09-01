@@ -494,7 +494,7 @@ export default function PerfilCerda() {
             const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
                 import("jspdf"),
                 import("html2canvas"),
-            ])
+            ]);
 
             const el = pdfRef.current
             const canvas = await html2canvas(el, {
