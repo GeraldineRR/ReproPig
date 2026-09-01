@@ -284,4 +284,4 @@ const CrudPartos = () => {
 };
 
 
-export default CrudPartos;
+export default CrudPartos

@@ -11,19 +11,19 @@ export const getAllSegcamadas = async (req, res) => {
     }
 }
 
-export const getSegCamadaByCria = async (req, res) => {
-    const { idCria } = req.params;
+export const getSegCamadaByPorcino = async (req, res) => {
+    const { idPorcino } = req.params;
 
     try {
         const registros = await SegCamadaModel.findAll({
-            where: { Id_Cria: idCria },
-            order: [['Dia_Programado', 'ASC']] // Para obtener el último día fácilmente
+            where: { Id_Porcino: idPorcino },
+            order: [['Dia_Programado', 'ASC']]
         });
 
         res.status(200).json(registros);
 
     } catch (error) {
-        console.error("Error obteniendo registros por cría:", error);
+        console.error("Error obteniendo registros por porcino:", error);
         res.status(500).json({ error: error.message });
     }
 };

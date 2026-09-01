@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
-import RazaForm from "./RazaForm.jsx"
+import RazaForm from "./razaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 const CrudRazas = () => {
