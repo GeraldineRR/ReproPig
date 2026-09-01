@@ -6,7 +6,8 @@ const ActividadesCamadaModel = db.define('actividades_camada', {
     Tipo_Actividad: { type: DataTypes.STRING, allowNull: false },
     Fecha_Actividad: { type: DataTypes.DATEONLY, allowNull: false },
     Observaciones: { type: DataTypes.TEXT, allowNull: true },
-    Id_Medicamento: { type: DataTypes.INTEGER, allowNull: true },
+    Id_Medicamento: { type: DataTypes.TEXT, allowNull: true },
+    Id_Responsable: { type: DataTypes.TEXT, allowNull: true },
     Id_SegCamada: { type: DataTypes.INTEGER, allowNull: true }
 }, {
     freezeTableName: true,

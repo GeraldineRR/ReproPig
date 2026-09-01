@@ -33,8 +33,8 @@ PorcinoModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'parto' })
 PartosModel.hasMany(PorcinoModel, { foreignKey: 'Id_parto', as: 'lechones' })
 
 
-MedicamentosModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Medicamento', as: 'actividades_camada' })
-ActividadesCamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
+// MedicamentosModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Medicamento', as: 'actividades_camada' })
+// ActividadesCamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
 
 NovedadesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
@@ -129,7 +129,37 @@ app.get('/', (req, res) => {
 try {
     await db.authenticate()
     console.log('✅ Conexión a la base de datos exitosa')
-    // await db.sync()
+
+    try {
+        await db.query("ALTER TABLE actividades_camada MODIFY COLUMN Id_Medicamento TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter Id_Medicamento:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE actividades_camada ADD COLUMN Id_Responsable TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter Id_Responsable:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE partos ADD COLUMN Id_Responsable TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter partos Id_Responsable:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE monta ADD COLUMN estado VARCHAR(10) DEFAULT 'Activo';")
+    } catch (e) {
+        console.log("Aviso alter monta estado:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE inseminacion ADD COLUMN estado VARCHAR(10) DEFAULT 'Activo';")
+    } catch (e) {
+        console.log("Aviso alter inseminacion estado:", e.message)
+    }
+
     console.log('✅ Base de datos sincronizada')
 } catch (error) {
     console.error('❌ Error al conectar a la base de datos:', error)

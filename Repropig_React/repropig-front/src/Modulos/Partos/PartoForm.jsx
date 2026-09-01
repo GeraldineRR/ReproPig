@@ -1,370 +1,276 @@
 import { useState, useEffect } from "react"
 import apiAxios from "../../api/axiosConfig.js"
-
 import Swal from "sweetalert2"
 import withReactContent from "sweetalert2-react-content"
-import CriaForm from "../crias/criaForm.jsx"
 
 const MySwal = withReactContent(Swal)
 
-const PartosForm = ({ hideModal, rowToEdit = {} }) => {
+const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
 
     const [Id_Porcino, setPorcino] = useState('')
     const [Fec_inicio, setFec_inicio] = useState('')
     const [Hor_inicial, setHor_inicial] = useState('')
-    const [Nac_vivos, setNac_vivos] = useState('')
-    const [Nac_momias, setNac_momias] = useState('')
-    const [Nac_muertos, setNac_muertos] = useState('')
+    const [Nac_vivos, setNac_vivos] = useState(0)
+    const [Nac_momias, setNac_momias] = useState(0)
+    const [Nac_muertos, setNac_muertos] = useState(0)
     const [Pes_camada, setPes_camada] = useState('')
     const [Observaciones, setObservaciones] = useState('')
     const [Fec_fin, setFec_fin] = useState('')
     const [Hor_final, setHor_final] = useState('')
+    const [Id_Responsable, setId_Responsable] = useState([])
     const [porcinos, setPorcinos] = useState([])
-    const [textFormButton, setTextFormButton] = useState('Enviar')
+    const [responsables, setResponsables] = useState([])
+    const [textFormButton, setTextFormButton] = useState('Registrar')
 
-    // Estado para el flujo post-registro de lechones
-    const [mostrarCriaForm, setMostrarCriaForm] = useState(false)
-    const [partoRegistrado, setPartoRegistrado] = useState(null)  // { id, porcinoNombre }
-    const [totalLechonesRegistrados, setTotalLechonesRegistrados] = useState(0)
+    // 🔢 Total automático
+    const totalNacidos =
+        Number(Nac_vivos) +
+        Number(Nac_momias) +
+        Number(Nac_muertos)
 
-    // 🔹 Cargar datos si se edita
-    useEffect(() => {
-        if (rowToEdit?.id) {
-            loadDataInForm()
-        } else {
-            resetForm()
-        }
-    }, [rowToEdit])
-
-    // 🔹 Resetear formulario
-    const resetForm = () => {
-        setFec_fin("")
-        setFec_inicio("")
-        setHor_final("")
-        setHor_inicial("")
-        setPorcino("")
-        setNac_momias("")
-        setNac_muertos("")
-        setNac_vivos("")
-        setObservaciones("")
-        setPes_camada("")
-        setTextFormButton("Enviar")
-        setMostrarCriaForm(false)
-        setPartoRegistrado(null)
-        setTotalLechonesRegistrados(0)
-    }
-
-    // 🔹 Obtener porcinos
     useEffect(() => {
         getPorcinos()
+        getResponsables()
     }, [])
 
     const getPorcinos = async () => {
         try {
-            const response = await apiAxios.get('/porcino/')
-            setPorcinos(response.data)
+            const res = await apiAxios.get('/porcino/')
+            setPorcinos(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) {
             console.error("Error al obtener porcinos:", error)
         }
     }
 
-    // 🔹 Cargar datos en edición
-    const loadDataInForm = () => {
-        setFec_fin(rowToEdit.Fec_fin || "")
-        setFec_inicio(rowToEdit.Fec_inicio || "")
-        setHor_final(rowToEdit.Hor_final || "")
-        setHor_inicial(rowToEdit.Hor_inicial || "")
-        setPorcino(rowToEdit.Id_Porcino || "")
-        setNac_momias(rowToEdit.Nac_momias || "")
-        setNac_muertos(rowToEdit.Nac_muertos || "")
-        setNac_vivos(rowToEdit.Nac_vivos || "")
-        setObservaciones(rowToEdit.Observaciones || "")
-        setPes_camada(rowToEdit.Pes_camada || "")
-        setTextFormButton("Actualizar")
-    }
-
-    // 🔹 Enviar formulario
-    const gestionarForm = async (e) => {
-        e.preventDefault()
-
-        // ✅ Validación básica
-        if (!Id_Porcino || !Fec_inicio || !Hor_inicial) {
-            return MySwal.fire({
-                title: "Campos obligatorios",
-                text: "Por favor completa los campos requeridos",
-                icon: "warning"
-            })
-        }
-
-        const datos = {
-            Id_Porcino: Number(Id_Porcino),
-            Fec_inicio,
-            Hor_inicial,
-            Nac_vivos: Number(Nac_vivos) || 0,
-            Nac_momias: Number(Nac_momias) || 0,
-            Nac_muertos: Number(Nac_muertos) || 0,
-            Pes_camada,
-            Observaciones,
-            Fec_fin,
-            Hor_final
-        }
-
+    const getResponsables = async () => {
         try {
-
-            if (textFormButton === "Enviar") {
-
-                const response = await apiAxios.post("/partos/", datos)
-
-                // Obtener el id del parto recién creado
-                const partoId = response.data?.Partos?.Id_parto
-                const porcinoNombre = porcinos.find(p => p.Id_Porcino === Number(Id_Porcino))?.Nom_Porcino || ''
-
-                await MySwal.fire({
-                    title: "✅ Parto registrado",
-                    text: "El parto fue creado correctamente.",
-                    icon: "success",
-                    timer: 1500,
-                    showConfirmButton: false
-                })
-
-                // Preguntar si quiere registrar lechones
-                const result = await MySwal.fire({
-                    title: "¿Registrar lechones?",
-                    html: `<p>¿Deseas registrar los lechones del parto de <strong>${porcinoNombre}</strong>?</p>`,
-                    icon: "question",
-                    showCancelButton: true,
-                    confirmButtonText: "Sí, registrar lechones",
-                    cancelButtonText: "No, cerrar",
-                    confirmButtonColor: "#28a745",
-                    cancelButtonColor: "#6c757d"
-                })
-
-                if (result.isConfirmed && partoId) {
-                    setPartoRegistrado({ id: partoId, porcinoNombre })
-                    setTotalLechonesRegistrados(0)
-                    setMostrarCriaForm(true)
-                } else {
-                    hideModal()
-                    resetForm()
-                }
-
-            } else {
-
-                await apiAxios.put(`/partos/${rowToEdit.id}`, datos)
-
-                await MySwal.fire({
-                    title: "Actualización exitosa",
-                    text: "Parto actualizado correctamente",
-                    icon: "success"
-                })
-
-                hideModal()
-                resetForm()
-            }
-
+            const res = await apiAxios.get('/responsables/')
+            setResponsables(res.data)
         } catch (error) {
-
-            console.error("Error:", error.response ? error.response.data : error.message)
-
-            MySwal.fire({
-                title: "Error",
-                text: error.response?.data?.message || "Error al guardar",
-                icon: "error"
-            })
+            console.error("Error al obtener responsables:", error)
         }
     }
 
-    // 🔹 Cuando se registra un lechón correctamente
-    const onLechonRegistrado = async () => {
-        const nuevoTotal = totalLechonesRegistrados + 1
-        setTotalLechonesRegistrados(nuevoTotal)
+    const parsearResponsables = (valor) => {
+        if (!valor) return []
+        if (Array.isArray(valor)) return valor.map(Number)
+        if (typeof valor === 'string' && valor.startsWith('[')) {
+            try { return JSON.parse(valor).map(Number) } catch { return [] }
+        }
+        const num = Number(valor)
+        return isNaN(num) ? [] : [num]
+    }
 
-        const result = await MySwal.fire({
-            title: `🐷 Lechón #${nuevoTotal} registrado`,
-            html: `<p>¿Deseas registrar otro lechón del parto de <strong>${partoRegistrado.porcinoNombre}</strong>?</p>`,
-            icon: "success",
-            showCancelButton: true,
-            confirmButtonText: "Sí, registrar otro",
-            cancelButtonText: "Terminar",
-            confirmButtonColor: "#28a745",
-            cancelButtonColor: "#6c757d"
-        })
-
-        if (!result.isConfirmed) {
+    useEffect(() => {
+        if (rowToEdit?.Id_parto) {
+            setPorcino(rowToEdit.Id_Porcino || '')
+            setFec_inicio(rowToEdit.Fec_inicio?.split('T')[0] || '')
+            setHor_inicial(rowToEdit.Hor_inicial || '')
+            setNac_vivos(rowToEdit.Nac_vivos || 0)
+            setNac_momias(rowToEdit.Nac_momias || 0)
+            setNac_muertos(rowToEdit.Nac_muertos || 0)
+            setPes_camada(rowToEdit.Pes_camada || '')
+            setObservaciones(rowToEdit.Observaciones || '')
+            setFec_fin(rowToEdit.Fec_fin?.split('T')[0] || '')
+            setHor_final(rowToEdit.Hor_final || '')
+            setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
+            setTextFormButton("Actualizar")
+        } else {
             resetForm()
-            hideModal()
         }
+    }, [rowToEdit])
+
+    const resetForm = () => {
+        setPorcino('')
+        setFec_inicio('')
+        setHor_inicial('')
+        setNac_vivos(0)
+        setNac_momias(0)
+        setNac_muertos(0)
+        setPes_camada('')
+        setObservaciones('')
+        setFec_fin('')
+        setHor_final('')
+        setId_Responsable([])
+        setTextFormButton("Registrar")
     }
 
-    // 🔹 Cancelar registro de lechones
-    const cancelarLechones = () => {
-        resetForm()
-        hideModal()
-    }
-
-    // ─── Render: modo registro de lechones ───────────────────────────────────
-    if (mostrarCriaForm && partoRegistrado) {
-        return (
-            <div>
-                {/* Encabezado del flujo de lechones */}
-                <div className="alert alert-success py-2 mb-3">
-                    <strong>🐷 Registrando lechones</strong> — Parto de <strong>{partoRegistrado.porcinoNombre}</strong>
-                    <br />
-                    <small>
-                        Lechones registrados en esta sesión:
-                        <span className="badge bg-success ms-2 fs-6">{totalLechonesRegistrados}</span>
-                    </small>
-                </div>
-
-                <CriaForm
-                    key={`cria-parto-${partoRegistrado.id}-${totalLechonesRegistrados}`}
-                    hideModal={cancelarLechones}
-                    criaEdit={null}
-                    reload={onLechonRegistrado}
-                    partoFijo={partoRegistrado.id}
-                />
-            </div>
+    const toggleResponsable = (id) => {
+        const numId = Number(id)
+        setId_Responsable(prev =>
+            prev.includes(numId) ? prev.filter(r => r !== numId) : [...prev, numId]
         )
     }
 
-    // ─── Render: formulario de parto ─────────────────────────────────────────
+    const gestionarForm = async (e) => {
+        e.preventDefault()
+
+        if (!Id_Porcino || !Fec_inicio || !Hor_inicial) {
+            return MySwal.fire({
+                icon: "warning",
+                title: "Campos obligatorios",
+                text: "Porcino, fecha y hora inicial son obligatorios"
+            })
+        }
+
+        if (totalNacidos === 0) {
+            return MySwal.fire({
+                icon: "warning",
+                title: "Datos inválidos",
+                text: "Debe haber al menos un nacimiento"
+            })
+        }
+
+        const data = {
+            Id_Porcino: Number(Id_Porcino),
+            Fec_inicio,
+            Hor_inicial,
+            Nac_vivos: Number(Nac_vivos),
+            Nac_momias: Number(Nac_momias),
+            Nac_muertos: Number(Nac_muertos),
+            Pes_camada,
+            Observaciones,
+            Fec_fin,
+            Hor_final,
+            Id_Responsable: Id_Responsable.length > 0 ? JSON.stringify(Id_Responsable) : null
+        }
+
+        try {
+            if (rowToEdit?.Id_parto) {
+                await apiAxios.put(`/partos/${rowToEdit.Id_parto}`, data)
+                MySwal.fire("Actualizado", "Parto actualizado correctamente", "success")
+            } else {
+                await apiAxios.post("/partos/", data)
+                MySwal.fire("Registrado", "Parto creado correctamente", "success")
+            }
+
+            await reload()
+            hideModal()
+            resetForm()
+
+        } catch (error) {
+            console.error(error)
+            MySwal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.response?.data?.message || error.message || "No se pudo guardar el parto"
+            })
+        }
+    }
+
     return (
-        <form onSubmit={gestionarForm} className="col-12 col-md-12">
+        <form onSubmit={gestionarForm}>
 
             {/* Porcino */}
             <div className="mb-3">
-                <label className="form-label">Porcino:</label>
+                <label className="form-label fw-semibold">Porcino</label>
                 <select
                     className="form-control"
                     value={Id_Porcino}
                     onChange={(e) => setPorcino(e.target.value)}
                     required
                 >
-                    <option value="">Seleccione un porcino...</option>
-                    {porcinos.map((porcino) => (
-                        <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
-                            {porcino.Nom_Porcino}
+                    <option value="">Seleccione...</option>
+                    {porcinos.map(p => (
+                        <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                            {p.Nom_Porcino}
                         </option>
                     ))}
                 </select>
             </div>
 
-            {/* Fecha inicio */}
-            <div className="mb-3">
-                <label>Fecha inicio</label>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={Fec_inicio}
-                    onChange={(e) => setFec_inicio(e.target.value)}
-                    required
-                />
+            {/* Inicio */}
+            <div className="row mb-3">
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Fecha inicio</label>
+                    <input type="date" className="form-control" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
+                </div>
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Hora inicio</label>
+                    <input type="time" className="form-control" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
+                </div>
             </div>
 
-            {/* Hora inicial */}
+            {/* Responsables */}
             <div className="mb-3">
-                <label className="form-label">Hora inicial:</label>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={Hor_inicial}
-                    onChange={(e) => setHor_inicial(e.target.value)}
-                    required
-                />
+                <label className="form-label fw-semibold d-block">
+                    👨‍🌾 Responsables ({Id_Responsable.length})
+                </label>
+                <div className="d-flex flex-wrap gap-2">
+                    {responsables.length === 0 ? (
+                        <span className="text-muted small">No hay responsables registrados</span>
+                    ) : (
+                        responsables.map(r => {
+                            const activo = Id_Responsable.includes(Number(r.Id_Responsable))
+                            return (
+                                <span
+                                    key={r.Id_Responsable}
+                                    onClick={() => toggleResponsable(r.Id_Responsable)}
+                                    className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                        activo
+                                            ? "bg-success text-white shadow-sm fw-bold"
+                                            : "bg-white border text-secondary"
+                                    }`}
+                                    style={{ cursor: "pointer", fontSize: "13px" }}
+                                >
+                                    {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos || ''}
+                                </span>
+                            )
+                        })
+                    )}
+                </div>
             </div>
 
-            {/* Nacidos vivos */}
-            <div className="mb-3">
-                <label className="form-label">Nacidos vivos:</label>
-                <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={Nac_vivos}
-                    onChange={(e) => setNac_vivos(e.target.value)}
-                    required
-                />
+            {/* Nacimientos */}
+            <div className="row">
+                <div className="col">
+                    <label className="form-label fw-semibold">Vivos</label>
+                    <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} />
+                </div>
+                <div className="col">
+                    <label className="form-label fw-semibold">Muertos</label>
+                    <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} />
+                </div>
+                <div className="col">
+                    <label className="form-label fw-semibold">Momias</label>
+                    <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} />
+                </div>
             </div>
 
-            {/* Nacidos momias */}
-            <div className="mb-3">
-                <label className="form-label">Nacidos momias:</label>
-                <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={Nac_momias}
-                    onChange={(e) => setNac_momias(e.target.value)}
-                    required
-                />
+            {/* Total automático */}
+            <div className="mt-2">
+                <span className="badge bg-dark">
+                    Total nacidos: {totalNacidos}
+                </span>
             </div>
 
-            {/* Nacidos muertos */}
-            <div className="mb-3">
-                <label className="form-label">Nacidos muertos:</label>
-                <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={Nac_muertos}
-                    onChange={(e) => setNac_muertos(e.target.value)}
-                    required
-                />
-            </div>
-
-            {/* Peso camada */}
-            <div className="mb-3">
-                <label className="form-label">Peso de camada:</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={Pes_camada}
-                    onChange={(e) => setPes_camada(e.target.value)}
-                    required
-                />
+            {/* Peso */}
+            <div className="mb-3 mt-3">
+                <label className="form-label fw-semibold">Peso camada (kg)</label>
+                <input type="number" step="0.01" className="form-control" value={Pes_camada} onChange={(e) => setPes_camada(e.target.value)} />
             </div>
 
             {/* Observaciones */}
             <div className="mb-3">
-                <label className="form-label">Observaciones:</label>
-                <input
-                    type="text"
-                    className="form-control"
-                    value={Observaciones}
-                    onChange={(e) => setObservaciones(e.target.value)}
-                />
+                <label className="form-label fw-semibold">Observaciones</label>
+                <textarea className="form-control" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
 
-            {/* Fecha fin */}
-            <div className="mb-3">
-                <label>Fecha fin</label>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={Fec_fin}
-                    onChange={(e) => setFec_fin(e.target.value)}
-                />
+            {/* Fin */}
+            <div className="row mb-3">
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Fecha fin</label>
+                    <input type="date" className="form-control" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} required />
+                </div>
+                <div className="col-md-6">
+                    <label className="form-label fw-semibold">Hora fin</label>
+                    <input type="time" className="form-control" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} required />
+                </div>
             </div>
 
-            {/* Hora final */}
-            <div className="mb-3">
-                <label className="form-label">Hora final:</label>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={Hor_final}
-                    onChange={(e) => setHor_final(e.target.value)}
-                />
-            </div>
-
-            {/* Botón */}
-            <div className="mb-3">
-                <input
-                    type="submit"
-                    className="btn btn-primary w-50"
-                    value={textFormButton}
-                />
-            </div>
+            <button className="btn btn-primary w-100 shadow-sm fw-bold py-2">
+                {textFormButton}
+            </button>
 
         </form>
     )
