@@ -4,6 +4,7 @@ import { getAllSeguimiento_Cerda, getSeguimiento_Cerda, createSeguimiento_Cerda,
 const router = express.Router();
 
 router.get('/', getAllSeguimiento_Cerda);
+router.get('/parto/:idParto', getSeguimientoByParto);
 router.get('/:id', getSeguimiento_Cerda);
 router.post('/', createSeguimiento_Cerda);
 router.put('/:id/toggle-estado', toggleEstadoSeguimiento_Cerda);

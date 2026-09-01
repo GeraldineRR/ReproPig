@@ -8,6 +8,7 @@ router.get('/:id', getinseminacion);
 router.post('/', createinseminacion);
 router.put('/:id/toggle-estado', toggleEstadoinseminacion);
 router.put('/:id', updateinseminacion);
+router.put('/:id/toggle-estado', toggleEstadoInseminacion);
 router.delete('/:id', deleteinseminacion);
 
 export default router;

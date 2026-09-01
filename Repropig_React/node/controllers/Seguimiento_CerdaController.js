@@ -56,15 +56,11 @@ export const deleteSeguimiento_Cerda = async (req, res) => {
     }
 }
 
-export const toggleEstadoSeguimiento_Cerda = async (req, res) => {
+export const getSeguimientoByParto = async (req, res) => {
     try {
-        const item = await Seguimiento_CerdaModel.findByPk(req.params.id);
-        if (!item) return res.status(404).json({ message: "Seguimiento de cerda no encontrado" });
-
-        const nuevoEstado = (item.Estado === 'Inactivo' || item.Estado === 'I') ? 'Activo' : 'Inactivo';
-        await item.update({ Estado: nuevoEstado });
-        res.status(200).json({ message: `Estado cambiado a ${nuevoEstado}`, Estado: nuevoEstado });
+        const registros = await Seguimiento_CerdaService.getByParto(req.params.idParto)
+        res.status(200).json(registros)
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: error.message })
     }
 }

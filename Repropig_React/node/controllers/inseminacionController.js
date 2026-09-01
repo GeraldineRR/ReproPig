@@ -1,21 +1,17 @@
 import inseminacionservice from "../services/inseminacionService.js";
+import inseminacionModel from "../models/inseminacionModel.js";
 
 // obtener todas las inseminaciones
 export const getAllinseminacion = async (req, res) => {
     try {
         const inseminacion = await inseminacionservice.getAll()
-        console.log(inseminacion.data)
         res.status(200).json(inseminacion)
-        
-        // console.log(JSON.stringify(inseminacion, null, 2))
     } catch (error) {
         res.status(500).json({ message: error.message })
     }
 }
 // obtener una inseminacion por id
 export const getinseminacion = async (req, res) => {
-
-    console.log(req.params.id);
     try {
         const inseminacion = await inseminacionservice.getById(req.params.id)
         res.status(200).json(inseminacion)
@@ -42,28 +38,28 @@ export const updateinseminacion = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
-import inseminacionModel from "../models/inseminacionModel.js";
-
 // eliminar una inseminacion 
 export const deleteinseminacion = async (req, res) => {
     try {
         await inseminacionservice.delete(req.params.id)
-        res.status(204).send()//204 No content (borrado exitoso sin cuerpo))
+        res.status(204).send()
     } catch (error) {
         res.status(400).json({ message: error.message })
     }
 }
 
-// toggle estado inseminacion
-export const toggleEstadoinseminacion = async (req, res) => {
+// alternar estado Activo / Inactivo
+export const toggleEstadoInseminacion = async (req, res) => {
     try {
-        const item = await inseminacionModel.findByPk(req.params.id);
-        if (!item) return res.status(404).json({ message: "Inseminación no encontrada" });
-
-        const nuevoEstado = (item.Estado === 'Inactivo' || item.Estado === 'I') ? 'Activo' : 'Inactivo';
-        await item.update({ Estado: nuevoEstado });
-        res.status(200).json({ message: `Estado cambiado a ${nuevoEstado}`, Estado: nuevoEstado });
+        const { id } = req.params;
+        const inseminacion = await inseminacionModel.findByPk(id);
+        if (!inseminacion) {
+            return res.status(404).json({ message: "Inseminación no encontrada" });
+        }
+        inseminacion.estado = inseminacion.estado === "Activo" ? "Inactivo" : "Activo";
+        await inseminacion.save();
+        res.json({ message: "Estado actualizado", estado: inseminacion.estado });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-}
+};

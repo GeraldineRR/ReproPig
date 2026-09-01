@@ -25,6 +25,7 @@ const CrudCiclos = () => {
     const [calendarioData, setCalendarioData] = useState(null)
     const [calendarioEdit, setCalendarioEdit] = useState(null)
     const [calendarioIsInactive, setCalendarioIsInactive] = useState(false)
+    const [selectedReproduccion, setSelectedReproduccion] = useState(null)
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
@@ -142,6 +143,7 @@ const CrudCiclos = () => {
     const hideModalCalendario = async () => {
         setCalendarioData(null)
         setCalendarioEdit(null)
+        setSelectedReproduccion(null)
         cerrarModal(modalCalendarioInstanceRef)
         await getAllCiclos()
     }
@@ -222,22 +224,44 @@ const CrudCiclos = () => {
             }
         },
         {
-            name: 'Activo',
-            width: '110px',
+            name: 'Estado',
+            width: '130px',
             cell: row => {
                 const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
                 return (
                     <span
-                        className={`badge ${isActivo ? 'bg-success' : 'bg-secondary'}`}
-                        style={{ cursor: 'pointer', fontSize: '12px' }}
-                        title={isActivo ? 'Clic para inactivar' : 'Clic para activar'}
-                        onClick={() => handleToggleActivo(row)}
+                        className={`badge ${badgeClass}`}
+                        style={{ fontSize: '12px' }}
                     >
-                        {isActivo ? '✅ Activo' : '⛔ Inactivo'}
+                        {icon} {estado}
                     </span>
                 );
             }
         },
+        {
+            name: 'F. Servicio',
+            width: '120px',
+            selector: row => row.Fec_servicio ? row.Fec_servicio.split('T')[0] : '-',
+            sortable: true
+        },
+        {
+            name: 'Días Gestación',
+            width: '110px',
+            cell: row => {
+                const dias = calcularDiasGestacion(row);
+                return <span style={{ fontWeight: 'bold' }}>{dias}</span>;
+            },
+            sortable: true
+        },
+        // {
+        //     name: 'Fecha Probable Parto',
+        //     width: '140px',
+        //     cell: row => {
+        //         const fecha = calcularFechaProbableParto(row.Fec_servicio);
+        //         return <span>{fecha}</span>;
+        //     },
+        //     sortable: true
+        // },
         {
             name: 'Montas',
             width: '100px',
@@ -392,9 +416,9 @@ const CrudCiclos = () => {
             <div className="modal fade" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
                 <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
                     <div className="modal-content">
-                        <div className="modal-header bg-info bg-opacity-10">
+                        <div className="modal-header">
                             <h5 className="modal-title">
-                                {calendarioEdit ? '📅 Actualizar Calendario' : '📅 Agregar Calendario'}
+                                📅 Calendario Reproductivo
                             </h5>
                             <button type="button" className="btn-close"
                                 onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
@@ -409,6 +433,7 @@ const CrudCiclos = () => {
                                     hideModal={hideModalCalendario}
                                     reload={getAllCiclos}
                                     isInactive={calendarioIsInactive}
+                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                             {!calendarioEdit && calendarioData && (
@@ -422,6 +447,7 @@ const CrudCiclos = () => {
                                         Fecha_Servicio: calendarioData.fechaServicio
                                     }}
                                     isInactive={calendarioIsInactive}
+                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                         </div>

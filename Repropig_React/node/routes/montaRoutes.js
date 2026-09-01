@@ -8,6 +8,7 @@ router.get('/:id', getmonta);
 router.post('/', createmonta);
 router.put('/:id/toggle-estado', toggleEstadomonta);
 router.put('/:id', updatemonta);
+router.put('/:id/toggle-estado', toggleEstadoMonta);
 router.delete('/:id', deletemonta);
 
 export default router;
