@@ -7,7 +7,6 @@ export const getAllActividades = async (req, res) => {
     try {
         const actividades = await ActividadesCamadaModel.findAll({
             include: [
-                { model: MedicamentosModel, as: 'medicamentos' },
                 { 
                     model: segcamadaModel, 
                     as: 'segcamada',
@@ -36,6 +35,7 @@ export const createActividad = async (req, res) => {
         const actividad = await ActividadesCamadaModel.create(req.body);
         res.status(201).json({ message: "Creada exitosamente", actividad });
     } catch (error) {
+        console.error("Error al crear actividad de camada:", error);
         res.status(400).json({ message: error.message });
     }
 };

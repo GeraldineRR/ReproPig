@@ -10,7 +10,7 @@ import ColectaForm from "../colectas/colectaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import Swal from "sweetalert2"
 import WithReactContent from "sweetalert2-react-content"
-import CalendarioForm from "../calendario/CalendarioForm.jsx"
+import CalendarioForm from "../Calendario/CalendarioForm.jsx"
 
 
 const CrudCiclos = () => {

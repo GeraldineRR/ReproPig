@@ -7,10 +7,14 @@ import withReactContent from 'sweetalert2-react-content'
 const CrudActividades = () => {
     const MySwal = withReactContent(Swal)
     const [actividades, setActividades] = useState([])
+    const [medicamentos, setMedicamentos] = useState([])
+    const [responsables, setResponsables] = useState([])
     const [filterText, setFilterText] = useState('')
 
     useEffect(() => {
         getActividades()
+        getMedicamentos()
+        getResponsables()
     }, [])
 
     const getActividades = async () => {
@@ -18,8 +22,56 @@ const CrudActividades = () => {
             const res = await apiAxios.get('/actividades_camada/')
             setActividades(res.data)
         } catch (error) {
-            console.error(error)
+            console.error("Error al obtener actividades:", error)
         }
+    }
+
+    const getMedicamentos = async () => {
+        try {
+            const res = await apiAxios.get('/medicamentos/')
+            setMedicamentos(res.data)
+        } catch (error) {
+            console.error("Error al obtener medicamentos:", error)
+        }
+    }
+
+    const getResponsables = async () => {
+        try {
+            const res = await apiAxios.get('/responsables/')
+            setResponsables(res.data)
+        } catch (error) {
+            console.error("Error al obtener responsables:", error)
+        }
+    }
+
+    const parsearIDs = (valor) => {
+        if (!valor) return []
+        if (Array.isArray(valor)) return valor.map(Number)
+        if (typeof valor === 'string' && valor.startsWith('[')) {
+            try { return JSON.parse(valor).map(Number) } catch { return [] }
+        }
+        const num = Number(valor)
+        return isNaN(num) ? [] : [num]
+    }
+
+    const getNombresMedicamentos = (val) => {
+        const ids = parsearIDs(val)
+        if (ids.length === 0) return 'N/A'
+        const nombres = ids.map(id => {
+            const m = medicamentos.find(med => Number(med.Id_Medicamento) === Number(id))
+            return m ? m.Nombre : `#${id}`
+        })
+        return nombres.join(', ')
+    }
+
+    const getNombresResponsables = (val) => {
+        const ids = parsearIDs(val)
+        if (ids.length === 0) return 'N/A'
+        const nombres = ids.map(id => {
+            const r = responsables.find(resp => Number(resp.Id_Responsable) === Number(id))
+            return r ? `${r.Nombres} ${r.Apellidos || ''}`.trim() : `#${id}`
+        })
+        return nombres.join(', ')
     }
 
     const handleDelete = async (id) => {
@@ -50,8 +102,10 @@ const CrudActividades = () => {
         const lechon = act.segcamada?.porcino?.Nom_Porcino?.toLowerCase() || ''
         const idLechon = act.segcamada?.Id_Porcino?.toString() || ''
         const fecha = act.Fecha_Actividad?.toLowerCase() || ''
+        const meds = getNombresMedicamentos(act.Id_Medicamento).toLowerCase()
+        const resps = getNombresResponsables(act.Id_Responsable).toLowerCase()
         
-        return tipo.includes(text) || obs.includes(text) || lechon.includes(text) || idLechon.includes(text) || fecha.includes(text)
+        return tipo.includes(text) || obs.includes(text) || lechon.includes(text) || idLechon.includes(text) || fecha.includes(text) || meds.includes(text) || resps.includes(text)
     })
 
     const columns = [
@@ -74,9 +128,16 @@ const CrudActividades = () => {
             sortable: true
         },
         {
-            name: 'Medicamento',
-            selector: row => row.medicamentos?.Nombre || 'N/A',
-            sortable: true
+            name: 'Medicamento(s)',
+            selector: row => getNombresMedicamentos(row.Id_Medicamento),
+            sortable: true,
+            wrap: true
+        },
+        {
+            name: 'Responsable(s)',
+            selector: row => getNombresResponsables(row.Id_Responsable),
+            sortable: true,
+            wrap: true
         },
         {
             name: 'Observaciones',
@@ -106,7 +167,7 @@ const CrudActividades = () => {
                         <input
                             type="text"
                             className="form-control"
-                            placeholder="Buscar por lechón, tipo, observaciones, fecha..."
+                            placeholder="Buscar por lechón, tipo, medicamentos, responsables, observaciones..."
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
                         />

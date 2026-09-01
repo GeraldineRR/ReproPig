@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // ✅ agregar useLocation
+import { useNavigate, useLocation } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import InseminacionForm from "./inseminacionForm.jsx";
-import Swal from "sweetalert2";
-import WithReactContent from "sweetalert2-react-content";
 
 const CrudInseminacion = () => {
-    const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
     const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
@@ -18,6 +15,7 @@ const CrudInseminacion = () => {
     const [ciclos, setCiclos] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
+    const [loadingId, setLoadingId] = useState(null);
 
     const hideModal = () => {
         document.getElementById('closeModal').click()
@@ -39,27 +37,23 @@ const CrudInseminacion = () => {
         } catch { return Id_Responsable }
     }
 
-    const handleDelete = async (row) => {
-        const result = await MySwal.fire({
-            title: '¿Estás seguro?',
-            text: `Se eliminará la inseminación #${row.Id_Inseminacion} permanentemente.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        })
-        if (result.isConfirmed) {
-            try {
-                await apiAxios.delete('/inseminacion/' + row.Id_Inseminacion)
-                MySwal.fire({ icon: 'success', title: 'Eliminado', text: 'Inseminación eliminada correctamente' })
-                getAllInseminaciones()
-            } catch (error) {
-                MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
-            }
+    const toggleEstado = async (id) => {
+        setLoadingId(id);
+        try {
+            const res = await apiAxios.put(`/inseminacion/${id}/toggle-estado`);
+            setInseminaciones(prev =>
+                prev.map(i =>
+                    i.Id_Inseminacion === id
+                        ? { ...i, estado: res.data.estado }
+                        : i
+                )
+            );
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingId(null);
         }
-    }
+    };
 
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Inseminacion, width: '70px' },
@@ -75,8 +69,21 @@ const CrudInseminacion = () => {
                 return col ? `${col.porcino?.Nom_Porcino || `Cerdo #${col.Id_Porcino}`} (#${row.Id_colecta})` : `#${row.Id_colecta}`;
             }
         },
-        { name: 'Observaciones', selector: row => row.Observaciones },
+        { name: 'Observaciones', selector: row => row.Observaciones || '—' },
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
+        {
+            name: 'Estado',
+            selector: row => (
+                <button
+                    className={`badge border-0 ${row.estado === 'Inactivo' ? 'bg-danger' : 'bg-success'}`}
+                    onClick={() => toggleEstado(row.Id_Inseminacion)}
+                    disabled={loadingId === row.Id_Inseminacion}
+                    title="Haz clic para cambiar estado"
+                >
+                    {loadingId === row.Id_Inseminacion ? '...' : (row.estado || 'Activo')}
+                </button>
+            )
+        },
         {
             name: 'Acciones', cell: row => {
                 let isInactive = false;
@@ -97,12 +104,6 @@ const CrudInseminacion = () => {
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : "Editar"}>
                             <i className="fa-solid fa-pencil"></i>
-                        </button>
-                        <button className="btn btn-sm btn-danger"
-                            onClick={() => handleDelete(row)}
-                            disabled={isInactive}
-                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
-                            <i className="fa-solid fa-trash"></i>
                         </button>
                         {row.Id_colecta && (
                             <button className="btn btn-sm btn-success"
@@ -167,8 +168,9 @@ const CrudInseminacion = () => {
         const text = filterText.toLowerCase().trim();
         const fecha = item.Fec_hora?.toString().toLowerCase() || '';
         const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || '';
-        const resps = getNombresResponsables(item.Id_Responsable).toLowerCase()
-        return fecha.includes(text) || porcino.includes(text) || resps.includes(text);
+        const resps = getNombresResponsables(item.Id_Responsable).toLowerCase();
+        const est = (item.estado || 'Activo').toLowerCase();
+        return fecha.includes(text) || porcino.includes(text) || resps.includes(text) || est.includes(text);
     });
 
     return (
@@ -191,7 +193,7 @@ const CrudInseminacion = () => {
 
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
-                    <input className="form-control" placeholder="🔍 Buscar..."
+                    <input className="form-control" placeholder="🔍 Buscar por cerda, responsable, estado..."
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">

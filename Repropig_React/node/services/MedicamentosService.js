@@ -17,7 +17,7 @@ class MedicamentosService {
     }
 
     async update(id, data) {
-        const result = await MedicamentosModel.update(data, {where: { id_Medicamento: id } })
+        const result = await MedicamentosModel.update(data, {where: { Id_Medicamento: id } })
         const update = result[0]
 
         if (update === 0) throw new Error("Medicamento no encontrado o sin cambios")
@@ -25,7 +25,7 @@ class MedicamentosService {
         return true
     }
     async delete (id){
-        const deleted = await MedicamentosModel.destroy({ where: { id_Medicamento: id} })
+        const deleted = await MedicamentosModel.destroy({ where: { Id_Medicamento: id} })
 
         if (!deleted) throw new Error ("Medicamento no encontrado")
         return true
