@@ -61,9 +61,6 @@ ciclosModel.hasMany(inseminacionModel, { foreignKey: 'Id_Ciclo', as: 'inseminaci
 responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
 
-PartosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_parto', as: 'seguimiento_cerda' })
-SeguimientoCerda_Model.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'partos' })
-
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 

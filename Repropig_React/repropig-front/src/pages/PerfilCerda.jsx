@@ -402,6 +402,12 @@ export default function PerfilCerda() {
                 apiAxios.get("/Seguimiento_Cerda/").catch(() => ({ data: [] })),
             ])
 
+            setPorcino(resPorcino.data)
+            setCiclos((resRepro.data || []).filter((r) => Number(r.Id_Cerda) === Number(id)))
+            setPartos((resPartos.data || []).filter((p) => Number(p.Id_Porcino) === Number(id)))
+            setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
+            setSeguimientos((resSeg.data || []).filter((s) => Number(s.Id_Porcino) === Number(id)))
+
             // Traer responsables
             try {
                 const resResp = await apiAxios.get('/responsables/')
@@ -409,11 +415,6 @@ export default function PerfilCerda() {
             } catch (errResp) {
                 console.error("Error al cargar responsables:", errResp)
             }
-            setPorcino(resPorcino.data)
-            setCiclos((resRepro.data || []).filter((r) => Number(r.Id_Cerda) === Number(id)))
-            setPartos((resPartos.data || []).filter((p) => Number(p.Id_Porcino) === Number(id)))
-            setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
-            setSeguimientos((resSeg.data || []).filter((s) => Number(s.Id_Porcino) === Number(id)))
         } catch (error) {
             console.error("Error al cargar perfil:", error)
         } finally {
@@ -449,16 +450,8 @@ export default function PerfilCerda() {
                         TipoCiclo: c.TipoCiclo
                     }))
                 )
-                .sort((a, b) =>
-                    toSortKey(a.Fec_hora).localeCompare(toSortKey(b.Fec_hora))
-                ),
+                .sort((a, b) => toSortKey(a.Fec_hora).localeCompare(toSortKey(b.Fec_hora))),
         [ciclos]
-    )
-
-    if (loading) return (
-        <div className="flex justify-center items-center h-screen w-full">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
-        </div>
     )
 
     const inseminacionesTodas = useMemo(
@@ -768,30 +761,30 @@ export default function PerfilCerda() {
                                         const numInsem = repro.inseminaciones?.length || 0;
 
                                         return (
-                                            <div
-                                                key={repro.Id_Ciclo}
+                                            <div 
+                                                key={repro.Id_Ciclo} 
                                                 onClick={() => { setCicloSeleccionado(repro); setTabModal('todas'); }}
                                                 className="border border-gray-200 rounded-2xl p-5 hover:shadow-lg hover:border-pink-300 transition-all bg-white relative overflow-hidden group cursor-pointer"
                                             >
                                                 {/* Indicador de estado */}
                                                 <div className={`absolute top-0 left-0 w-1.5 h-full ${esActivo ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-
+                                                
                                                 <div className="flex justify-between items-start mb-4 pl-2">
                                                     <div>
                                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ciclo #{repro.Id_Ciclo}</span>
                                                         <h4 className="text-lg font-bold text-gray-800 mt-0.5">{repro.TipoCiclo || 'Servicio'}</h4>
                                                     </div>
-                                                    {esActivo ?
+                                                    {esActivo ? 
                                                         <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-md flex items-center shadow-sm">
                                                             <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span> Activo
-                                                        </span>
-                                                        :
+                                                        </span> 
+                                                        : 
                                                         <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-md">Cerrado</span>
                                                     }
                                                 </div>
-
+                                                
                                                 <div className="grid grid-cols-2 gap-3 bg-gray-50/80 p-3 rounded-xl border border-gray-100 pl-2">
-                                                    <div
+                                                    <div 
                                                         onClick={(e) => { e.stopPropagation(); setCicloSeleccionado(repro); setTabModal('montas'); }}
                                                         className="text-center hover:bg-amber-100/50 p-1.5 rounded-lg transition-colors cursor-pointer"
                                                         title="Ver detalle de montas"
@@ -799,7 +792,7 @@ export default function PerfilCerda() {
                                                         <p className="text-xs text-amber-700 font-bold uppercase mb-1">🐷 Montas</p>
                                                         <p className="text-xl font-black text-amber-900">{numMontas}</p>
                                                     </div>
-                                                    <div
+                                                    <div 
                                                         onClick={(e) => { e.stopPropagation(); setCicloSeleccionado(repro); setTabModal('inseminaciones'); }}
                                                         className="text-center border-l border-gray-200 hover:bg-blue-100/50 p-1.5 rounded-lg transition-colors cursor-pointer"
                                                         title="Ver detalle de inseminaciones"
@@ -817,6 +810,7 @@ export default function PerfilCerda() {
                                             </div>
                                         );
                                     })}
+
                                 </div>
                             )}
                         </div>
@@ -1102,10 +1096,11 @@ export default function PerfilCerda() {
                                     <span className="bg-pink-500/30 text-pink-300 border border-pink-500/40 text-xs font-bold px-2.5 py-0.5 rounded-full">
                                         Ciclo #{cicloSeleccionado.Id_Ciclo}
                                     </span>
-                                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${(cicloSeleccionado.Estado || cicloSeleccionado.Activo || '').toUpperCase() === 'ACTIVO' || cicloSeleccionado.Activo === 'S'
-                                        ? 'bg-green-500/30 text-green-300 border border-green-500/40'
-                                        : 'bg-gray-500/30 text-gray-300 border border-gray-500/40'
-                                        }`}>
+                                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                        (cicloSeleccionado.Estado || cicloSeleccionado.Activo || '').toUpperCase() === 'ACTIVO' || cicloSeleccionado.Activo === 'S'
+                                            ? 'bg-green-500/30 text-green-300 border border-green-500/40' 
+                                            : 'bg-gray-500/30 text-gray-300 border border-gray-500/40'
+                                    }`}>
                                         {(cicloSeleccionado.Estado || cicloSeleccionado.Activo || '').toUpperCase() === 'ACTIVO' || cicloSeleccionado.Activo === 'S' ? 'Activo' : 'Cerrado'}
                                     </span>
                                 </div>
@@ -1116,7 +1111,7 @@ export default function PerfilCerda() {
                                     Cerda: <strong className="text-white">{porcino.Nom_Porcino}</strong> (Chapeta: {porcino.Num_Chapeta})
                                 </p>
                             </div>
-                            <button
+                            <button 
                                 onClick={() => setCicloSeleccionado(null)}
                                 className="text-gray-400 hover:text-white hover:bg-white/10 w-9 h-9 rounded-full flex items-center justify-center transition-colors">
                                 <i className="fa-solid fa-xmark text-lg"></i>
@@ -1125,28 +1120,31 @@ export default function PerfilCerda() {
 
                         {/* Selector de pestañas */}
                         <div className="flex border-b border-gray-100 bg-gray-50 px-6 pt-3 gap-2">
-                            <button
+                            <button 
                                 onClick={() => setTabModal('todas')}
-                                className={`pb-3 px-4 font-bold text-xs rounded-t-xl transition-all border-b-2 ${tabModal === 'todas'
-                                    ? 'border-pink-600 text-pink-600 bg-white shadow-sm'
-                                    : 'border-transparent text-gray-500 hover:text-gray-800'
-                                    }`}>
+                                className={`pb-3 px-4 font-bold text-xs rounded-t-xl transition-all border-b-2 ${
+                                    tabModal === 'todas' 
+                                        ? 'border-pink-600 text-pink-600 bg-white shadow-sm' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-800'
+                                }`}>
                                 Todos los registros ({(cicloSeleccionado.montas?.length || 0) + (cicloSeleccionado.inseminaciones?.length || 0)})
                             </button>
-                            <button
+                            <button 
                                 onClick={() => setTabModal('montas')}
-                                className={`pb-3 px-4 font-bold text-xs rounded-t-xl transition-all border-b-2 ${tabModal === 'montas'
-                                    ? 'border-amber-600 text-amber-600 bg-white shadow-sm'
-                                    : 'border-transparent text-gray-500 hover:text-gray-800'
-                                    }`}>
+                                className={`pb-3 px-4 font-bold text-xs rounded-t-xl transition-all border-b-2 ${
+                                    tabModal === 'montas' 
+                                        ? 'border-amber-600 text-amber-600 bg-white shadow-sm' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-800'
+                                }`}>
                                 🐷 Montas Naturales ({cicloSeleccionado.montas?.length || 0})
                             </button>
-                            <button
+                            <button 
                                 onClick={() => setTabModal('inseminaciones')}
-                                className={`pb-3 px-4 font-bold text-xs rounded-t-xl transition-all border-b-2 ${tabModal === 'inseminaciones'
-                                    ? 'border-blue-600 text-blue-600 bg-white shadow-sm'
-                                    : 'border-transparent text-gray-500 hover:text-gray-800'
-                                    }`}>
+                                className={`pb-3 px-4 font-bold text-xs rounded-t-xl transition-all border-b-2 ${
+                                    tabModal === 'inseminaciones' 
+                                        ? 'border-blue-600 text-blue-600 bg-white shadow-sm' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-800'
+                                }`}>
                                 💉 Inseminaciones ({cicloSeleccionado.inseminaciones?.length || 0})
                             </button>
                         </div>
@@ -1180,10 +1178,11 @@ export default function PerfilCerda() {
                                                                 <i className="fa-regular fa-clock mr-1 text-amber-600"></i>
                                                                 {monta.Fec_hora ? new Date(monta.Fec_hora).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'Fecha no especificada'}
                                                             </span>
-                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${(monta.Estado || '').toLowerCase() === 'inactivo' || monta.Estado === 'I'
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : 'bg-green-100 text-green-700'
-                                                                }`}>
+                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+                                                                (monta.Estado || '').toLowerCase() === 'inactivo' || monta.Estado === 'I' 
+                                                                    ? 'bg-red-100 text-red-700' 
+                                                                    : 'bg-green-100 text-green-700'
+                                                            }`}>
                                                                 {monta.Estado || 'Activo'}
                                                             </span>
                                                         </div>
@@ -1249,10 +1248,11 @@ export default function PerfilCerda() {
                                                                 <i className="fa-regular fa-clock mr-1 text-blue-600"></i>
                                                                 {insem.Fec_hora ? new Date(insem.Fec_hora).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'Fecha no especificada'}
                                                             </span>
-                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${(insem.Estado || '').toLowerCase() === 'inactivo' || insem.Estado === 'I'
-                                                                ? 'bg-red-100 text-red-700'
-                                                                : 'bg-green-100 text-green-700'
-                                                                }`}>
+                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
+                                                                (insem.Estado || '').toLowerCase() === 'inactivo' || insem.Estado === 'I' 
+                                                                    ? 'bg-red-100 text-red-700' 
+                                                                    : 'bg-green-100 text-green-700'
+                                                            }`}>
                                                                 {insem.Estado || 'Activo'}
                                                             </span>
                                                         </div>
@@ -1304,7 +1304,7 @@ export default function PerfilCerda() {
 
                         {/* Modal Footer */}
                         <div className="bg-gray-50 border-t border-gray-100 p-4 px-6 flex justify-end">
-                            <button
+                            <button 
                                 onClick={() => setCicloSeleccionado(null)}
                                 className="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold text-xs rounded-xl shadow-sm transition-colors">
                                 Cerrar

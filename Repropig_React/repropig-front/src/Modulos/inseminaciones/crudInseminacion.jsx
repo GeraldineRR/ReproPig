@@ -37,24 +37,6 @@ const CrudInseminacion = () => {
         } catch { return Id_Responsable }
     }
 
-    const toggleEstado = async (id) => {
-        setLoadingId(id);
-        try {
-            const res = await apiAxios.put(`/inseminacion/${id}/toggle-estado`);
-            setInseminaciones(prev =>
-                prev.map(i =>
-                    i.Id_Inseminacion === id
-                        ? { ...i, estado: res.data.estado }
-                        : i
-                )
-            );
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoadingId(null);
-        }
-    };
-
     // 🔹 Toggle Estado Inseminación con confirmación SweetAlert
     const toggleEstado = async (row) => {
         const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
@@ -107,7 +89,6 @@ const CrudInseminacion = () => {
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
             name: 'Estado',
-<<<<<<< HEAD
             cell: row => {
                 const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
                 return (
@@ -120,18 +101,6 @@ const CrudInseminacion = () => {
                     </button>
                 );
             }
-=======
-            selector: row => (
-                <button
-                    className={`badge border-0 ${row.estado === 'Inactivo' ? 'bg-danger' : 'bg-success'}`}
-                    onClick={() => toggleEstado(row.Id_Inseminacion)}
-                    disabled={loadingId === row.Id_Inseminacion}
-                    title="Haz clic para cambiar estado"
-                >
-                    {loadingId === row.Id_Inseminacion ? '...' : (row.estado || 'Activo')}
-                </button>
-            )
->>>>>>> 4a943b4248b281d564369f620c8659763dd29229
         },
         {
             name: 'Acciones', cell: row => {
@@ -154,15 +123,12 @@ const CrudInseminacion = () => {
                             title={isInactive ? "El ciclo está inactivo" : "Editar"}>
                             <i className="fa-solid fa-pencil"></i>
                         </button>
-<<<<<<< HEAD
                         <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
                             onClick={() => toggleEstado(row)}
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}>
                             <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
                         </button>
-=======
->>>>>>> 4a943b4248b281d564369f620c8659763dd29229
                         {row.Id_colecta && (
                             <button className="btn btn-sm btn-success"
                                 title="Ver Colecta"

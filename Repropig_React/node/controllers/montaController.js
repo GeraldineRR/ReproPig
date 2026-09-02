@@ -41,8 +41,6 @@ export const updatemonta = async (req, res) => {
   }
 }
 
-import montaModel from '../models/montaModel.js'
-
 // eliminar una monta
 export const deletemonta = async (req, res) => {
   try {
