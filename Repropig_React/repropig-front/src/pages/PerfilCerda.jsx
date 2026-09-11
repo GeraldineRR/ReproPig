@@ -28,18 +28,19 @@ const toSortKey = (valor) => {
 }
 
 function GraficoHistorialPartos({ partos, forPdf = false }) {
-    const datos = useMemo(() => {
-        return [...partos]
-            .sort((a, b) => String(a.Fec_inicio || "").localeCompare(String(b.Fec_inicio || "")))
-            .map((p, i) => ({
-                label: fmtFecha(p.Fec_inicio) || `#${i + 1}`,
-                vivos: Number(p.Nac_vivos) || 0,
-                muertos: Number(p.Nac_muertos) || 0,
-                momias: Number(p.Nac_momias) || 0,
-            }))
-    }, [partos])
+    const totales = useMemo(() => {
+        let vivos = 0, muertos = 0, momias = 0;
+        partos.forEach(p => {
+            vivos += Number(p.Nac_vivos) || 0;
+            muertos += Number(p.Nac_muertos) || 0;
+            momias += Number(p.Nac_momias) || 0;
+        });
+        return { vivos, muertos, momias };
+    }, [partos]);
 
-    if (datos.length === 0) {
+    const total = totales.vivos + totales.muertos + totales.momias;
+
+    if (total === 0) {
         return (
             <div className={forPdf ? "pdf-empty" : "text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200"}>
                 <p className={forPdf ? undefined : "text-gray-500 font-medium"}>Sin datos para graficar.</p>
@@ -47,76 +48,95 @@ function GraficoHistorialPartos({ partos, forPdf = false }) {
         )
     }
 
-    const w = forPdf ? 720 : 640
-    const h = forPdf ? 200 : 220
-    const pad = { top: 20, right: 12, bottom: 36, left: 34 }
-    const chartW = w - pad.left - pad.right
-    const chartH = h - pad.top - pad.bottom
-    const maxY = Math.max(1, ...datos.flatMap((d) => [d.vivos, d.muertos, d.momias]))
-    const groupW = chartW / datos.length
-    const barW = Math.min(16, groupW / 4)
-    const yScale = (v) => pad.top + chartH - (v / maxY) * chartH
     const series = [
-        { key: "vivos", color: "#15803d", label: "Vivos" },
-        { key: "muertos", color: "#b91c1c", label: "Muertos" },
-        { key: "momias", color: "#a16207", label: "Momias" },
-    ]
+        { key: "vivos", color: "#15803d", label: "Vivos", value: totales.vivos },
+        { key: "muertos", color: "#b91c1c", label: "Muertos", value: totales.muertos },
+        { key: "momias", color: "#a16207", label: "Momias", value: totales.momias },
+    ].filter(s => s.value > 0);
+
+    const w = forPdf ? 400 : 400;
+    const h = forPdf ? 220 : 250;
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = Math.min(cx, cy) - 40;
+
+    let startAngle = 0;
 
     return (
-        <div className={forPdf ? undefined : "w-full overflow-x-auto"}>
-            <svg viewBox={`0 0 ${w} ${h}`} width={forPdf ? w : "100%"} height={forPdf ? h : undefined} style={forPdf ? { display: "block", maxWidth: "100%" } : undefined} className={forPdf ? undefined : "w-full max-w-full min-w-[480px]"} role="img" aria-label="Historial de partos">
-                {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-                    const y = pad.top + chartH * (1 - t)
-                    const val = Math.round(maxY * t)
+        <div className={forPdf ? undefined : "w-full flex flex-col items-center justify-center overflow-x-auto"} style={forPdf ? { textAlign: "center" } : {}}>
+            <svg viewBox={`0 0 ${w} ${h}`} width={forPdf ? w : "100%"} height={forPdf ? h : undefined} style={forPdf ? { display: "inline-block", maxWidth: "100%" } : undefined} role="img" aria-label="Distribución de partos">
+                {series.map((s, i) => {
+                    const sliceAngle = (s.value / total) * 2 * Math.PI;
+                    const endAngle = startAngle + sliceAngle;
+                    
+                    const x1 = cx + r * Math.cos(startAngle);
+                    const y1 = cy + r * Math.sin(startAngle);
+                    const x2 = cx + r * Math.cos(endAngle);
+                    const y2 = cy + r * Math.sin(endAngle);
+                    
+                    const largeArcFlag = sliceAngle > Math.PI ? 1 : 0;
+                    let pathData = "";
+                    
+                    if (s.value === total) {
+                        pathData = `M ${cx}, ${cy - r} A ${r},${r} 0 1,1 ${cx},${cy + r} A ${r},${r} 0 1,1 ${cx},${cy - r}`;
+                    } else {
+                        pathData = [
+                            `M ${cx} ${cy}`,
+                            `L ${x1} ${y1}`,
+                            `A ${r} ${r} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+                            `Z`
+                        ].join(" ");
+                    }
+
+                    // Label position
+                    const midAngle = startAngle + sliceAngle / 2;
+                    // Push labels further out
+                    const labelR = r + 35;
+                    const labelX = cx + labelR * Math.cos(midAngle);
+                    const labelY = cy + labelR * Math.sin(midAngle);
+                    
+                    const percentage = Math.round((s.value / total) * 100);
+                    
+                    // Determine text anchor based on x position to prevent overlap
+                    const isRight = Math.cos(midAngle) >= 0;
+                    const textAnchor = isRight ? "start" : "end";
+
+                    startAngle = endAngle;
+
                     return (
-                        <g key={t}>
-                            <line x1={pad.left} x2={w - pad.right} y1={y} y2={y} stroke="#e5e7eb" strokeWidth="1" />
-                            <text x={pad.left - 6} y={y + 3} textAnchor="end" fontSize="10" fill="#6b7280">{val}</text>
-                        </g>
-                    )
-                })}
-                {datos.map((d, i) => {
-                    const cx = pad.left + groupW * i + groupW / 2
-                    return (
-                        <g key={i}>
-                            {series.map((s, si) => {
-                                const val = d[s.key]
-                                const bh = (val / maxY) * chartH
-                                const x = cx - (series.length * barW) / 2 + si * barW
-                                return (
-                                    <rect
-                                        key={s.key}
-                                        x={x}
-                                        y={yScale(val)}
-                                        width={Math.max(barW - 2, 4)}
-                                        height={Math.max(bh, val > 0 ? 2 : 0)}
-                                        fill={s.color}
-                                        rx="1"
-                                    />
-                                )
-                            })}
-                            <text x={cx} y={h - 10} textAnchor="middle" fontSize="9" fill="#374151">
-                                {d.label}
+                        <g key={s.key}>
+                            <path d={pathData} fill={s.color} stroke="#ffffff" strokeWidth="2" />
+                            {/* Connect line from pie to label */}
+                            <line 
+                                x1={cx + r * Math.cos(midAngle)} 
+                                y1={cy + r * Math.sin(midAngle)} 
+                                x2={cx + (labelR - 5) * Math.cos(midAngle)} 
+                                y2={cy + (labelR - 5) * Math.sin(midAngle)} 
+                                stroke="#9ca3af" 
+                                strokeWidth="1" 
+                            />
+                            <text 
+                                x={labelX} 
+                                y={labelY} 
+                                textAnchor={textAnchor} 
+                                dominantBaseline="middle" 
+                                fontSize="12" 
+                                fontWeight="bold"
+                                fill="#374151"
+                            >
+                                {s.label}: {percentage}% ({s.value})
                             </text>
                         </g>
                     )
                 })}
             </svg>
-            <div style={forPdf ? { display: "flex", gap: 16, justifyContent: "center", marginTop: 6, fontSize: 11, color: "#374151" } : undefined} className={forPdf ? undefined : "flex flex-wrap gap-4 justify-center mt-2 text-xs font-semibold text-gray-600"}>
-                {series.map((s) => (
-                    <span key={s.key} style={forPdf ? { display: "inline-flex", alignItems: "center", gap: 6 } : undefined} className={forPdf ? undefined : "inline-flex items-center gap-1.5"}>
-                        <span style={{ width: 10, height: 10, background: s.color, display: "inline-block" }} className={forPdf ? undefined : "w-3 h-3 rounded-sm"} />
-                        {s.label}
-                    </span>
-                ))}
-            </div>
         </div>
     )
 }
 
 function PdfSeccion({ n, titulo, children }) {
     return (
-        <section style={{ marginBottom: 18, pageBreakInside: "avoid" }}>
+        <section className="pdf-avoid-break" style={{ marginBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, borderBottom: "2px solid #1f2937", paddingBottom: 4, marginBottom: 8 }}>
                 <span style={{ background: "#1f2937", color: "#fff", fontSize: 11, fontWeight: 700, width: 22, height: 22, borderRadius: 4, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                     {n}
@@ -204,34 +224,44 @@ function DocumentoPDFHojaVida({ porcino, ciclos, partos, novedades, seguimientos
 
             {/* Identificación */}
             <PdfSeccion n="1" titulo="Identificación del animal">
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11 }}>
-                    <tbody>
-                        <tr>
-                            <td style={{ width: "50%", border: "1px solid #e5e7eb", padding: 8, background: "#fdf2f8" }}>
-                                <div style={{ fontSize: 9, color: "#9d174d", fontWeight: 700 }}>NOMBRE</div>
-                                <div style={{ fontWeight: 800, fontSize: 15 }}>{porcino.Nom_Porcino}</div>
-                            </td>
-                            <td style={{ width: "50%", border: "1px solid #e5e7eb", padding: 8, background: "#fdf2f8" }}>
-                                <div style={{ fontSize: 9, color: "#9d174d", fontWeight: 700 }}>CHAPETA</div>
-                                <div style={{ fontWeight: 800, fontSize: 15 }}>{porcino.Num_Chapeta}</div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "6px 8px" }}><b>Raza:</b> {porcino.razas?.Nom_Raza || "—"}</td>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "6px 8px" }}><b>Placa SENA:</b> {porcino.Plac_Sena_Porcino || "—"}</td>
-                        </tr>
-                        <tr>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "6px 8px" }}><b>Nacimiento:</b> {fmtFecha(porcino.Fec_Nac_Porcino)}</td>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "6px 8px" }}><b>Llegada:</b> {fmtFecha(porcino.Fec_Llegada)}</td>
-                        </tr>
-                        <tr>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "6px 8px" }}><b>Peso inicial:</b> {porcino.Peso_Llegada != null ? `${porcino.Peso_Llegada} kg` : "—"}</td>
-                            <td style={{ border: "1px solid #e5e7eb", padding: "6px 8px" }}>
-                                <b>Origen:</b> {[porcino.Proc_Porcino, porcino.Lug_Proc_Porcino].filter(Boolean).join(" · ") || "—"}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, background: "#fdf8fa", padding: 16, borderRadius: 8, border: "1px solid #fbcfe8" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f9a8d4", paddingBottom: 10 }}>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 10, color: "#be185d", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Nombre</div>
+                            <div style={{ fontWeight: 900, fontSize: 18, color: "#831843", marginTop: 2 }}>{porcino.Nom_Porcino}</div>
+                        </div>
+                        <div style={{ flex: 1, borderLeft: "1px solid #f9a8d4", paddingLeft: 16 }}>
+                            <div style={{ fontSize: 10, color: "#be185d", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>Chapeta</div>
+                            <div style={{ fontWeight: 900, fontSize: 18, color: "#831843", marginTop: 2 }}>{porcino.Num_Chapeta}</div>
+                        </div>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "12px 24px" }}>
+                        <div style={{ flex: "1 1 calc(33.333% - 16px)", display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Raza</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#111827", marginTop: 2 }}>{porcino.raza?.Nom_Raza || "—"}</span>
+                        </div>
+                        <div style={{ flex: "1 1 calc(33.333% - 16px)", display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Placa SENA</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#111827", marginTop: 2 }}>{porcino.Plac_Sena_Porcino || "—"}</span>
+                        </div>
+                        <div style={{ flex: "1 1 calc(33.333% - 16px)", display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Nacimiento</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#111827", marginTop: 2 }}>{fmtFecha(porcino.Fec_Nac_Porcino)}</span>
+                        </div>
+                        <div style={{ flex: "1 1 calc(33.333% - 16px)", display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Llegada</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#111827", marginTop: 2 }}>{fmtFecha(porcino.Fec_Llegada)}</span>
+                        </div>
+                        <div style={{ flex: "1 1 calc(33.333% - 16px)", display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Peso inicial</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#111827", marginTop: 2 }}>{porcino.Peso_Llegada != null ? `${porcino.Peso_Llegada} kg` : "—"}</span>
+                        </div>
+                        <div style={{ flex: "1 1 calc(33.333% - 16px)", display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontSize: 9, color: "#6b7280", fontWeight: 700, textTransform: "uppercase" }}>Origen</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#111827", marginTop: 2 }}>{[porcino.Proc_Porcino, porcino.Lug_Proc_Porcino].filter(Boolean).join(" · ") || "—"}</span>
+                        </div>
+                    </div>
+                </div>
             </PdfSeccion>
 
             {/* Resumen */}
@@ -270,96 +300,53 @@ function DocumentoPDFHojaVida({ porcino, ciclos, partos, novedades, seguimientos
                 />
             </PdfSeccion>
 
-            {/* Ciclos */}
-            <PdfSeccion n="5" titulo="Ciclos reproductivos">
-                <PdfTabla
-                    headers={["ID", "Tipo", "Estado", "Montas", "Inseminaciones"]}
-                    empty="Sin ciclos registrados."
-                    rows={ciclos.map((c) => [
-                        `#${c.Id_Ciclo}`,
-                        c.TipoCiclo || "—",
-                        cicloEstado(c),
-                        String(c.montas?.length || 0),
-                        String(c.inseminaciones?.length || 0),
-                    ])}
-                />
-            </PdfSeccion>
 
-            {/* Montas e inseminaciones */}
-            <PdfSeccion n="6" titulo="Montas e inseminaciones">
-                <p style={{ margin: "0 0 6px", fontSize: 11, fontWeight: 700, color: "#9f1239" }}>Montas</p>
-                <PdfTabla
-                    headers={["ID", "Fecha / hora", "Ciclo"]}
-                    empty="Sin montas."
-                    rows={montasTodas.map((m) => [
-                        `#${m.Id_Monta}`,
-                        fmtFechaHora(m.Fec_hora),
-                        `#${m.Id_Ciclo}${m.TipoCiclo ? ` (${m.TipoCiclo})` : ""}`,
-                    ])}
-                />
-                <p style={{ margin: "12px 0 6px", fontSize: 11, fontWeight: 700, color: "#0f766e" }}>Inseminaciones</p>
-                <PdfTabla
-                    headers={["ID", "Fecha / hora", "Ciclo"]}
-                    empty="Sin inseminaciones."
-                    rows={inseminacionesTodas.map((ins) => [
-                        `#${ins.Id_Inseminacion}`,
-                        fmtFechaHora(ins.Fec_hora),
-                        `#${ins.Id_Ciclo}${ins.TipoCiclo ? ` (${ins.TipoCiclo})` : ""}`,
-                    ])}
-                />
-            </PdfSeccion>
-
-            {/* Partos */}
-            <PdfSeccion n="7" titulo="Historial de partos">
-                <PdfTabla
-                    headers={["Fecha", "Ciclo", "Vivos", "Muertos", "Momias", "Peso (kg)", "Observaciones"]}
-                    empty="Sin partos registrados."
-                    rows={[...partos]
-                        .sort((a, b) => String(a.Fec_inicio || "").localeCompare(String(b.Fec_inicio || "")))
-                        .map((p) => [
-                            fmtFecha(p.Fec_inicio),
-                            p.Id_Ciclo ? `#${p.Id_Ciclo}` : "—",
-                            String(p.Nac_vivos ?? "—"),
-                            String(p.Nac_muertos ?? "—"),
-                            String(p.Nac_momias ?? "—"),
-                            String(p.Pes_camada ?? "—"),
-                            p.Observaciones || "—",
-                        ])}
-                />
-            </PdfSeccion>
-
-            {/* Seguimientos */}
-            <PdfSeccion n="8" titulo="Seguimiento de cerda">
-                <PdfTabla
-                    headers={["Fecha", "Hora", "Ciclo", "Responsable", "Medicamento", "Observaciones"]}
-                    empty="Sin seguimientos."
-                    rows={[...seguimientos]
-                        .sort((a, b) => toSortKey(a.Fecha).localeCompare(toSortKey(b.Fecha)))
-                        .map((s) => [
-                            fmtFecha(s.Fecha),
-                            s.Hora ? String(s.Hora).slice(0, 5) : "—",
-                            s.Id_Ciclo ? `#${s.Id_Ciclo}` : "—",
-                            s.Responsables?.Nombres || "—",
-                            s.medicamentos?.Nombre || "—",
-                            s.Observaciones || "—",
-                        ])}
-                />
-            </PdfSeccion>
 
             {/* Novedades */}
-            <PdfSeccion n="9" titulo="Novedades">
-                <PdfTabla
-                    headers={["Fecha", "Tipo", "Causa / motivo", "Observaciones"]}
-                    empty="Sin novedades."
-                    rows={[...novedades]
-                        .sort((a, b) => toSortKey(a.Fecha_Novedad).localeCompare(toSortKey(b.Fecha_Novedad)))
-                        .map((n) => [
-                            fmtFecha(n.Fecha_Novedad),
-                            n.Tipo_Novedad || "—",
-                            n.Causa_Motivo || "—",
-                            n.Observaciones || "—",
-                        ])}
-                />
+            <PdfSeccion n="5" titulo="Novedades">
+                {novedades.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: 11, color: "#6b7280", fontStyle: "italic" }}>Sin novedades.</p>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {[...novedades]
+                            .sort((a, b) => toSortKey(a.Fecha_Novedad).localeCompare(toSortKey(b.Fecha_Novedad)))
+                            .map((n) => {
+                                const isMuerte = n.Tipo_Novedad === "Muerte" || n.Tipo_Novedad === "Descarte";
+                                const isMomia = n.Causa_Motivo?.toLowerCase().includes("momia") || n.Observaciones?.toLowerCase().includes("momia");
+                                const causaMotivoFinal = isMomia ? "Momia" : (n.Causa_Motivo || "—");
+                                
+                                return (
+                                    <div 
+                                        className="pdf-avoid-break"
+                                        key={n.Id_Novedad} 
+                                        style={{ 
+                                            border: `1px solid ${isMuerte ? "#fca5a5" : "#e5e7eb"}`, 
+                                            background: isMuerte ? "#fef2f2" : "#f9fafb",
+                                            padding: 10, 
+                                            borderRadius: 6
+                                        }}
+                                    >
+                                        <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${isMuerte ? "#fecaca" : "#e5e7eb"}`, paddingBottom: 6, marginBottom: 6 }}>
+                                            <div style={{ fontWeight: 800, fontSize: 12, color: isMuerte ? "#b91c1c" : "#374151", textTransform: "uppercase" }}>
+                                                {isMuerte && isMomia ? "Muerte de cría: Momia" : (n.Tipo_Novedad || "Novedad")}
+                                            </div>
+                                            <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280" }}>
+                                                {fmtFecha(n.Fecha_Novedad)}
+                                            </div>
+                                        </div>
+                                        <div style={{ fontSize: 11, color: "#1f2937", lineHeight: 1.4 }}>
+                                            <span style={{ fontWeight: 700, color: isMuerte ? "#991b1b" : "#4b5563" }}>Causa / Motivo:</span> {causaMotivoFinal}
+                                        </div>
+                                        {n.Observaciones && (
+                                            <div style={{ fontSize: 11, color: "#4b5563", marginTop: 4, fontStyle: "italic" }}>
+                                                <span style={{ fontWeight: 700, fontStyle: "normal" }}>Observaciones:</span> {n.Observaciones}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                    </div>
+                )}
             </PdfSeccion>
 
             <footer style={{ marginTop: 20, paddingTop: 10, borderTop: "1px solid #d1d5db", fontSize: 9, color: "#6b7280", display: "flex", justifyContent: "space-between" }}>
@@ -380,6 +367,7 @@ export default function PerfilCerda() {
     const [partos, setPartos] = useState([])
     const [novedades, setNovedades] = useState([])
     const [seguimientos, setSeguimientos] = useState([])
+    const [responsables, setResponsables] = useState([])
     const [loading, setLoading] = useState(true)
     const [exportando, setExportando] = useState(false)
 
@@ -391,12 +379,13 @@ export default function PerfilCerda() {
         try {
             setLoading(true)
 
-            const [resPorcino, resRepro, resPartos, resNovedades, resSeg] = await Promise.all([
+            const [resPorcino, resRepro, resPartos, resNovedades, resSeg, resResp] = await Promise.all([
                 apiAxios.get(`/porcino/${id}`),
                 apiAxios.get("/ciclos/"),
                 apiAxios.get("/Partos/"),
                 apiAxios.get("/novedades/"),
                 apiAxios.get("/Seguimiento_Cerda/").catch(() => ({ data: [] })),
+                apiAxios.get("/responsables/").catch(() => ({ data: [] })),
             ])
 
             setPorcino(resPorcino.data)
@@ -404,11 +393,29 @@ export default function PerfilCerda() {
             setPartos((resPartos.data || []).filter((p) => Number(p.Id_Porcino) === Number(id)))
             setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
             setSeguimientos((resSeg.data || []).filter((s) => Number(s.Id_Porcino) === Number(id)))
+            setResponsables(resResp.data || [])
         } catch (error) {
             console.error("Error al cargar perfil:", error)
         } finally {
             setLoading(false)
         }
+    }
+
+    const getNombresResponsables = (Id_Responsable) => {
+        if (!Id_Responsable || responsables.length === 0) return null
+        try {
+            let ids = []
+            if (typeof Id_Responsable === 'string' && Id_Responsable.startsWith('[')) {
+                ids = JSON.parse(Id_Responsable).map(Number)
+            } else {
+                ids = [Number(Id_Responsable)]
+            }
+            const res = ids.map(id => {
+                const r = responsables.find(r => r.Id_Responsable === id)
+                return r ? `${r.Nombres} ${r.Apellidos}` : null
+            }).filter(Boolean)
+            return res.length > 0 ? res.join(', ') : null
+        } catch { return null }
     }
 
     const montasTodas = useMemo(
@@ -433,59 +440,53 @@ export default function PerfilCerda() {
         const events = []
 
         montasTodas.forEach((m) => {
+            const resp = getNombresResponsables(m.Id_Responsable) || m.Responsables?.Nombres;
             events.push({
                 sort: toSortKey(m.Fec_hora),
                 fecha: fmtFechaHora(m.Fec_hora),
                 tipo: "Monta",
-                detalle: `Monta natural registrada`,
+                detalle: [`Monta natural registrada`, resp ? `Resp: ${resp}` : null].filter(Boolean).join(" · "),
                 ref: `Ciclo #${m.Id_Ciclo}${m.TipoCiclo ? ` · ${m.TipoCiclo}` : ""}`,
             })
         })
 
         inseminacionesTodas.forEach((ins) => {
+            const resp = getNombresResponsables(ins.Id_Responsable) || ins.Responsables?.Nombres;
             events.push({
                 sort: toSortKey(ins.Fec_hora),
                 fecha: fmtFechaHora(ins.Fec_hora),
                 tipo: "Inseminación",
-                detalle: `Inseminación artificial`,
+                detalle: [`Inseminación artificial`, resp ? `Resp: ${resp}` : null].filter(Boolean).join(" · "),
                 ref: `Ciclo #${ins.Id_Ciclo}${ins.TipoCiclo ? ` · ${ins.TipoCiclo}` : ""}`,
             })
         })
 
         partos.forEach((p) => {
+            const resp = getNombresResponsables(p.Id_Responsable) || p.Responsables?.Nombres;
             events.push({
                 sort: toSortKey(p.Fec_inicio),
                 fecha: fmtFecha(p.Fec_inicio),
                 tipo: "Parto",
-                detalle: `Vivos ${p.Nac_vivos ?? 0} · Muertos ${p.Nac_muertos ?? 0} · Momias ${p.Nac_momias ?? 0} · Peso ${p.Pes_camada ?? "—"} kg`,
+                detalle: [`Vivos ${p.Nac_vivos ?? 0} · Muertos ${p.Nac_muertos ?? 0} · Momias ${p.Nac_momias ?? 0} · Peso ${p.Pes_camada ?? "—"} kg`, resp ? `Resp: ${resp}` : null].filter(Boolean).join(" · "),
                 ref: p.Id_Ciclo ? `Ciclo #${p.Id_Ciclo}` : "—",
             })
         })
 
         seguimientos.forEach((s) => {
+            const resp = getNombresResponsables(s.Id_Responsable) || s.Responsables?.Nombres;
             events.push({
                 sort: toSortKey(s.Fecha) + (s.Hora ? ` ${String(s.Hora).slice(0, 5)}` : ""),
                 fecha: `${fmtFecha(s.Fecha)}${s.Hora ? ` ${String(s.Hora).slice(0, 5)}` : ""}`,
                 tipo: "Seguimiento",
-                detalle: [s.Observaciones, s.medicamentos?.Nombre ? `Med: ${s.medicamentos.Nombre}` : null, s.Responsables?.Nombres ? `Resp: ${s.Responsables.Nombres}` : null]
+                detalle: [s.Observaciones, s.medicamentos?.Nombre ? `Med: ${s.medicamentos.Nombre}` : null, resp ? `Resp: ${resp}` : null]
                     .filter(Boolean)
                     .join(" · ") || "Seguimiento clínico",
                 ref: s.Id_Ciclo ? `Ciclo #${s.Id_Ciclo}` : "—",
             })
         })
 
-        novedades.forEach((n) => {
-            events.push({
-                sort: toSortKey(n.Fecha_Novedad),
-                fecha: fmtFecha(n.Fecha_Novedad),
-                tipo: n.Tipo_Novedad || "Novedad",
-                detalle: [n.Causa_Motivo, n.Observaciones].filter(Boolean).join(" · ") || "Sin detalle",
-                ref: `#${n.Id_Novedad}`,
-            })
-        })
-
         return events.sort((a, b) => a.sort.localeCompare(b.sort))
-    }, [montasTodas, inseminacionesTodas, partos, seguimientos, novedades])
+    }, [montasTodas, inseminacionesTodas, partos, seguimientos, responsables])
 
     const exportarPDF = async () => {
         if (!pdfRef.current || exportando) return
@@ -497,6 +498,40 @@ export default function PerfilCerda() {
             ]);
 
             const el = pdfRef.current
+            
+            // Calculate page dimensions in pixels
+            const pdf = new jsPDF("p", "mm", "a4")
+            const margin = 6
+            const pageW = pdf.internal.pageSize.getWidth() - margin * 2
+            const pageH = pdf.internal.pageSize.getHeight() - margin * 2
+            
+            // Pixels per page
+            const pxPageH = (el.scrollWidth * pageH) / pageW
+            
+            const avoidElements = el.querySelectorAll('.pdf-avoid-break')
+            const spacers = []
+            
+            // Force layout recalculation inside loop
+            avoidElements.forEach(node => {
+                const elRect = el.getBoundingClientRect()
+                const rect = node.getBoundingClientRect()
+                const top = rect.top - elRect.top
+                const height = rect.height
+                
+                const currentPage = Math.floor(top / pxPageH)
+                const endPage = Math.floor((top + height) / pxPageH)
+                
+                // If it crosses a boundary and isn't bigger than a full page itself
+                if (endPage > currentPage && height < pxPageH) {
+                    const spaceNeeded = ((currentPage + 1) * pxPageH) - top
+                    const spacer = document.createElement('div')
+                    spacer.style.height = `${spaceNeeded}px`
+                    spacer.className = "pdf-temp-spacer"
+                    node.parentNode.insertBefore(spacer, node)
+                    spacers.push(spacer)
+                }
+            })
+
             const canvas = await html2canvas(el, {
                 scale: 2,
                 useCORS: true,
@@ -505,14 +540,12 @@ export default function PerfilCerda() {
                 width: el.scrollWidth,
                 windowWidth: el.scrollWidth,
             })
+            
+            spacers.forEach(s => s.remove())
 
-            const pdf = new jsPDF("p", "mm", "a4")
-            const pageW = pdf.internal.pageSize.getWidth()
-            const pageH = pdf.internal.pageSize.getHeight()
-            const margin = 6
-            const usableH = pageH - margin * 2
-            const imgW = pageW - margin * 2
+            const imgW = pageW
             const imgH = (canvas.height * imgW) / canvas.width
+            const usableH = pageH
             const imgData = canvas.toDataURL("image/jpeg", 0.95)
 
             let heightLeft = imgH
@@ -530,6 +563,8 @@ export default function PerfilCerda() {
 
             const nombre = (porcino?.Nom_Porcino || "cerda").replace(/\s+/g, "_")
             pdf.save(`Hoja_de_Vida_${nombre}_${porcino?.Num_Chapeta || id}.pdf`)
+            setExportando(false)
+            return;
         } catch (err) {
             console.error("Error exportando PDF:", err)
             window.print()
@@ -613,7 +648,7 @@ export default function PerfilCerda() {
                                     Chapeta: <span className="text-gray-800 font-bold">{porcino.Num_Chapeta}</span>
                                 </p>
                                 <span className="inline-block bg-pink-500 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">
-                                    {porcino.razas?.Nom_Raza || "Sin raza definida"}
+                                    {porcino.raza?.Nom_Raza || "Sin raza definida"}
                                 </span>
                             </div>
 
@@ -1026,6 +1061,10 @@ export default function PerfilCerda() {
                                             icon = "fa-truck-fast"
                                         }
 
+                                        const isMuerte = nov.Tipo_Novedad === "Muerte" || nov.Tipo_Novedad === "Descarte";
+                                        const isMomia = nov.Causa_Motivo?.toLowerCase().includes("momia") || nov.Observaciones?.toLowerCase().includes("momia");
+                                        const causaMotivoFinal = isMomia ? "Momia" : nov.Causa_Motivo;
+
                                         return (
                                             <div
                                                 key={nov.Id_Novedad}
@@ -1038,14 +1077,14 @@ export default function PerfilCerda() {
                                                 </div>
                                                 <div className="flex-grow">
                                                     <div className="flex justify-between items-start mb-1">
-                                                        <h4 className={`font-bold ${textClass}`}>{nov.Tipo_Novedad}</h4>
+                                                        <h4 className={`font-bold ${textClass}`}>{isMuerte && isMomia ? "Muerte de cría: Momia" : nov.Tipo_Novedad}</h4>
                                                         <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
                                                             {fmtFecha(nov.Fecha_Novedad)}
                                                         </span>
                                                     </div>
-                                                    {nov.Causa_Motivo && (
+                                                    {causaMotivoFinal && (
                                                         <p className="text-sm font-semibold text-gray-700 mb-1">
-                                                            Causa: {nov.Causa_Motivo}
+                                                            Causa: {causaMotivoFinal}
                                                         </p>
                                                     )}
                                                     {nov.Observaciones && (
