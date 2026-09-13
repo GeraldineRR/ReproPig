@@ -51,7 +51,127 @@ export default function PerfilCerda() {
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
         </div>
     )
-    if (!porcino) return <div className="p-10 text-center mt-5 text-gray-500 text-xl font-medium">Cerda no encontrada</div>
+    const inseminacionesTodas = useMemo(
+        () =>
+            ciclos
+                .flatMap((c) =>
+                    (c.inseminaciones || []).map((m) => ({ ...m, Id_Ciclo: c.Id_Ciclo, TipoCiclo: c.TipoCiclo }))
+                )
+                .sort((a, b) => toSortKey(a.Fec_hora).localeCompare(toSortKey(b.Fec_hora))),
+        [ciclos]
+    )
+
+    const historialCronologico = useMemo(() => {
+        const events = []
+
+        montasTodas.forEach((m) => {
+            events.push({
+                sort: toSortKey(m.Fec_hora),
+                fecha: fmtFechaHora(m.Fec_hora),
+                tipo: "Monta",
+                detalle: `Monta natural registrada`,
+                ref: `Ciclo #${m.Id_Ciclo}${m.TipoCiclo ? ` · ${m.TipoCiclo}` : ""}`,
+            })
+        })
+
+        inseminacionesTodas.forEach((ins) => {
+            events.push({
+                sort: toSortKey(ins.Fec_hora),
+                fecha: fmtFechaHora(ins.Fec_hora),
+                tipo: "Inseminación",
+                detalle: `Inseminación artificial`,
+                ref: `Ciclo #${ins.Id_Ciclo}${ins.TipoCiclo ? ` · ${ins.TipoCiclo}` : ""}`,
+            })
+        })
+
+        partos.forEach((p) => {
+            events.push({
+                sort: toSortKey(p.Fec_inicio),
+                fecha: fmtFecha(p.Fec_inicio),
+                tipo: "Parto",
+                detalle: `Vivos ${p.Nac_vivos ?? 0} · Muertos ${p.Nac_muertos ?? 0} · Momias ${p.Nac_momias ?? 0} · Peso ${p.Pes_camada ?? "—"} kg`,
+                ref: p.Id_Ciclo ? `Ciclo #${p.Id_Ciclo}` : "—",
+            })
+        })
+
+        seguimientos.forEach((s) => {
+            events.push({
+                sort: toSortKey(s.Fecha) + (s.Hora ? ` ${String(s.Hora).slice(0, 5)}` : ""),
+                fecha: `${fmtFecha(s.Fecha)}${s.Hora ? ` ${String(s.Hora).slice(0, 5)}` : ""}`,
+                tipo: "Seguimiento",
+                detalle: [s.Observaciones, s.medicamentos?.Nombre ? `Med: ${s.medicamentos.Nombre}` : null, s.Responsables?.Nombres ? `Resp: ${s.Responsables.Nombres}` : null]
+                    .filter(Boolean)
+                    .join(" · ") || "Seguimiento clínico",
+                ref: s.Id_Ciclo ? `Ciclo #${s.Id_Ciclo}` : "—",
+            })
+        })
+
+        return events.sort((a, b) => a.sort.localeCompare(b.sort))
+    }, [montasTodas, inseminacionesTodas, partos, seguimientos])
+
+    const exportarPDF = async () => {
+        if (!pdfRef.current || exportando) return
+        setExportando(true)
+        try {
+            const [jsPDFModule, html2canvasModule] = await Promise.all([
+                import("jspdf"),
+                import("html2canvas"),
+            ]);
+            const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default;
+            const html2canvas = html2canvasModule.default || html2canvasModule;
+
+            const el = pdfRef.current
+            const canvas = await html2canvas(el, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                logging: false,
+                width: el.scrollWidth,
+                windowWidth: el.scrollWidth,
+            })
+
+            const pdf = new jsPDF("p", "mm", "a4")
+            const pageW = pdf.internal.pageSize.getWidth()
+            const pageH = pdf.internal.pageSize.getHeight()
+            const margin = 6
+            const usableH = pageH - margin * 2
+            const imgW = pageW - margin * 2
+            const imgH = (canvas.height * imgW) / canvas.width
+            const imgData = canvas.toDataURL("image/jpeg", 0.95)
+
+            let heightLeft = imgH
+            let position = margin
+
+            pdf.addImage(imgData, "JPEG", margin, position, imgW, imgH)
+            heightLeft -= usableH
+
+            while (heightLeft > 0) {
+                position = margin - (imgH - heightLeft)
+                pdf.addPage()
+                pdf.addImage(imgData, "JPEG", margin, position, imgW, imgH)
+                heightLeft -= usableH
+            }
+
+            const nombre = (porcino?.Nom_Porcino || "cerda").replace(/\s+/g, "_")
+            pdf.save(`Hoja_de_Vida_${nombre}_${porcino?.Num_Chapeta || id}.pdf`)
+        } catch (err) {
+            console.error("Error exportando PDF:", err)
+            window.print()
+        } finally {
+            setExportando(false)
+        }
+    }
+
+    if (loading)
+        return (
+            <div className="flex justify-center items-center h-screen w-full">
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
+            </div>
+        )
+    if (!porcino)
+        return <div className="p-10 text-center mt-5 text-gray-500 text-xl font-medium">Cerda no encontrada</div>
+
+    const cicloActivo = (repro) => repro.Estado === "Activo" || repro.Activo === "S"
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-12">

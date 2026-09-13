@@ -61,18 +61,34 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
     const getPorcinos = async () => {
         try {
-            const response = await apiAxios.get('/porcino/')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
+            const [porcinosRes, ciclosRes] = await Promise.all([
+                apiAxios.get('/porcino/'),
+                apiAxios.get('/ciclos/')
+            ]);
+            const activeCiclosSows = new Set(
+                ciclosRes.data
+                    .filter(c => (c.Estado || '').toUpperCase() === 'ACTIVO')
+                    .map(c => c.Id_Cerda)
+            );
+            
+            setPorcinos(porcinosRes.data.filter(p => 
+                p.Gen_Porcino === 'H' && 
+                p.Tipo_Cerdo === 'Adulto' &&
+                (activeCiclosSows.has(p.Id_Porcino) || (Seguimiento_CerdaEdit && Seguimiento_CerdaEdit.Id_Porcino === p.Id_Porcino))
+            ));
         } catch (error) {
-            console.error('Error obteniendo porcinos:', error)
+            console.error('Error obteniendo porcinos y ciclos:', error)
             setPorcinos([])
         }
     }
 
     const getResponsables = async () => {
         try {
-            const responsables = await apiAxios.get('/responsables/')
-            setResponsables(responsables.data)
+            const res = await apiAxios.get('/responsables/')
+            // Filtrar activos o si ya está seleccionado en edición
+            setResponsables(res.data.filter(r => 
+                r.Estado === 'Activo' || (Seguimiento_CerdaEdit && Seguimiento_CerdaEdit.Id_Responsable === r.Id_Responsable)
+            ))
         } catch (error) {
             console.error('Error obteniendo responsables:', error)
             setResponsables([])
@@ -94,7 +110,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         try {
             const response = await apiAxios.get('/ciclos/')
             const activas = response.data.filter(r =>
-                r.Id_Cerda == idPorcino && r.Activo === 'S'
+                r.Id_Cerda == idPorcino && (r.Estado || '').toUpperCase() === 'ACTIVO'
             )
             setCiclosActivas(activas)
         } catch (error) {

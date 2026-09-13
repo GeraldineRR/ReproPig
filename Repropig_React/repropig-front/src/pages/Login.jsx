@@ -177,6 +177,12 @@ export default function Login() {
                         />
                     </div>
 
+                    <div className="mb-4 text-center">
+                        <p style={{ fontSize: '0.85rem', color: '#777', margin: 0 }}>
+                            Al iniciar sesión, aceptas los <a href="/terminos-condiciones" target="_blank" rel="noopener noreferrer" className="forgot-link">Términos y Condiciones</a> y la <a href="/politica-privacidad" target="_blank" rel="noopener noreferrer" className="forgot-link">Política de Privacidad</a> del SENA.
+                        </p>
+                    </div>
+
                     <button
                         type="submit"
                         className="auth-btn"

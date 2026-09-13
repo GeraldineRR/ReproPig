@@ -11,10 +11,12 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import Swal from "sweetalert2"
 import WithReactContent from "sweetalert2-react-content"
 import CalendarioForm from "../Calendario/CalendarioForm.jsx"
+import { useAuth } from "../../context/AuthContext.jsx"
 
 
 const CrudCiclos = () => {
-
+    const auth = useAuth() || {};
+    const { usuario } = auth;
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const [ciclos, setCiclos] = useState([])
@@ -177,6 +179,15 @@ const CrudCiclos = () => {
     }
 
     const handleToggleActivo = async (row) => {
+        if (usuario?.Cargo !== 'Gestor') {
+            MySwal.fire({
+                icon: 'warning',
+                title: 'Acceso denegado',
+                text: 'Pídele permiso al instructor para activar o inactivar el ciclo.'
+            })
+            return
+        }
+
         const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
         const accion = isActivo ? 'inactivar' : 'activar'
         const result = await MySwal.fire({
@@ -208,6 +219,27 @@ const CrudCiclos = () => {
         }
     }
 
+    const getFechaServicio = (row) => {
+        const fechas = [
+            ...(row.montas || []).map(m => m.Fec_hora).filter(Boolean),
+            ...(row.inseminaciones || []).map(i => i.Fec_hora).filter(Boolean)
+        ];
+        return fechas.length ? fechas.sort()[0].split('T')[0] : null;
+    };
+
+    const calcularDiasGestacion = (row) => {
+        const fec = getFechaServicio(row);
+        if (!fec) return '-';
+        try {
+            const servicio = new Date(fec + 'T00:00:00');
+            const hoy = new Date();
+            const dias = Math.floor((hoy - servicio) / (1000 * 60 * 60 * 24));
+            return dias > 0 ? dias : 0;
+        } catch (e) {
+            return '-';
+        }
+    }
+
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Ciclo, sortable: true, width: '60px' },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
@@ -222,23 +254,99 @@ const CrudCiclos = () => {
             }
         },
         {
-            name: 'Activo',
-            width: '110px',
+            name: 'Estado / Progreso',
+            width: '180px',
             cell: row => {
                 const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
+                const badgeClass = isActivo ? 'bg-success text-white' : 'bg-secondary text-white';
+                const icon = isActivo ? '🟢' : '⚫';
+                const estado = row.Estado || 'Inactivo';
+                
+                // Calcular progreso
+                let progreso = 0;
+                let dias = 0;
+                const fecServicio = getFechaServicio(row);
+                if (fecServicio) {
+                    try {
+                        const servicio = new Date(fecServicio + 'T00:00:00')
+                        const hoy = new Date()
+                        hoy.setHours(0, 0, 0, 0) // Normalizar a medianoche para evitar diferencias de zona horaria
+                        dias = Math.round((hoy - servicio) / (1000 * 60 * 60 * 24))
+                        if (dias < 0) dias = 0;
+                        progreso = Math.min(100, Math.floor((dias / 114) * 100));
+                    } catch(e) { console.error(e) }
+                }
+
+                const isTerminado = isActivo && dias >= 114;
+
                 return (
-                    <span
-                        className={`badge ${isActivo ? 'bg-success' : 'bg-secondary'}`}
-                        style={{ cursor: 'pointer', fontSize: '12px' }}
-                        title={isActivo ? 'Clic para inactivar' : 'Clic para activar'}
-                        onClick={() => handleToggleActivo(row)}
-                    >
-                        {isActivo ? '✅ Activo' : '⛔ Inactivo'}
-                    </span>
+                    <div className="w-100" style={{ cursor: 'pointer' }} onClick={() => handleToggleActivo(row)}>
+                        <div className="d-flex justify-content-between mb-1">
+                            <span className={`badge ${badgeClass}`} style={{ fontSize: '11px' }}>
+                                {icon} {estado}
+                            </span>
+                            {isActivo && (
+                                <small className={`fw-bold ${isTerminado ? 'text-danger' : 'text-muted'}`} style={{ fontSize: '10px' }}>
+                                    {progreso}%
+                                </small>
+                            )}
+                        </div>
+                        {isActivo && (
+                            <>
+                                <div className="progress" style={{ height: '5px' }}>
+                                    <div className={`progress-bar ${isTerminado ? 'bg-danger' : 'bg-success'}`} role="progressbar" style={{ width: `${progreso}%` }} aria-valuenow={progreso} aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                {isTerminado && (
+                                    <>
+                                        <small className="text-danger fw-bold d-block mt-1" style={{ fontSize: '9px' }}>
+                                            ⚠️ Ciclo terminado, continúa con el parto.
+                                        </small>
+                                        <div className="mt-2 text-center">
+                                            <button 
+                                                className="btn btn-sm btn-danger px-3 py-0 fw-bold" 
+                                                style={{ fontSize: '10px', borderRadius: '12px' }}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate('/partos', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda } });
+                                                }}
+                                            >
+                                                Registrar parto <i className="fa-solid fa-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
                 );
             }
         },
         {
+            name: 'F. Servicio',
+            width: '120px',
+            selector: row => getFechaServicio(row) || '-',
+            sortable: true
+        },
+        {
+            name: 'Días Gestación',
+            width: '110px',
+            cell: row => {
+                const dias = calcularDiasGestacion(row);
+                return <span style={{ fontWeight: 'bold' }}>{dias}</span>;
+            },
+            sortable: true
+        },
+        // {
+        //     name: 'Fecha Probable Parto',
+        //     width: '140px',
+        //     cell: row => {
+        //         const fecha = calcularFechaProbableParto(row.Fec_servicio);
+        //         return <span>{fecha}</span>;
+        //     },
+        //     sortable: true
+        // },
+        {
+>>>>>>> Stashed changes
             name: 'Montas',
             width: '100px',
             cell: row => (
@@ -389,7 +497,7 @@ const CrudCiclos = () => {
                 </div>
             </div>
             {/* Modal Calendario */}
-            <div className="modal fade" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
+            <div className="modal fade" ref={modalCalendarioRef} aria-hidden="true" data-bs-focus="false">
                 <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
                     <div className="modal-content">
                         <div className="modal-header bg-info bg-opacity-10">
