@@ -59,11 +59,7 @@ export default function PerfilCerda() {
         }
     }
 
-    if (loading) return (
-        <div className="flex justify-center items-center h-screen w-full">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-500"></div>
-        </div>
-    )
+
     const inseminacionesTodas = useMemo(
         () =>
             ciclos
