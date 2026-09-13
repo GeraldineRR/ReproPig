@@ -2,6 +2,21 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import apiAxios from "../api/axiosConfig"
 
+const toSortKey = (dateStr) => {
+    if (!dateStr) return "0000-00-00T00:00:00.000Z"
+    try { return new Date(dateStr).toISOString() } catch (e) { return "0000-00-00T00:00:00.000Z" }
+}
+
+const fmtFecha = (dateStr) => {
+    if (!dateStr) return "—"
+    try { return new Date(dateStr).toLocaleDateString() } catch (e) { return "—" }
+}
+
+const fmtFechaHora = (dateStr) => {
+    if (!dateStr) return "—"
+    try { return new Date(dateStr).toLocaleString() } catch (e) { return "—" }
+}
+
 export default function PerfilCerda() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -59,6 +74,16 @@ export default function PerfilCerda() {
         }
     }
 
+
+    const montasTodas = useMemo(
+        () =>
+            ciclos
+                .flatMap((c) =>
+                    (c.montas || []).map((m) => ({ ...m, Id_Ciclo: c.Id_Ciclo, TipoCiclo: c.TipoCiclo }))
+                )
+                .sort((a, b) => toSortKey(a.Fec_hora).localeCompare(toSortKey(b.Fec_hora))),
+        [ciclos]
+    )
 
     const inseminacionesTodas = useMemo(
         () =>
