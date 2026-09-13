@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import apiAxios from "../api/axiosConfig"
 
@@ -10,7 +10,11 @@ export default function PerfilCerda() {
     const [ciclos, setCiclos] = useState([])
     const [partos, setPartos] = useState([])
     const [novedades, setNovedades] = useState([])
+    const [seguimientos, setSeguimientos] = useState([])
     const [loading, setLoading] = useState(true)
+
+    const pdfRef = useRef(null)
+    const [exportando, setExportando] = useState(false)
 
     useEffect(() => {
         cargarDatos()
@@ -38,6 +42,15 @@ export default function PerfilCerda() {
             const resNovedades = await apiAxios.get('/novedades/')
             const novedadesDeCerda = resNovedades.data.filter(n => n.Id_Porcino == id)
             setNovedades(novedadesDeCerda)
+
+            // Traer seguimientos (si existe la ruta, o un array vacío si falla)
+            try {
+                const resSeguimientos = await apiAxios.get('/seguimiento_cerda/')
+                const seguimientosDeCerda = resSeguimientos.data.filter(s => s.Id_Cerda == id)
+                setSeguimientos(seguimientosDeCerda)
+            } catch (e) {
+                console.log("No se pudieron cargar seguimientos", e)
+            }
 
         } catch (error) {
             console.error("Error al cargar perfil:", error)
