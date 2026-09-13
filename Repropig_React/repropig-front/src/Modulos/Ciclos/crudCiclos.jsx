@@ -346,7 +346,7 @@ const CrudCiclos = () => {
         //     sortable: true
         // },
         {
->>>>>>> Stashed changes
+
             name: 'Montas',
             width: '100px',
             cell: row => (
