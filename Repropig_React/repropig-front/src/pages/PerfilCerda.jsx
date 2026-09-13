@@ -214,7 +214,17 @@ export default function PerfilCerda() {
                 <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-pink-600 transition-colors font-medium">
                     <i className="fa-solid fa-arrow-left mr-2"></i> Volver a Porcinos
                 </button>
-                <div className="text-sm text-gray-400 font-medium">Perfil Clínico y Reproductivo</div>
+                <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-400 font-medium hidden sm:block">Perfil Clínico y Reproductivo</div>
+                    <button 
+                        onClick={exportarPDF} 
+                        disabled={exportando}
+                        className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow font-medium text-sm transition-colors flex items-center disabled:opacity-50"
+                    >
+                        <i className={`fa-solid ${exportando ? 'fa-spinner fa-spin' : 'fa-file-pdf'} mr-2`}></i>
+                        {exportando ? 'Exportando...' : 'Exportar PDF'}
+                    </button>
+                </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
@@ -235,7 +245,7 @@ export default function PerfilCerda() {
                                 <h2 className="text-2xl font-black text-gray-800 tracking-tight mb-1">{porcino.Nom_Porcino}</h2>
                                 <p className="text-gray-500 font-medium mb-3">Chapeta: <span className="text-gray-800 font-bold">{porcino.Num_Chapeta}</span></p>
                                 <span className="inline-block bg-pink-500 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">
-                                    {porcino.razas?.Nom_Raza || 'Sin raza definida'}
+                                    {porcino.raza?.Nom_Raza || porcino.razas?.Nom_Raza || 'Sin raza definida'}
                                 </span>
                             </div>
                             
