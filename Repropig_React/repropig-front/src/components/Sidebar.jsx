@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
-import { TbHome, TbPig, TbChevronDown, TbActivityHeart, TbStethoscope, TbUsers } from 'react-icons/tb'
+import { TbHome, TbPig, TbChevronDown, TbActivityHeartbeat, TbStethoscope, TbUsers } from 'react-icons/tb'
 
 export default function Sidebar({ isOpen }) {
   const [animalesOpen, setAnimalesOpen] = useState(true)
@@ -50,7 +50,7 @@ export default function Sidebar({ isOpen }) {
         <div>
           <button className={buttonClass} onClick={() => setReproOpen(!reproOpen)}>
             <div className="flex items-center gap-2">
-              <TbActivityHeart className="w-5 h-5 text-purple-500" /> Ciclos
+              <TbActivityHeartbeat className="w-5 h-5 text-purple-500" /> Ciclos
             </div>
             <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${reproOpen ? 'rotate-180' : ''}`} />
           </button>
