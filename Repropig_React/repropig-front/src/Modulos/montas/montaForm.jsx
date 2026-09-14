@@ -74,29 +74,36 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             setObservaciones('');
             setTextFormButton('Agregar Monta');
 
-            try {
-                const res = await apiAxios.get('/ciclos');
-                const activas = (res.data || []).filter(r =>
-                    r.Id_Cerda == preloaded.Id_Porcino &&
-                    ((r.Estado || r.activo || r.Activo || '').toUpperCase() === 'ACTIVO' || r.Activo === 'S' || r.Id_Ciclo == preloaded.Id_Ciclo)
-                );
-                setCiclosActivas(activas);
-            } catch (err) {
-                console.error("Error al cargar ciclos preloaded:", err);
-            }
+            const res = await apiAxios.get('/ciclos');
+            const activas = res.data.filter(r =>
+                r.Id_Cerda == preloaded.Id_Porcino && (r.Estado || '').toUpperCase() === 'ACTIVO'
+            );
+            setCiclosActivas(activas);
         };
 
         cargarPreloaded();
     }, [preloaded?.Id_Porcino, preloaded?.Id_Ciclo]);
 
     const getPorcinos = async () => {
-        try {
-            const res = await apiAxios.get('/porcino');
-            setHembras(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'));
-            setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
-        } catch (error) {
-            console.error("Error cargando porcinos:", error);
-        }
+        const [res, ciclosRes] = await Promise.all([
+            apiAxios.get('/porcino'),
+            apiAxios.get('/ciclos')
+        ]);
+        
+        const activeCiclosSows = new Set(
+            ciclosRes.data
+                .filter(c => (c.Estado || '').toUpperCase() === 'ACTIVO')
+                .map(c => String(c.Id_Cerda))
+        );
+
+        const cerdaPermitida = String(rowToEdit?.Id_Porcino || preloaded?.Id_Porcino || '');
+
+        setHembras(res.data.filter(p => 
+            p.Gen_Porcino === 'H' && 
+            p.Tipo_Cerdo === 'Adulto' && 
+            (activeCiclosSows.has(String(p.Id_Porcino)) || String(p.Id_Porcino) === cerdaPermitida)
+        ));
+        setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
     };
 
     const getResponsables = async () => {
@@ -129,16 +136,9 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     // ✅ Para cuando el usuario cambia la cerda manualmente (solo activas)
     const getCiclosActivasSolo = async (id) => {
         if (!id) return setCiclosActivas([]);
-        try {
-            const res = await apiAxios.get('/ciclos');
-            const activas = (res.data || []).filter(r =>
-                r.Id_Cerda == id &&
-                ((r.Estado || r.activo || r.Activo || '').toUpperCase() === 'ACTIVO' || r.Activo === 'S')
-            );
-            setCiclosActivas(activas);
-        } catch (error) {
-            console.error("Error cargando ciclos activos:", error);
-        }
+        const res = await apiAxios.get('/ciclos');
+        const activas = res.data.filter(r => r.Id_Cerda == id && (r.Estado || '').toUpperCase() === 'ACTIVO');
+        setCiclosActivas(activas);
     };
 
     const toggleResponsable = (id) => {
@@ -295,7 +295,9 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             <div className="mt-4">
                 <label className="form-label fw-semibold">👨‍🌾 Responsables</label>
                 <div className="d-flex flex-wrap gap-2">
-                    {responsables.map(r => {
+                    {responsables
+                        .filter(r => r.Estado === 'Activo' || Id_Responsable.includes(r.Id_Responsable))
+                        .map(r => {
                         const activo = Id_Responsable.includes(r.Id_Responsable);
                         return (
                             <span

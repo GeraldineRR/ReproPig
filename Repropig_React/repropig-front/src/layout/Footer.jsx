@@ -67,6 +67,15 @@ function Footer() {
           Sistema Integral de Gestión Reproductiva Porcina
         </p>
 
+        <div className="flex justify-center gap-6 mb-8 text-sm font-medium">
+          <a href="/terminos-condiciones" className="text-pink-300 hover:text-pink-100 transition-colors">
+            Términos y Condiciones
+          </a>
+          <a href="/politica-privacidad" className="text-pink-300 hover:text-pink-100 transition-colors">
+            Política de Privacidad
+          </a>
+        </div>
+
         <hr className="rp-footer-divider" />
 
         <p className="rp-footer-copy">

@@ -68,6 +68,12 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
             </button>
           </div>
         )}
+        <button
+          onClick={() => navigate("/contactanos")}
+          className="text-pink-600 font-bold hover:text-pink-800 transition-colors px-2"
+        >
+          Contáctanos
+        </button>
 
         {usuario ? (
           <>

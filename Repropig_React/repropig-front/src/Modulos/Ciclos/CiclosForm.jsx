@@ -167,6 +167,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                 )}
             </div>
 
+
             {/* ── MODO EDICIÓN ─────────────────────────────── */}
             {esEdicion && (
                 <>

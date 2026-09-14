@@ -5,11 +5,14 @@ import RutaProtegida from "./components/RutaProtegida"
 
 // páginas
 import Landing from "./pages/landing"
+import Contactanos from "./pages/Contactanos"
 import Login from "./pages/Login"
 import QuienesSomos from "./pages/QuienesSomos"
 import Dashboard from "./pages/dashboard"
 import ForgotPassword from "./Forgotpassword"
 import ResetPassword from "./Resetpassword"
+import PoliticaPrivacidad from "./pages/PoliticaPrivacidad"
+import TerminosCondiciones from "./pages/TerminosCondiciones"
 
 // módulos
 import CrudPorcinos from "./Modulos/porcinos/crudPorcinos"
@@ -35,10 +38,13 @@ function App() {
       {/* públicas */}
       <Route path="/" element={<Landing />} />
       <Route path="/quienes-somos" element={<QuienesSomos />} />
+      <Route path="/contactanos" element={<Contactanos />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/perfil-cerda/:id" element={<PerfilCerda />} />
+      <Route path="/politica-privacidad" element={<PoliticaPrivacidad />} />
+      <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
 
       {/* protegidas */}
       <Route element={<RutaProtegida />}>

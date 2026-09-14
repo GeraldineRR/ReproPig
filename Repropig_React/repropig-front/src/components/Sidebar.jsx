@@ -19,13 +19,13 @@ export default function Sidebar({ isOpen }) {
   return (
     <aside
       className={`bg-white border-r border-gray-100 h-full transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-40 shrink-0 ${
-        isOpen ? "w-72 overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:w-72" : "w-0 opacity-0 overflow-hidden pointer-events-none md:relative md:w-0 md:opacity-0 md:pointer-events-none"
+        isOpen ? "w-72 overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:top-0 md:w-72" : "w-0 opacity-0 overflow-hidden pointer-events-none md:relative md:top-0 md:w-0 md:opacity-0 md:pointer-events-none"
       }`}
       style={{
         // ensure proper stacking on mobile overlay
       }}
     >
-      <nav className="flex flex-col gap-1 py-4">
+      <nav className="flex flex-col gap-1 py-4 pb-32">
 
         <NavLink to="/dashboard" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>
           <i className="fa-solid fa-house w-5 text-center"></i> Inicio
@@ -86,7 +86,7 @@ export default function Sidebar({ isOpen }) {
         </div>
 
         {/* Administración */}
-        {usuario?.cargo === "instructor" && (
+        {(usuario?.Cargo?.toLowerCase().includes("instructor") || usuario?.cargo?.toLowerCase().includes("instructor")) && (
           <div>
             <button className={buttonClass} onClick={() => setAdminOpen(!adminOpen)}>
               <div className="flex items-center gap-2">

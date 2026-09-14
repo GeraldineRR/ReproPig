@@ -11,6 +11,7 @@ function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [aceptaPoliticas, setAceptaPoliticas] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,7 +71,21 @@ function ResetPassword() {
             />
           </div>
 
-          <button className="btn btn-primary w-100" style={{ background: '#C97A85', border: 'none' }}>
+          <div className="mb-3 form-check">
+            <input
+              type="checkbox"
+              className="form-check-input"
+              id="aceptaPoliticas"
+              checked={aceptaPoliticas}
+              onChange={(e) => setAceptaPoliticas(e.target.checked)}
+              required
+            />
+            <label className="form-check-label" htmlFor="aceptaPoliticas" style={{ fontSize: '0.85rem', color: '#555' }}>
+              Acepto los <a href="/terminos-condiciones" target="_blank" rel="noopener noreferrer">Términos y Condiciones</a> y la <a href="/politica-privacidad" target="_blank" rel="noopener noreferrer">Política de Privacidad</a> del SENA.
+            </label>
+          </div>
+
+          <button className="btn btn-primary w-100" style={{ background: '#C97A85', border: 'none' }} disabled={!aceptaPoliticas}>
             Cambiar contraseña
           </button>
         </form>

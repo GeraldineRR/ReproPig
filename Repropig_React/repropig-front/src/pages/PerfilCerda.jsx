@@ -419,6 +419,15 @@ export default function PerfilCerda() {
             setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
             setSeguimientos((resSeg.data || []).filter((s) => Number(s.Id_Porcino) === Number(id)))
             setResponsables(resResp.data || [])
+            // Traer seguimientos (si existe la ruta, o un array vacío si falla)
+            try {
+                const resSeguimientos = await apiAxios.get('/seguimiento_cerda/')
+                const seguimientosDeCerda = resSeguimientos.data.filter(s => s.Id_Cerda == id)
+                setSeguimientos(seguimientosDeCerda)
+            } catch (e) {
+                console.log("No se pudieron cargar seguimientos", e)
+            }
+
         } catch (error) {
             console.error("Error inesperado al cargar perfil:", error)
         } finally {
@@ -530,10 +539,12 @@ export default function PerfilCerda() {
         if (!pdfRef.current || exportando) return
         setExportando(true)
         try {
-            const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+            const [jsPDFModule, html2canvasModule] = await Promise.all([
                 import("jspdf"),
                 import("html2canvas"),
             ]);
+            const jsPDF = jsPDFModule.jsPDF || jsPDFModule.default;
+            const html2canvas = html2canvasModule.default || html2canvasModule;
 
             const el = pdfRef.current
             const canvas = await html2canvas(el, {
@@ -652,7 +663,7 @@ export default function PerfilCerda() {
                                     Chapeta: <span className="text-gray-800 font-bold">{porcino.Num_Chapeta}</span>
                                 </p>
                                 <span className="inline-block bg-pink-500 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">
-                                    {porcino.raza?.Nom_Raza || "Sin raza definida"}
+                                    {porcino.raza?.Nom_Raza || porcino.razas?.Nom_Raza || 'Sin raza definida'}
                                 </span>
                             </div>
 
