@@ -62,10 +62,10 @@ const CrudRazas = () => {
             name: 'Acciones',
             cell: row => (
                 <button
-                    className="btn btn-sm bg-info"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                     onClick={() => handleEdit(row)}
                 >
-                    <i className="fa-solid fa-pencil"></i>
+                    <i className="fa-solid fa-pencil text-xs"></i>
                 </button>
             )
         }
@@ -105,7 +105,7 @@ const CrudRazas = () => {
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <div className="input-group">
                             <span className="input-group-text">
                                 🔍
@@ -120,7 +120,7 @@ const CrudRazas = () => {
                         </div>
                     </div>
 
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <button
                             type="button"
                             className="btn btn-success"

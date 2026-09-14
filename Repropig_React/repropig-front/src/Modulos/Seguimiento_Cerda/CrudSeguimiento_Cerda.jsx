@@ -32,8 +32,8 @@ const crudSeguimiento_Cerda = () => {
         { name: 'Observaciones', selector: row => row.Observaciones, wrap: true },
         {
             name: 'Acciones', cell: row => (
-                <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)}>
-                    <i className="fa-solid fa-pencil"></i>
+                <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" onClick={() => handleEdit(row)}>
+                    <i className="fa-solid fa-pencil text-xs"></i>
                 </button>
             )
         }

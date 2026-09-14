@@ -3,8 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
+import Swal from "sweetalert2";
+import WithReactContent from "sweetalert2-react-content";
 
 const CrudMonta = () => {
+    const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
     const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
@@ -14,7 +17,6 @@ const CrudMonta = () => {
     const [ciclos, setCiclos] = useState([]);
     const [filterText, setFilterText] = useState('');
     const [rowToEdit, setRowToEdit] = useState({});
-    const [loadingId, setLoadingId] = useState(null);
 
     const hideModal = () => {
         document.getElementById('closeModal').click()
@@ -36,23 +38,27 @@ const CrudMonta = () => {
         } catch { return Id_Responsable }
     }
 
-    const toggleEstado = async (id) => {
-        setLoadingId(id);
-        try {
-            const res = await apiAxios.put(`/monta/${id}/toggle-estado`);
-            setMontas(prev =>
-                prev.map(m =>
-                    m.Id_Monta === id
-                        ? { ...m, estado: res.data.estado }
-                        : m
-                )
-            );
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoadingId(null);
+    const handleDelete = async (row) => {
+        const result = await MySwal.fire({
+            title: '¿Estás seguro?',
+            text: `Se eliminará la monta #${row.Id_Monta} permanentemente.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        })
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.delete('/monta/' + row.Id_Monta)
+                MySwal.fire({ icon: 'success', title: 'Eliminado', text: 'Monta eliminada correctamente' })
+                getAllMontas()
+            } catch (error) {
+                MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
+            }
         }
-    };
+    }
 
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Monta, width: '70px' },
@@ -60,21 +66,8 @@ const CrudMonta = () => {
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
         { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
-        { name: 'Observaciones', selector: row => row.Observaciones || '—' },
+        { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
-        {
-            name: 'Estado',
-            selector: row => (
-                <button
-                    className={`badge border-0 ${row.estado === 'Inactivo' ? 'bg-danger' : 'bg-success'}`}
-                    onClick={() => toggleEstado(row.Id_Monta)}
-                    disabled={loadingId === row.Id_Monta}
-                    title="Haz clic para cambiar estado"
-                >
-                    {loadingId === row.Id_Monta ? '...' : (row.estado || 'Activo')}
-                </button>
-            )
-        },
         {
             name: 'Acciones', cell: row => {
                 let isInactive = false;
@@ -88,13 +81,19 @@ const CrudMonta = () => {
                 }
 
                 return (
-                    <div className="d-flex gap-1">
-                        <button className="btn btn-sm btn-info"
+                    <div className="flex gap-2 items-center justify-end w-full">
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                             onClick={() => setRowToEdit(row)}
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : "Editar"}>
-                            <i className="fa-solid fa-pencil"></i>
+                            <i className="fa-solid fa-pencil text-xs"></i>
+                        </button>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                            onClick={() => handleDelete(row)}
+                            disabled={isInactive}
+                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
+                            <i className="fa-solid fa-trash text-xs"></i>
                         </button>
                     </div>
                 );
@@ -142,9 +141,8 @@ const CrudMonta = () => {
         const text = filterText.toLowerCase().trim();
         const fecha = item.Fec_hora?.toString().toLowerCase() || '';
         const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || '';
-        const resps = getNombresResponsables(item.Id_Responsable).toLowerCase();
-        const est = (item.estado || 'Activo').toLowerCase();
-        return fecha.includes(text) || porcino.includes(text) || resps.includes(text) || est.includes(text);
+        const resps = getNombresResponsables(item.Id_Responsable).toLowerCase()
+        return fecha.includes(text) || porcino.includes(text) || resps.includes(text);
     });
 
     return (
@@ -158,7 +156,7 @@ const CrudMonta = () => {
                         {' '}— Ciclo <strong>#{filtroDesdeCiclo.Id_Ciclo}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-secondary"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                         onClick={() => navigate(-1)}>
                         ← Volver a Ciclos
                     </button>
@@ -167,7 +165,7 @@ const CrudMonta = () => {
 
             <div className="row d-flex justify-content-between align-items-center mb-3">
                 <div className="col-4">
-                    <input className="form-control" placeholder="🔍 Buscar por cerda, responsable, estado..."
+                    <input className="form-control" placeholder="🔍 Buscar..."
                         value={filterText} onChange={e => setFilterText(e.target.value)} />
                 </div>
                 <div className="col-2">

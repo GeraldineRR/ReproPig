@@ -109,7 +109,7 @@ const CrudActividadesCamada = () => {
                             <i className="fa-solid fa-syringe"></i> Actividades
                         </button>
                         <button
-                            className="btn btn-sm btn-warning"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
                             title="Registrar Novedad"
                             onClick={() => handleOpenNovedad(row)}
                         >

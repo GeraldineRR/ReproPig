@@ -43,6 +43,13 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigate("/contactanos")}
+          className="text-pink-600 font-bold hover:text-pink-800 transition-colors px-2"
+        >
+          Contáctanos
+        </button>
+
         {usuario ? (
           <>
             <NotificacionesCamada />
