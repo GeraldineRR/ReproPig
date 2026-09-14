@@ -1,4 +1,5 @@
 import montaService from '../services/montaService.js'
+import montaModel from '../models/montaModel.js'
 
 // obtener todas las montas
 export const getAllmonta = async (req, res) => {
@@ -49,3 +50,20 @@ export const deletemonta = async (req, res) => {
     res.status(400).json({ message: error.message })
   }
 }
+
+// alternar estado Activo / Inactivo
+export const toggleEstadoMonta = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const monta = await montaModel.findByPk(id);
+    if (!monta) {
+      return res.status(404).json({ message: "Monta no encontrada" });
+    }
+    monta.estado = monta.estado === "Activo" ? "Inactivo" : "Activo";
+    await monta.save();
+    res.json({ message: "Estado actualizado", estado: monta.estado });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

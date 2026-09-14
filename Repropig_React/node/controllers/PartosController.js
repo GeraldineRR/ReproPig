@@ -86,3 +86,14 @@ export const toggleEstadoParto = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// NUEVA FUNCIÓN PARA VERIFICAR SEGUIMIENTO DE CAMADA
+export const checkSeguimiento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tieneSeg = await PartosService.tieneSeguimiento(id);
+        res.json({ tieneSeguimiento: tieneSeg });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
