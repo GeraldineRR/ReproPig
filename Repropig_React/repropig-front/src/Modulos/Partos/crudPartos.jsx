@@ -34,12 +34,12 @@ const CrudPartos = () => {
             name: 'Acciones',
             cell: (row) => (
                 <button
-                    className="btn btn-sm bg-info"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                     data-bs-toggle="modal"
                     data-bs-target="#exampleModal"
                     onClick={() => setRowToEdit(row)}
                 >
-                    <i className="fa-solid fa-pencil"></i>
+                    <i className="fa-solid fa-pencil text-xs"></i>
                 </button>
             ),
             ignoreRowClick: true,

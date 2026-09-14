@@ -184,7 +184,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                     {/* Agregar monta o inseminación */}
                     <div className="mb-3">
                         <label className="form-label fw-semibold">Agregar registro</label>
-                        <div className="d-flex gap-3">
+                        <div className="flex gap-2 items-center justify-end w-full">
 
                             {/* Siempre puede agregar montas */}
                             <div
@@ -242,7 +242,7 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                     <label className="form-label fw-semibold">
                         Tipo de Ciclo <span className="text-danger">*</span>
                     </label>
-                    <div className="d-flex gap-3">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <div onClick={() => setTipoCiclo('Monta')}
                             className="border rounded p-3 text-center flex-fill"
                             style={{

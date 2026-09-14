@@ -90,22 +90,22 @@ const CrudInseminacion = () => {
                 }
 
                 return (
-                    <div className="d-flex gap-1">
-                        <button className="btn btn-sm btn-info"
+                    <div className="flex gap-2 items-center justify-end w-full">
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                             onClick={() => setRowToEdit(row)}
                             data-bs-toggle="modal" data-bs-target="#exampleModal"
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : "Editar"}>
-                            <i className="fa-solid fa-pencil"></i>
+                            <i className="fa-solid fa-pencil text-xs"></i>
                         </button>
-                        <button className="btn btn-sm btn-danger"
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                             onClick={() => handleDelete(row)}
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
-                            <i className="fa-solid fa-trash"></i>
+                            <i className="fa-solid fa-trash text-xs"></i>
                         </button>
                         {row.Id_colecta && (
-                            <button className="btn btn-sm btn-success"
+                            <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
                                 title="Ver Colecta"
                                 onClick={() => navigate('/colectas', { state: { Id_colecta: row.Id_colecta } })}>
                                 🧪
@@ -182,7 +182,7 @@ const CrudInseminacion = () => {
                         {' '}— Ciclo <strong>#{filtroDesdeCiclo.Id_Ciclo}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-secondary"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                         onClick={() => navigate(-1)}>
                         ← Volver a Ciclos
                     </button>

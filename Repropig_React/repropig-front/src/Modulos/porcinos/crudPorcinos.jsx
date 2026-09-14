@@ -147,18 +147,18 @@
 //         },
 //         {
 //             name: 'Acciones', cell: row => (
-//                 <div className="d-flex gap-2">
-//                     <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)} title="Editar">
-//                         <i className="fa-solid fa-pencil"></i>
+//                 <div className="flex gap-2 items-center justify-end w-full">
+//                     <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" onClick={() => handleEdit(row)} title="Editar">
+//                         <i className="fa-solid fa-pencil text-xs"></i>
 //                     </button>
 //                     {row.Gen_Porcino?.trim().toLowerCase() === 'h' && (
-//                         <button className="btn btn-sm btn-dark" onClick={() => handleShowQR(row)} title="Ver QR de Cerda">
-//                             <i className="fa-solid fa-qrcode"></i>
+//                         <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" onClick={() => handleShowQR(row)} title="Ver QR de Cerda">
+//                             <i className="fa-solid fa-qrcode text-xs"></i>
 //                         </button>
 //                     )}
 //                     {row.Gen_Porcino?.trim().toLowerCase() === 'h' && (
-//                         <Link to={`/perfil-cerda/${row.Id_Porcino}`} className="btn btn-sm btn-primary" title="Ver Perfil Completo">
-//                             <i className="fa-solid fa-eye"></i>
+//                         <Link to={`/perfil-cerda/${row.Id_Porcino}`} className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Ver Perfil Completo">
+//                             <i className="fa-solid fa-eye text-xs"></i>
 //                         </Link>
 //                     )}
 //                 </div>
@@ -399,7 +399,7 @@ const CrudPorcinos = () => {
         },
         { name: 'Tipo', selector: row => row.Tipo_Cerdo, },
 
-        { name: 'Procedencia', selector: row => (<span className={`badge rounded-pill px-2 py-1 ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-success' : 'bg-primary'}`} > {row.Proc_Porcino} </span>), },
+        { name: 'Procedencia', selector: row => (<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-blue-600/20'}`} > {row.Proc_Porcino} </span>), },
         { name: 'Lugar Proc.', selector: row => row.Lug_Proc_Porcino, },
         { name: 'Fecha Nac.', selector: row => row.Fec_Nac_Porcino, },
         { name: 'Fecha Lleg', selector: row => row.Fec_Llegada, },
@@ -407,20 +407,20 @@ const CrudPorcinos = () => {
             name: 'Peso Lleg (kg)', selector: row => {
                 const peso = row.Peso_Llegada
                 if (!peso) return 'No aplica'
-                let clase = ''
+                let tailwind = ''
                 let icono = ''
                 if (peso < 1) {
-                    clase = 'bg-danger'
+                    tailwind = 'bg-red-50 text-red-700 ring-red-600/20'
                     icono = '⚠'
                 } else if (peso < 2) {
-                    clase = 'bg-danger-subtle text-danger'
+                    tailwind = 'bg-red-50 text-red-700 ring-red-600/20'
                     icono = '!'
                 } else {
-                    clase = 'bg-success'
+                    tailwind = 'bg-green-50 text-green-700 ring-green-600/20'
                     icono = '✓'
                 }
                 return (
-                    <span className={`badge ${clase} px-2 py-1`}> {icono} {peso} kg </span>)
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${tailwind}`}> {icono} {peso} kg </span>)
             }
         },
 
@@ -441,7 +441,7 @@ const CrudPorcinos = () => {
             name: 'Estado',
             selector: row => (
                 <button
-                    className={`badge border-0 ${row.Estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
+                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset transition-colors ${row.Estado === 'Activo' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' : 'bg-red-50 text-red-700 ring-red-600/20 hover:bg-red-100'}`}
                     onClick={() => toggleEstado(row.Id_Porcino)}
                     disabled={loadingId === row.Id_Porcino}
                 >
@@ -453,18 +453,18 @@ const CrudPorcinos = () => {
         },
         {
             name: 'Acciones', cell: row => (
-                <div className="d-flex gap-2">
-                    <button className="btn btn-sm bg-info" onClick={() => handleEdit(row)} title="Editar">
-                        <i className="fa-solid fa-pencil"></i>
+                <div className="flex gap-2 items-center justify-end w-full">
+                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" onClick={() => handleEdit(row)} title="Editar">
+                        <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
                     {row.Gen_Porcino?.trim().toLowerCase() === 'h' && (
-                        <button className="btn btn-sm btn-dark" onClick={() => handleShowQR(row)} title="Ver QR de Cerda">
-                            <i className="fa-solid fa-qrcode"></i>
+                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors" onClick={() => handleShowQR(row)} title="Ver QR de Cerda">
+                            <i className="fa-solid fa-qrcode text-xs"></i>
                         </button>
                     )}
                     {row.Gen_Porcino?.trim().toLowerCase() === 'h' && (
-                        <Link to={`/perfil-cerda/${row.Id_Porcino}`} className="btn btn-sm btn-primary" title="Ver Perfil Completo">
-                            <i className="fa-solid fa-eye"></i>
+                        <Link to={`/perfil-cerda/${row.Id_Porcino}`} className="w-8 h-8 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Ver Perfil Completo">
+                            <i className="fa-solid fa-eye text-xs"></i>
                         </Link>
                     )}
                 </div>

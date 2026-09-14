@@ -160,14 +160,14 @@ export default function PerfilCerda() {
                 useCORS: true,
                 backgroundColor: "#ffffff",
                 logging: false,
-                width: el.scrollWidth,
-                windowWidth: el.scrollWidth,
+                width: 1024,
+                windowWidth: 1024,
             })
 
             const pdf = new jsPDF("p", "mm", "a4")
             const pageW = pdf.internal.pageSize.getWidth()
             const pageH = pdf.internal.pageSize.getHeight()
-            const margin = 6
+            const margin = 0 // Usamos 0 porque el HTML ya tiene padding (p-12)
             const usableH = pageH - margin * 2
             const imgW = pageW - margin * 2
             const imgH = (canvas.height * imgW) / canvas.width
@@ -205,10 +205,26 @@ export default function PerfilCerda() {
     if (!porcino)
         return <div className="p-10 text-center mt-5 text-gray-500 text-xl font-medium">Cerda no encontrada</div>
 
-    const cicloActivo = (repro) => repro.Estado === "Activo" || repro.Activo === "S"
+    // Utils para el PDF y tarjetas
+    const cicloActivo = (repro) => repro.Estado === "Activo" || repro.Activo === "S";
+
+    const SectionHeader = ({ num, title }) => (
+        <div className="flex items-center bg-gray-900 text-white font-bold py-1 px-3 mt-8 mb-2 rounded-t-sm">
+            <div className="bg-white text-gray-900 rounded-sm font-black w-6 h-6 flex items-center justify-center mr-3 text-sm">
+                {num}
+            </div>
+            <h2 className="uppercase tracking-wide text-sm">{title}</h2>
+        </div>
+    );
+    const Td = ({ children, className = "" }) => (
+        <td className={`border-b border-x border-gray-200 px-4 py-3 text-sm text-gray-700 ${className}`}>{children}</td>
+    );
+    const Th = ({ children, className = "" }) => (
+        <th className={`border-b border-x border-gray-200 px-4 py-3 text-xs font-bold text-gray-800 bg-gray-50 uppercase tracking-wider text-left ${className}`}>{children}</th>
+    );
 
     return (
-        <div className="min-h-screen bg-gray-50/50 pb-12">
+        <div className="min-h-screen bg-gray-50/50 pb-12 relative overflow-hidden overflow-x-hidden">
             {/* Header / Top Bar */}
             <div className="bg-white shadow-sm border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10">
                 <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-pink-600 transition-colors font-medium">
@@ -227,6 +243,7 @@ export default function PerfilCerda() {
                 </div>
             </div>
 
+            {/* VISTA EN PANTALLA (TARJETAS BONITAS ORIGINALES) */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
@@ -306,15 +323,14 @@ export default function PerfilCerda() {
                                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                                     {ciclos.map((repro) => (
                                         <div key={repro.Id_Ciclo} className="border border-gray-100 rounded-2xl p-5 hover:shadow-md transition-shadow bg-gray-50/50 relative overflow-hidden group">
-                                            {/* Indicador de estado */}
-                                            <div className={`absolute top-0 left-0 w-1 h-full ${repro.Activo === 'S' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                                            <div className={`absolute top-0 left-0 w-1 h-full ${cicloActivo(repro) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                                             
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
                                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Ciclo #{repro.Id_Ciclo}</span>
                                                     <h4 className="text-lg font-bold text-gray-800 mt-1">{repro.TipoCiclo}</h4>
                                                 </div>
-                                                {repro.Activo === 'S' ? 
+                                                {cicloActivo(repro) ? 
                                                     <span className="bg-green-100 text-green-700 text-xs font-bold px-2.5 py-1 rounded-md flex items-center shadow-sm">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 animate-pulse"></span> Activa
                                                     </span> 
@@ -463,6 +479,322 @@ export default function PerfilCerda() {
                         </div>
 
                     </div>
+                </div>
+            </div>
+
+            {/* VISTA PARA EXPORTAR A PDF (OCULTA EN PANTALLA) */}
+            <div style={{ position: 'fixed', left: '200vw', top: '0', width: '1024px', zIndex: -1000 }}>
+                <div ref={pdfRef} className="bg-white p-12 w-full font-sans">
+                    
+                    {/* ENCABEZADO */}
+                    <div className="flex justify-between items-end border-b-[3px] border-pink-700 pb-5 mb-8">
+                        <div>
+                            <div className="text-pink-700 font-bold tracking-widest text-sm mb-2 uppercase flex items-center">
+                                Repropig <span className="mx-2 text-gray-300">·</span> Unidad Porcina
+                            </div>
+                            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Hoja de vida reproductiva</h1>
+                            <p className="text-gray-500 font-medium mt-2">Historial clínico y de producción</p>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xs text-gray-500 mb-1 uppercase tracking-wider font-semibold">Fecha de emisión</div>
+                            <div className="font-bold text-gray-800 text-lg">{new Date().toLocaleDateString('es-CO')}</div>
+                            <div className="text-sm text-gray-500 mt-2 font-medium">ID animal: {porcino.Id_Porcino}</div>
+                        </div>
+                    </div>
+
+                    {/* 1 IDENTIFICACIÓN DEL ANIMAL */}
+                    <SectionHeader num="1" title="Identificación del Animal" />
+                    <table className="w-full border-collapse mb-8 border border-gray-200">
+                        <tbody>
+                            <tr>
+                                <td className="border border-pink-100 bg-pink-50/60 px-6 py-4 w-1/2">
+                                    <div className="text-xs font-black text-pink-700 uppercase mb-1 tracking-wider">Nombre</div>
+                                    <div className="text-3xl font-black text-gray-900">{porcino.Nom_Porcino}</div>
+                                </td>
+                                <td className="border border-pink-100 bg-pink-50/60 px-6 py-4 w-1/2">
+                                    <div className="text-xs font-black text-pink-700 uppercase mb-1 tracking-wider">Chapeta</div>
+                                    <div className="text-3xl font-black text-gray-900">{porcino.Num_Chapeta}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <Td><strong>Raza:</strong> {porcino.raza?.Nom_Raza || porcino.razas?.Nom_Raza || '—'}</Td>
+                                <Td><strong>Placa SENA:</strong> {porcino.Plac_Sena_Porcino}</Td>
+                            </tr>
+                            <tr>
+                                <Td><strong>Nacimiento:</strong> {fmtFecha(porcino.Fec_Nac_Porcino)}</Td>
+                                <Td><strong>Llegada:</strong> {fmtFecha(porcino.Fec_Llegada)}</Td>
+                            </tr>
+                            <tr>
+                                <Td><strong>Peso Inicial:</strong> {porcino.Peso_Llegada} kg</Td>
+                                <Td><strong>Origen:</strong> {porcino.Proc_Porcino} · {porcino.Lug_Proc_Porcino}</Td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {/* 2 RESUMEN DE REGISTROS */}
+                    <SectionHeader num="2" title="Resumen de Registros" />
+                    <table className="w-full border-collapse text-center mb-8 border border-gray-900">
+                        <thead>
+                            <tr className="bg-gray-900 text-white text-xs uppercase tracking-wider">
+                                <th className="py-3 px-2 border-r border-gray-700">Ciclos</th>
+                                <th className="py-3 px-2 border-r border-gray-700">Montas</th>
+                                <th className="py-3 px-2 border-r border-gray-700">Insem.</th>
+                                <th className="py-3 px-2 border-r border-gray-700">Partos</th>
+                                <th className="py-3 px-2 border-r border-gray-700">Seguim.</th>
+                                <th className="py-3 px-2">Novedades</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td className="border-r border-b border-gray-200 py-4 text-3xl font-black text-gray-900">{ciclos.length}</td>
+                                <td className="border-r border-b border-gray-200 py-4 text-3xl font-black text-gray-900">{ciclos.reduce((acc, c) => acc + (c.montas?.length || 0), 0)}</td>
+                                <td className="border-r border-b border-gray-200 py-4 text-3xl font-black text-gray-900">{ciclos.reduce((acc, c) => acc + (c.inseminaciones?.length || 0), 0)}</td>
+                                <td className="border-r border-b border-gray-200 py-4 text-3xl font-black text-gray-900">{partos.length}</td>
+                                <td className="border-r border-b border-gray-200 py-4 text-3xl font-black text-gray-900">{seguimientos.length}</td>
+                                <td className="border-b border-gray-200 py-4 text-3xl font-black text-gray-900">{novedades.length}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {/* 3 GRÁFICO DE HISTORIAL DE PARTOS */}
+                    <SectionHeader num="3" title="Gráfico de Historial de Partos" />
+                    <div className="border border-gray-200 bg-gray-50/40 p-8 mb-8 flex justify-center">
+                        {partos.length === 0 ? (
+                            <div className="text-center text-gray-500 py-8 font-medium">No hay partos registrados para graficar.</div>
+                        ) : (
+                            <div className="w-full max-w-2xl">
+                                <div className="relative h-64 border-b-2 border-l-2 border-gray-300 flex items-end justify-around pb-0 pt-4 px-6">
+                                    <div className="absolute left-0 top-0 bottom-0 w-full flex flex-col justify-between pointer-events-none">
+                                        {[15, 12, 9, 6, 3, 0].map(val => (
+                                            <div key={val} className="w-full border-t border-gray-200 flex items-center relative">
+                                                <span className="absolute -left-8 text-xs text-gray-500 font-medium bg-gray-50 pr-2">{val}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {partos.slice().sort((a,b)=>toSortKey(a.Fec_inicio).localeCompare(toSortKey(b.Fec_inicio))).map((p, idx) => {
+                                        const calcH = (val) => Math.min((val || 0) * (100/15), 100);
+                                        return (
+                                            <div key={idx} className="relative flex items-end justify-center group z-10 w-24 h-full">
+                                                <div className="w-6 bg-green-700 mx-1" style={{ height: `${calcH(p.Nac_vivos)}%` }}></div>
+                                                <div className="w-6 bg-red-600 mx-1" style={{ height: `${calcH(p.Nac_muertos)}%` }}></div>
+                                                <div className="w-6 bg-amber-700 mx-1" style={{ height: `${calcH(p.Nac_momias)}%` }}></div>
+                                                <span className="absolute -bottom-8 text-xs text-gray-700 font-medium whitespace-nowrap">{fmtFecha(p.Fec_inicio)}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex justify-center mt-12 space-x-8">
+                                    <div className="flex items-center text-sm font-semibold text-gray-700"><span className="w-4 h-4 bg-green-700 inline-block mr-2 rounded-sm shadow-sm"></span> Vivos</div>
+                                    <div className="flex items-center text-sm font-semibold text-gray-700"><span className="w-4 h-4 bg-red-600 inline-block mr-2 rounded-sm shadow-sm"></span> Muertos</div>
+                                    <div className="flex items-center text-sm font-semibold text-gray-700"><span className="w-4 h-4 bg-amber-700 inline-block mr-2 rounded-sm shadow-sm"></span> Momias</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 4 HISTORIAL CRONOLÓGICO */}
+                    <SectionHeader num="4" title="Historial Cronológico (Todas las Actividades)" />
+                    <table className="w-full border-collapse mb-8 border border-gray-200">
+                        <thead>
+                            <tr>
+                                <Th className="w-1/4">FECHA</Th>
+                                <Th className="w-1/5">TIPO</Th>
+                                <Th className="w-2/5">DETALLE</Th>
+                                <Th>REFERENCIA</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {historialCronologico.length === 0 ? (
+                                <tr><Td colSpan="4" className="text-center italic text-gray-500 py-6">Sin actividades registradas.</Td></tr>
+                            ) : (
+                                historialCronologico.map((ev, i) => (
+                                    <tr key={i}>
+                                        <Td>{ev.fecha}</Td>
+                                        <Td><span className="font-semibold">{ev.tipo}</span></Td>
+                                        <Td>{ev.detalle}</Td>
+                                        <Td>{ev.ref}</Td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+
+                    {/* 5 CICLOS REPRODUCTIVOS */}
+                    <SectionHeader num="5" title="Ciclos Reproductivos" />
+                    <table className="w-full border-collapse mb-8 border border-gray-200">
+                        <thead>
+                            <tr>
+                                <Th>ID</Th>
+                                <Th>TIPO</Th>
+                                <Th>ESTADO</Th>
+                                <Th>MONTAS</Th>
+                                <Th>INSEMINACIONES</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ciclos.length === 0 ? (
+                                <tr><Td colSpan="5" className="text-center italic text-gray-500 py-6">Sin ciclos registrados.</Td></tr>
+                            ) : (
+                                ciclos.map((c) => (
+                                    <tr key={c.Id_Ciclo}>
+                                        <Td>#{c.Id_Ciclo}</Td>
+                                        <Td>{c.TipoCiclo}</Td>
+                                        <Td>{c.Estado}</Td>
+                                        <Td>{c.montas?.length || 0}</Td>
+                                        <Td>{c.inseminaciones?.length || 0}</Td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+
+                    {/* 6 MONTAS E INSEMINACIONES */}
+                    <SectionHeader num="6" title="Montas e Inseminaciones" />
+                    <div className="mb-8 border border-gray-200 p-1">
+                        <div className="bg-pink-50 text-pink-800 font-bold px-4 py-2 border-b border-gray-200">Montas</div>
+                        {montasTodas.length === 0 ? (
+                            <p className="text-sm italic text-gray-500 p-4 border-b border-gray-200">Sin montas.</p>
+                        ) : (
+                            <table className="w-full border-collapse border-b border-gray-200">
+                                <thead>
+                                    <tr>
+                                        <Th>ID</Th>
+                                        <Th>FECHA / HORA</Th>
+                                        <Th>CICLO</Th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {montasTodas.map((m, i) => (
+                                        <tr key={i}>
+                                            <Td>#{m.Id_Monta || m.id || i}</Td>
+                                            <Td>{fmtFechaHora(m.Fec_hora)}</Td>
+                                            <Td>#{m.Id_Ciclo} ({m.TipoCiclo})</Td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+
+                        <div className="bg-teal-50 text-teal-800 font-bold px-4 py-2 border-b border-gray-200">Inseminaciones</div>
+                        {inseminacionesTodas.length === 0 ? (
+                            <p className="text-sm italic text-gray-500 p-4">Sin inseminaciones.</p>
+                        ) : (
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <Th>ID</Th>
+                                        <Th>FECHA / HORA</Th>
+                                        <Th>CICLO</Th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {inseminacionesTodas.map((m, i) => (
+                                        <tr key={i}>
+                                            <Td>#{m.Id_Inseminacion || m.id || i}</Td>
+                                            <Td>{fmtFechaHora(m.Fec_hora)}</Td>
+                                            <Td>#{m.Id_Ciclo} ({m.TipoCiclo})</Td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    {/* 7 HISTORIAL DE PARTOS */}
+                    <SectionHeader num="7" title="Historial de Partos" />
+                    <table className="w-full border-collapse mb-8 border border-gray-200">
+                        <thead>
+                            <tr>
+                                <Th>FECHA</Th>
+                                <Th>CICLO</Th>
+                                <Th>VIVOS</Th>
+                                <Th>MUERTOS</Th>
+                                <Th>MOMIAS</Th>
+                                <Th>PESO (KG)</Th>
+                                <Th>OBSERVACIONES</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {partos.length === 0 ? (
+                                <tr><Td colSpan="7" className="text-center italic text-gray-500 py-6">Sin partos registrados.</Td></tr>
+                            ) : (
+                                partos.map((p) => (
+                                    <tr key={p.Id_parto}>
+                                        <Td>{fmtFecha(p.Fec_inicio)}</Td>
+                                        <Td>#{p.Id_Ciclo}</Td>
+                                        <Td>{p.Nac_vivos}</Td>
+                                        <Td>{p.Nac_muertos}</Td>
+                                        <Td>{p.Nac_momias}</Td>
+                                        <Td>{p.Pes_camada}</Td>
+                                        <Td className="italic">{p.Observaciones || '—'}</Td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+
+                    {/* 8 SEGUIMIENTO DE CERDA */}
+                    <SectionHeader num="8" title="Seguimiento de Cerda" />
+                    {seguimientos.length === 0 ? (
+                        <p className="text-sm italic text-gray-500 mb-8 px-4">Sin seguimientos.</p>
+                    ) : (
+                        <table className="w-full border-collapse mb-8 border border-gray-200">
+                            <thead>
+                                <tr>
+                                    <Th>FECHA</Th>
+                                    <Th>CICLO</Th>
+                                    <Th>RESPONSABLE</Th>
+                                    <Th>MEDICAMENTO</Th>
+                                    <Th>OBSERVACIONES</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {seguimientos.map((s) => (
+                                    <tr key={s.Id_Seguimiento_Cerda}>
+                                        <Td>{fmtFecha(s.Fecha)} {s.Hora ? s.Hora.slice(0,5) : ''}</Td>
+                                        <Td>{s.Id_Ciclo ? `#${s.Id_Ciclo}` : '—'}</Td>
+                                        <Td>{s.Responsables?.Nombres || '—'}</Td>
+                                        <Td>{s.medicamentos?.Nombre || '—'}</Td>
+                                        <Td className="italic">{s.Observaciones || '—'}</Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    {/* 9 NOVEDADES */}
+                    <SectionHeader num="9" title="Novedades" />
+                    {novedades.length === 0 ? (
+                        <p className="text-sm italic text-gray-500 mb-8 px-4">Sin novedades.</p>
+                    ) : (
+                        <table className="w-full border-collapse mb-8 border border-gray-200">
+                            <thead>
+                                <tr>
+                                    <Th>FECHA</Th>
+                                    <Th>TIPO</Th>
+                                    <Th>CAUSA / MOTIVO</Th>
+                                    <Th>OBSERVACIONES</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {novedades.map((n) => (
+                                    <tr key={n.Id_Novedad}>
+                                        <Td>{fmtFecha(n.Fecha_Novedad)}</Td>
+                                        <Td><span className="font-semibold">{n.Tipo_Novedad}</span></Td>
+                                        <Td>{n.Causa_Motivo || '—'}</Td>
+                                        <Td className="italic">{n.Observaciones || '—'}</Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    {/* FOOTER */}
+                    <div className="mt-16 pt-6 border-t border-gray-300 flex justify-between items-center text-xs text-gray-400 font-medium">
+                        <div>Documento generado automáticamente por ReproPig</div>
+                        <div>{porcino.Nom_Porcino} · Chapeta {porcino.Num_Chapeta}</div>
+                    </div>
+
                 </div>
             </div>
         </div>

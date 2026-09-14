@@ -6,6 +6,7 @@ export const getAllSeguimiento_Cerda = async (req, res) => {
         res.status(200).json(Seguimiento_Cerda)
 
     } catch (error) {
+        console.log(error.stack)
         res.status(500).json({ message: error.message })
     }
 }

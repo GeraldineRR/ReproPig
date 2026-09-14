@@ -86,11 +86,11 @@ const CrudActividades = () => {
             name: 'Acciones',
             cell: row => (
                 <button
-                    className="btn btn-sm btn-danger"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                     onClick={() => handleDelete(row.Id_Actividad)}
                     title="Eliminar Actividad"
                 >
-                    <i className="fa-solid fa-trash"></i>
+                    <i className="fa-solid fa-trash text-xs"></i>
                 </button>
             ),
             width: '100px'
