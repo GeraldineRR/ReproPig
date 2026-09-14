@@ -149,6 +149,30 @@ class CalendarioService {
         }
 
         await CalendarioModel.update(updateData, { where: { Id_Calendario: id } })
+
+        // ✅ Actualizar estado del ciclo según el resultado del recelo o parto
+        const updatedCal = await CalendarioModel.findByPk(id)
+        if (updatedCal && updatedCal.Id_Ciclo) {
+            const hayRecelo = updatedCal.resultado_rc1 === 'recelo_detectado' || updatedCal.resultado_rc2 === 'recelo_detectado'
+            const hayParto = !!updatedCal.real_parto
+
+            if (hayRecelo || hayParto) {
+                // Inactivar ciclo si se detectó recelo (gestación fallida) o si ya parió
+                await ciclosModel.update(
+                    { Estado: 'Inactivo' },
+                    { where: { Id_Ciclo: updatedCal.Id_Ciclo } }
+                )
+            } else if (evento === 'rc1' || evento === 'rc2') {
+                // Si ambos controles de recelo están limpios (no recelo) y no hay parto, mantener o restaurar activo
+                if (updatedCal.resultado_rc1 !== 'recelo_detectado' && updatedCal.resultado_rc2 !== 'recelo_detectado' && !updatedCal.real_parto) {
+                    await ciclosModel.update(
+                        { Estado: 'Activo' },
+                        { where: { Id_Ciclo: updatedCal.Id_Ciclo } }
+                    )
+                }
+            }
+        }
+
         return await CalendarioModel.findByPk(id)
     }
 

@@ -60,7 +60,7 @@ class PartosService {
 
         const porcinosData = [];
         const novedadesData = [];
-        
+
         let numLechon = 1;
 
         // Crías vivas
@@ -104,10 +104,10 @@ class PartosService {
 
         if (porcinosData.length > 0) {
             const creados = await PorcinoModel.bulkCreate(porcinosData);
-            
+
             // Crear novedades para los muertos y momias
             let indexCreado = nacVivos; // Saltamos los vivos
-            
+
             // Novedades para muertos
             for (let i = 0; i < nacMuertos; i++) {
                 if (creados[indexCreado]) {
@@ -120,7 +120,7 @@ class PartosService {
                 }
                 indexCreado++;
             }
-            
+
             // Novedades para momias
             for (let i = 0; i < nacMomias; i++) {
                 if (creados[indexCreado]) {
@@ -133,7 +133,7 @@ class PartosService {
                 }
                 indexCreado++;
             }
-            
+
             if (novedadesData.length > 0) {
                 await NovedadesModel.bulkCreate(novedadesData);
             }

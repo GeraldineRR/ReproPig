@@ -228,6 +228,9 @@ const CrudCiclos = () => {
             width: '130px',
             cell: row => {
                 const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
+                const badgeClass = isActivo ? 'bg-success' : 'bg-secondary';
+                const icon = isActivo ? '✅' : '⏸️';
+                const estado = isActivo ? 'Activo' : 'Inactivo';
                 return (
                     <span
                         className={`badge ${badgeClass}`}
@@ -241,8 +244,14 @@ const CrudCiclos = () => {
         {
             name: 'F. Servicio',
             width: '120px',
-            selector: row => row.Fec_servicio ? row.Fec_servicio.split('T')[0] : '-',
-            sortable: true
+            cell: row => {
+                const fechas = [
+                    ...((row.montas || []).map(m => m.Fec_hora).filter(Boolean)),
+                    ...((row.inseminaciones || []).map(i => i.Fec_hora).filter(Boolean))
+                ].sort();
+                return <span>{fechas.length ? fechas[0].split('T')[0] : '-'}</span>;
+            },
+            sortable: false
         },
         {
             name: 'Días Gestación',
@@ -351,6 +360,19 @@ const CrudCiclos = () => {
     const hideModalColecta = () => {
         setColectaParaInseminacion(null)
         cerrarModal(modalColectaInstanceRef)
+    }
+
+    // Calcula días transcurridos desde el primer servicio (monta o inseminación)
+    const calcularDiasGestacion = (row) => {
+        const fechas = [
+            ...((row.montas || []).map(m => m.Fec_hora).filter(Boolean)),
+            ...((row.inseminaciones || []).map(i => i.Fec_hora).filter(Boolean))
+        ].sort()
+        if (!fechas.length) return '-'
+        const inicio = new Date(fechas[0])
+        const hoy = new Date()
+        const diff = Math.floor((hoy - inicio) / (1000 * 60 * 60 * 24))
+        return diff >= 0 ? `${diff} días` : '-'
     }
 
     const filteredCiclos = ciclos.filter(rep => {

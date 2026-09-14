@@ -210,11 +210,10 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
                                 <span
                                     key={r.Id_Responsable}
                                     onClick={() => toggleResponsable(r.Id_Responsable)}
-                                    className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                        activo
+                                    className={`px-3 py-1.5 rounded-pill user-select-none ${activo
                                             ? "bg-success text-white shadow-sm fw-bold"
                                             : "bg-white border text-secondary"
-                                    }`}
+                                        }`}
                                     style={{ cursor: "pointer", fontSize: "13px" }}
                                 >
                                     {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos || ''}

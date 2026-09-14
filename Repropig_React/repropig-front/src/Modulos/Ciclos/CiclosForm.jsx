@@ -167,17 +167,6 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
                 )}
             </div>
 
-            {/* Fecha de servicio */}
-            <div className="mb-3">
-                <label className="form-label">Fecha de Servicio</label>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={Fec_servicio}
-                    onChange={(e) => setFec_servicio(e.target.value)}
-                />
-            </div>
-
             {/* ── MODO EDICIÓN ─────────────────────────────── */}
             {esEdicion && (
                 <>

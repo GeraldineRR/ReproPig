@@ -394,29 +394,33 @@ export default function PerfilCerda() {
         try {
             setLoading(true)
 
-            const [resPorcino, resRepro, resPartos, resNovedades, resSeg] = await Promise.all([
-                apiAxios.get(`/porcino/${id}`),
-                apiAxios.get("/ciclos/"),
-                apiAxios.get("/Partos/"),
-                apiAxios.get("/novedades/"),
-                apiAxios.get("/Seguimiento_Cerda/").catch(() => ({ data: [] })),
+            // 1) Primero el porcino — si falla, mostramos "no encontrada"
+            let porcinoData = null
+            try {
+                const resPorcino = await apiAxios.get(`/porcino/${id}`)
+                porcinoData = resPorcino.data
+            } catch (errPorcino) {
+                console.error("Error al cargar porcino:", errPorcino)
+                // porcinoData queda null → se mostrará "Cerda no encontrada"
+            }
+            setPorcino(porcinoData)
+
+            // 2) Datos secundarios de forma independiente (nunca bloquean el perfil)
+            const [resRepro, resPartos, resNovedades, resSeg, resResp] = await Promise.all([
+                apiAxios.get("/ciclos/").catch((e) => { console.error("Error ciclos:", e); return { data: [] } }),
+                apiAxios.get("/Partos/").catch((e) => { console.error("Error partos:", e); return { data: [] } }),
+                apiAxios.get("/novedades/").catch((e) => { console.error("Error novedades:", e); return { data: [] } }),
+                apiAxios.get("/Seguimiento_Cerda/").catch((e) => { console.error("Error seguimientos:", e); return { data: [] } }),
+                apiAxios.get('/responsables/').catch((e) => { console.error("Error responsables:", e); return { data: [] } }),
             ])
 
-            setPorcino(resPorcino.data)
             setCiclos((resRepro.data || []).filter((r) => Number(r.Id_Cerda) === Number(id)))
             setPartos((resPartos.data || []).filter((p) => Number(p.Id_Porcino) === Number(id)))
             setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
             setSeguimientos((resSeg.data || []).filter((s) => Number(s.Id_Porcino) === Number(id)))
-
-            // Traer responsables
-            try {
-                const resResp = await apiAxios.get('/responsables/')
-                setResponsables(resResp.data)
-            } catch (errResp) {
-                console.error("Error al cargar responsables:", errResp)
-            }
+            setResponsables(resResp.data || [])
         } catch (error) {
-            console.error("Error al cargar perfil:", error)
+            console.error("Error inesperado al cargar perfil:", error)
         } finally {
             setLoading(false)
         }
@@ -648,7 +652,7 @@ export default function PerfilCerda() {
                                     Chapeta: <span className="text-gray-800 font-bold">{porcino.Num_Chapeta}</span>
                                 </p>
                                 <span className="inline-block bg-pink-500 text-white text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">
-                                    {porcino.razas?.Nom_Raza || "Sin raza definida"}
+                                    {porcino.raza?.Nom_Raza || "Sin raza definida"}
                                 </span>
                             </div>
 

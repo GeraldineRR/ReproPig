@@ -59,9 +59,9 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
         if (!idPorcino) { setCiclosActivas([]); return }
         try {
             const response = await apiAxios.get('/ciclos/')
-            const activas = response.data.filter(r =>
+            const activas = (response.data || []).filter(r =>
                 r.Id_Cerda == idPorcino &&
-                (r.activo || r.Activo || '').toUpperCase() === 'S'
+                ((r.Estado || r.activo || r.Activo || '').toUpperCase() === 'ACTIVO' || r.Activo === 'S' || (preloaded?.Id_Ciclo && r.Id_Ciclo == preloaded.Id_Ciclo))
             )
             setCiclosActivas(activas)
         } catch (error) { console.error('Error al obtener ciclos:', error) }
@@ -88,12 +88,12 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
             setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
-            setId_Porcino(rowToEdit.Id_Porcino)
+            setId_Porcino(String(rowToEdit.Id_Porcino))
             setCantidad(rowToEdit.cantidad)
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setId_colecta(rowToEdit.Id_colecta)
-            setObservaciones(rowToEdit.Observaciones)
-            setId_Ciclo(rowToEdit.Id_Ciclo)
+            setObservaciones(rowToEdit.Observaciones || '')
+            setId_Ciclo(String(rowToEdit.Id_Ciclo))
             getCiclosActivas(rowToEdit.Id_Porcino) // ✅ carga repros para que el select no quede vacío
             setTextFormButton('Actualizar Inseminacion')
         } else if (!preloaded.Id_Ciclo) {
@@ -112,17 +112,19 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     useEffect(() => {
         if (preloaded.Id_Ciclo && preloadedRef.current !== preloaded.Id_Ciclo) {
             preloadedRef.current = preloaded.Id_Ciclo
-            setId_Porcino(preloaded.Id_Porcino || '')
+            setId_Porcino(String(preloaded.Id_Porcino || ''))
             setId_colecta(preloaded.Id_colecta || '')
-            setId_Ciclo(preloaded.Id_Ciclo || '')
+            setId_Ciclo(String(preloaded.Id_Ciclo || ''))
             setFec_hora('')
             setCantidad('')
             setId_Responsable([])
             setObservaciones('')
             setTextFormButton('Agregar Inseminacion')
-            getCiclosActivas(preloaded.Id_Porcino)
+            if (preloaded.Id_Porcino) {
+                getCiclosActivas(preloaded.Id_Porcino)
+            }
         }
-    }, [preloaded.Id_Ciclo]);
+    }, [preloaded.Id_Ciclo, preloaded.Id_Porcino]);
 
     const toggleResponsable = (id) => {
         setId_Responsable(prev =>

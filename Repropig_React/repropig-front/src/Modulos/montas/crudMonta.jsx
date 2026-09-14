@@ -3,8 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig.js";
 import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
+import Swal from "sweetalert2";
+import WithReactContent from "sweetalert2-react-content";
 
 const CrudMonta = () => {
+    const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
     const filtroDesdeCiclo = (location.state && location.state.Id_Ciclo) ? location.state : null // { Id_Ciclo, Id_Porcino, Nom_Porcino }

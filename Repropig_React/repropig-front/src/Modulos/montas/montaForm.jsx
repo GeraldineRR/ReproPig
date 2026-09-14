@@ -68,60 +68,77 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         const cargarPreloaded = async () => {
             setId_Porcino(String(preloaded.Id_Porcino));
             setId_Ciclo(String(preloaded.Id_Ciclo));
-            setFec_hora('')
-            setId_Cerdo('')
-            setId_Responsable([])
-            setObservaciones('')
-            setTextFormButton('Agregar Monta')
+            setFec_hora('');
+            setId_Cerdo('');
+            setId_Responsable([]);
+            setObservaciones('');
+            setTextFormButton('Agregar Monta');
 
-            const res = await apiAxios.get('/ciclos');
-            const activas = res.data.filter(r =>
-                r.Id_Cerda == preloaded.Id_Porcino && (r.activo || r.Activo || '').toUpperCase() === 'S'
-            );
-            setCiclosActivas(activas);
+            try {
+                const res = await apiAxios.get('/ciclos');
+                const activas = (res.data || []).filter(r =>
+                    r.Id_Cerda == preloaded.Id_Porcino &&
+                    ((r.Estado || r.activo || r.Activo || '').toUpperCase() === 'ACTIVO' || r.Activo === 'S' || r.Id_Ciclo == preloaded.Id_Ciclo)
+                );
+                setCiclosActivas(activas);
+            } catch (err) {
+                console.error("Error al cargar ciclos preloaded:", err);
+            }
         };
 
         cargarPreloaded();
     }, [preloaded?.Id_Porcino, preloaded?.Id_Ciclo]);
 
     const getPorcinos = async () => {
-        const res = await apiAxios.get('/porcino');
-        setHembras(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'));
-        setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
+        try {
+            const res = await apiAxios.get('/porcino');
+            setHembras(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'));
+            setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
+        } catch (error) {
+            console.error("Error cargando porcinos:", error);
+        }
     };
 
     const getResponsables = async () => {
         try {
-            const res = await apiAxios.get('/responsables/')
-            setResponsables(res.data)
+            const res = await apiAxios.get('/responsables/');
+            setResponsables(res.data);
         } catch (error) {
-            console.error("Error cargando responsables:", error)
+            console.error("Error cargando responsables:", error);
         }
-    }
+    };
 
     const getCiclosActivas = async (id) => {
         if (!id) return setCiclosActivas([]);
-        const res = await apiAxios.get('/ciclos');
-        // ✅ Al editar trae TODAS las ciclos de esa cerda (activas e inactivas)
-        // para que el select pueda mostrar la que ya tiene asignada
-        const todas = res.data.filter(r => r.Id_Cerda == id);
-        setCiclosActivas(todas);
+        try {
+            const res = await apiAxios.get('/ciclos');
+            const todas = (res.data || []).filter(r => r.Id_Cerda == id);
+            setCiclosActivas(todas);
+        } catch (error) {
+            console.error("Error cargando ciclos:", error);
+        }
     };
 
     const handlePorcinoChange = (e) => {
         const val = e.target.value;
         setId_Porcino(val);
         setId_Ciclo('');
-        // Al seleccionar nueva cerda, solo muestra activas
         getCiclosActivasSolo(val);
     };
 
     // ✅ Para cuando el usuario cambia la cerda manualmente (solo activas)
     const getCiclosActivasSolo = async (id) => {
         if (!id) return setCiclosActivas([]);
-        const res = await apiAxios.get('/ciclos');
-        const activas = res.data.filter(r => r.Id_Cerda == id && (r.activo || r.Activo || '').toUpperCase() === 'S');
-        setCiclosActivas(activas);
+        try {
+            const res = await apiAxios.get('/ciclos');
+            const activas = (res.data || []).filter(r =>
+                r.Id_Cerda == id &&
+                ((r.Estado || r.activo || r.Activo || '').toUpperCase() === 'ACTIVO' || r.Activo === 'S')
+            );
+            setCiclosActivas(activas);
+        } catch (error) {
+            console.error("Error cargando ciclos activos:", error);
+        }
     };
 
     const toggleResponsable = (id) => {
