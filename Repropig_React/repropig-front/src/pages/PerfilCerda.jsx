@@ -380,7 +380,7 @@ export default function PerfilCerda() {
                                             
                                             {/* Fecha y Referencia */}
                                             <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6 text-center sm:text-left min-w-[120px]">
-                                                <div className="text-sm font-bold text-gray-800">{parto.Fec_inicio}</div>
+                                                <div className="text-sm font-bold text-gray-800">{fmtFecha(parto.Fec_inicio)}</div>
                                                 <div className="text-xs text-gray-400 mt-1">
                                                     Ciclo Ref: <span className="font-semibold text-gray-600">#{parto.Id_Ciclo || '—'}</span>
                                                 </div>

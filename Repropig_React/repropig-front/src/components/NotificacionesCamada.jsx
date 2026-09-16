@@ -170,7 +170,7 @@ export default function NotificacionesCamada() {
                                 <div
                                     key={`${notif.idParto}-${notif.diaProgramado}`}
                                     onClick={() => {
-                                        navigate(`/segcamada/parto/${notif.idParto}`);
+                                        navigate(`/actividades_camada/parto/${notif.idParto}`);
                                         setAbierto(false);
                                     }}
                                     style={{

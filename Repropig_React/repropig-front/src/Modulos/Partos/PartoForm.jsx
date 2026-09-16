@@ -76,7 +76,6 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             setHor_final(rowToEdit.Hor_final || '')
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setTextFormButton("Actualizar")
-            checkTieneSeguimiento(rowToEdit.Id_parto)
         } else {
             resetForm()
             setTieneSeguimiento(false)
