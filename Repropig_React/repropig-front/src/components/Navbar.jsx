@@ -45,33 +45,47 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
 
       <div className="flex items-center gap-4">
         {!usuario && (
-          <div className="flex items-center gap-2 sm:gap-4 mr-2">
+          <div className="flex items-center gap-1.5 sm:gap-3 mr-1">
             <button
               onClick={() => navigate("/")}
-              className={`font-bold transition-colors px-3 py-1.5 rounded-lg text-sm sm:text-base ${
-                location.pathname === "/"
-                  ? "text-pink-600 bg-white/70 shadow-sm"
-                  : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
-              }`}
+              className={`font-bold transition-colors px-2.5 py-1.5 rounded-lg text-sm sm:text-base flex items-center gap-1.5 ${location.pathname === "/"
+                ? "text-pink-600 bg-white/70 shadow-sm"
+                : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+                }`}
             >
+              <i className="fa-solid fa-home text-xs"></i>
               Inicio
             </button>
             <button
               onClick={() => navigate("/quienes-somos")}
-              className={`font-bold transition-colors px-3 py-1.5 rounded-lg text-sm sm:text-base ${
-                location.pathname === "/quienes-somos"
-                  ? "text-pink-600 bg-white/70 shadow-sm"
-                  : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
-              }`}
+              className={`font-bold transition-colors px-2.5 py-1.5 rounded-lg text-sm sm:text-base flex items-center gap-1.5 ${location.pathname === "/quienes-somos"
+                ? "text-pink-600 bg-white/70 shadow-sm"
+                : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+                }`}
             >
+              <i className="fa-solid fa-users text-xs"></i>
               ¿Quiénes somos?
+            </button>
+            <button
+              onClick={() => navigate("/documentos")}
+              className={`font-bold transition-colors px-2.5 py-1.5 rounded-lg text-sm sm:text-base flex items-center gap-1.5 ${location.pathname === "/documentos"
+                ? "text-pink-600 bg-white/70 shadow-sm"
+                : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+                }`}
+            >
+              <i className="fa-solid fa-file-lines text-xs"></i>
+              Documentos
             </button>
           </div>
         )}
         <button
           onClick={() => navigate("/contactanos")}
-          className="text-pink-600 font-bold hover:text-pink-800 transition-colors px-2"
+          className={`font-bold transition-colors px-2.5 py-1.5 rounded-lg text-sm sm:text-base flex items-center gap-1.5 ${location.pathname === "/contactanos"
+            ? "text-pink-600 bg-white/70 shadow-sm"
+            : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+            }`}
         >
+          <i className="fa-solid fa-envelope text-xs"></i>
           Contáctanos
         </button>
 

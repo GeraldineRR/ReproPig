@@ -12,8 +12,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Hora, setHora] = useState('')
     const [Observaciones, setObservaciones] = useState('')
     const [Id_Porcino, setId_Porcino] = useState('')
-    const [Id_Responsable, setId_Responsable] = useState('')
-    const [Id_Medicamento, setId_Medicamento] = useState('')
+    const [Id_Responsable, setId_Responsable] = useState([])
+    const [Id_Medicamento, setId_Medicamento] = useState([])
     const [Id_Ciclo, setId_Ciclo] = useState('')
 
     const [porcinos, setPorcinos] = useState([])
@@ -29,15 +29,43 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         getMedicamentos()
     }, [])
 
+    const parsearArray = (val) => {
+        if (!val) return []
+        if (Array.isArray(val)) return val.map(String)
+        if (typeof val === 'string' && val.trim().startsWith('[')) {
+            try { return JSON.parse(val).map(String) } catch { return [] }
+        }
+        if (typeof val === 'string' && val.includes(',')) {
+            return val.split(',').map(s => s.trim()).filter(Boolean)
+        }
+        return [String(val)]
+    }
+
+    const toggleResponsable = (id) => {
+        const strId = String(id)
+        setId_Responsable(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : [])
+            return arr.includes(strId) ? arr.filter(r => r !== strId) : [...arr, strId]
+        })
+    }
+
+    const toggleMedicamento = (id) => {
+        const strId = String(id)
+        setId_Medicamento(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : [])
+            return arr.includes(strId) ? arr.filter(m => m !== strId) : [...arr, strId]
+        })
+    }
+
     useEffect(() => {
         if (Seguimiento_CerdaEdit) {
             setId_Seguimiento_Cerda(Seguimiento_CerdaEdit.Id_Seguimiento_Cerda ?? '')
-            setFecha(Seguimiento_CerdaEdit.Fecha ?? '')
-            setHora(Seguimiento_CerdaEdit.Hora ?? '')
+            setFecha(Seguimiento_CerdaEdit.Fecha ? String(Seguimiento_CerdaEdit.Fecha).split('T')[0] : '')
+            setHora(Seguimiento_CerdaEdit.Hora ? String(Seguimiento_CerdaEdit.Hora).slice(0, 5) : '')
             setObservaciones(Seguimiento_CerdaEdit.Observaciones ?? '')
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
-            setId_Responsable(Seguimiento_CerdaEdit.Id_Responsable ?? '')
-            setId_Medicamento(Seguimiento_CerdaEdit.Id_Medicamento ?? '')
+            setId_Responsable(parsearArray(Seguimiento_CerdaEdit.Id_Responsable))
+            setId_Medicamento(parsearArray(Seguimiento_CerdaEdit.Id_Medicamento))
             setId_Ciclo(Seguimiento_CerdaEdit.Id_Ciclo ?? '')
             setTextFormButton("Actualizar")
 
@@ -51,8 +79,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setHora('')
             setObservaciones('')
             setId_Porcino('')
-            setId_Responsable('')
-            setId_Medicamento('')
+            setId_Responsable([])
+            setId_Medicamento([])
             setId_Ciclo('')
             setCiclosActivas([])
             setTextFormButton("Enviar")
@@ -129,13 +157,21 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const gestionarForm = async (e) => {
         e.preventDefault()
 
+        const formatMultiField = (val) => {
+            if (!val || (Array.isArray(val) && val.length === 0)) return null;
+            if (Array.isArray(val)) {
+                return val.length === 1 ? Number(val[0]) : JSON.stringify(val.map(Number));
+            }
+            return Number(val);
+        };
+
         const data = {
             Fecha,
             Hora,
             Observaciones,
             Id_Porcino,
-            Id_Responsable: Array.isArray(Id_Responsable) ? (Id_Responsable.length ? (Id_Responsable.length === 1 ? Id_Responsable[0] : JSON.stringify(Id_Responsable)) : null) : (Id_Responsable || null),
-            Id_Medicamento: Array.isArray(Id_Medicamento) ? (Id_Medicamento.length ? Id_Medicamento[0] : null) : (Id_Medicamento || null),
+            Id_Responsable: formatMultiField(Id_Responsable),
+            Id_Medicamento: formatMultiField(Id_Medicamento),
             Id_Ciclo: Id_Ciclo || null
         }
 
@@ -172,9 +208,9 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         <form onSubmit={gestionarForm} className="col-12">
 
             <div className="text-center mb-4">
-                        <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
-                        <small className="text-muted">Registro vinculado al ciclo</small>
-                    </div>
+                <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
+                <small className="text-muted">Registro vinculado al ciclo</small>
+            </div>
 
             <div className="row g-3">
 
@@ -244,45 +280,63 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                 </div>
 
                 {/* RESPONSABLE */}
-                <div className="col-md-6">
-                    <label className="form-label fw-semibold">👨‍🌾 Responsables (puedes elegir varios)</label>
-                    <select
-                        multiple
-                        className="form-select shadow-sm"
-                        style={{ height: '110px' }}
-                        value={Array.isArray(Id_Responsable) ? Id_Responsable : (Id_Responsable ? [String(Id_Responsable)] : [])}
-                        onChange={(e) => {
-                            const selected = Array.from(e.target.selectedOptions, option => option.value);
-                            setId_Responsable(selected);
-                        }}
-                    >
-                        {responsables.map((responsable) => (
-                            <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
-                                {responsable.Nombres} {responsable.Apellidos}
-                            </option>
-                        ))}
-                    </select>
+                <div className="col-12">
+                    <label className="form-label fw-semibold d-block">
+                        👨‍🌾 Responsables ({Id_Responsable.length})
+                    </label>
+                    <div className="d-flex flex-wrap gap-2">
+                        {responsables.length === 0 ? (
+                            <span className="text-muted small">No hay responsables registrados</span>
+                        ) : (
+                            responsables.map((responsable) => {
+                                const activo = Id_Responsable.map(String).includes(String(responsable.Id_Responsable));
+                                return (
+                                    <span
+                                        key={responsable.Id_Responsable}
+                                        onClick={() => toggleResponsable(responsable.Id_Responsable)}
+                                        className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                            activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                        }`}
+                                        style={{ cursor: "pointer", fontSize: "13px" }}
+                                    >
+                                        {activo ? "✓ " : "+ "}{responsable.Nombres} {responsable.Apellidos || ""}
+                                    </span>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
 
                 {/* MEDICAMENTO */}
-                <div className="col-md-6">
-                    <label className="form-label fw-semibold">💊 Medicamentos (puedes elegir varios)</label>
-                    <select
-                        multiple
-                        className="form-select shadow-sm"
-                        style={{ height: '110px' }}
-                        value={Array.isArray(Id_Medicamento) ? Id_Medicamento : (Id_Medicamento ? [String(Id_Medicamento)] : [])}
-                        onChange={(e) => {
-                            const selected = Array.from(e.target.selectedOptions, option => option.value);
-                            setId_Medicamento(selected);
-                        }}
-                    >
-                        {medicamentos.map((medicamento) => (
-                            <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
-                                {medicamento.Nombre}
-                            </option>
-                        ))}
-                    </select>
+                <div className="col-12">
+                    <label className="form-label fw-semibold d-block">
+                        💊 Medicamentos ({Id_Medicamento.length})
+                    </label>
+                    <div className="d-flex flex-wrap gap-2">
+                        {medicamentos.length === 0 ? (
+                            <span className="text-muted small">No hay medicamentos registrados</span>
+                        ) : (
+                            medicamentos.map((medicamento) => {
+                                const activo = Id_Medicamento.map(String).includes(String(medicamento.Id_Medicamento));
+                                return (
+                                    <span
+                                        key={medicamento.Id_Medicamento}
+                                        onClick={() => toggleMedicamento(medicamento.Id_Medicamento)}
+                                        className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                            activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                        }`}
+                                        style={{ cursor: "pointer", fontSize: "13px" }}
+                                    >
+                                        {activo ? "✓ " : "+ "}{medicamento.Nombre}
+                                    </span>
+                                );
+                            })
+                        )}
+                    </div>
                 </div>
 
                 {/* OBSERVACIONES */}

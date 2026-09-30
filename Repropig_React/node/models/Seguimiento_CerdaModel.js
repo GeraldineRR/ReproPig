@@ -31,12 +31,12 @@ const Seguimiento_CerdaModel = db.define(
         },
 
         Id_Responsable: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.TEXT,
             allowNull: true
         },
 
         Id_Medicamento: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.TEXT,
             allowNull: true
         },
 

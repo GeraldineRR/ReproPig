@@ -101,22 +101,22 @@ const CrudColecta = () => {
             name: 'Vigencia', cell: row => {
                 if (row.Tipo !== 'Interno') return <span className="badge bg-secondary">N/A</span>;
                 if (!row.Fecha) return <span className="badge bg-secondary">—</span>;
-                
+
                 const fechaColecta = new Date(row.Fecha);
                 const expirationDate = new Date(fechaColecta);
                 expirationDate.setDate(expirationDate.getDate() + 3);
                 const today = new Date();
-                
+
                 const diffTime = expirationDate.getTime() - today.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 if (diffDays <= 0) return <span className="badge bg-danger">Vencida</span>;
                 return <span className="badge bg-warning text-dark">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
             }
         },
         { name: 'Uso', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
-        { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' }, 
+        { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Volumen', selector: row => row.volumen },
         { name: 'Color', selector: row => row.color },
@@ -129,7 +129,32 @@ const CrudColecta = () => {
                 return <span className={disp <= 0 ? 'badge bg-danger' : disp <= 2 ? 'badge bg-warning' : 'badge bg-success'}>{disp}</span>
             }
         },
-        { name: 'Observaciones', selector: row => row.Observaciones },
+        {
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
+        },
         {
             name: 'Estado',
             cell: row => {

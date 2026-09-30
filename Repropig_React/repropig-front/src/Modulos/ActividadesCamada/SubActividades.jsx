@@ -181,8 +181,30 @@ const SubActividades = ({ segCamada }) => {
             wrap: true
         },
         {
-            name: 'Observaciones',
-            selector: row => row.Observaciones || 'N/A'
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
         },
         {
             name: 'Acciones',
@@ -275,11 +297,10 @@ const SubActividades = ({ segCamada }) => {
                                     <span
                                         key={m.Id_Medicamento}
                                         onClick={() => toggleMedicamento(m.Id_Medicamento)}
-                                        className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                            activo
+                                        className={`px-3 py-1.5 rounded-pill user-select-none ${activo
                                                 ? "bg-primary text-white shadow-sm fw-bold"
                                                 : "bg-white border text-secondary"
-                                        }`}
+                                            }`}
                                         style={{ cursor: "pointer", fontSize: "13px" }}
                                     >
                                         {activo ? "✓ " : "+ "}{m.Nombre}
@@ -305,11 +326,10 @@ const SubActividades = ({ segCamada }) => {
                                     <span
                                         key={r.Id_Responsable}
                                         onClick={() => toggleResponsable(r.Id_Responsable)}
-                                        className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                            activo
+                                        className={`px-3 py-1.5 rounded-pill user-select-none ${activo
                                                 ? "bg-success text-white shadow-sm fw-bold"
                                                 : "bg-white border text-secondary"
-                                        }`}
+                                            }`}
                                         style={{ cursor: "pointer", fontSize: "13px" }}
                                     >
                                         {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos || ''}

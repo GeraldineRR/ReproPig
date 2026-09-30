@@ -32,7 +32,7 @@ const CrudNovedades = () => {
                 if (row.Tipo_Novedad === 'Muerte' || row.Tipo_Novedad === 'Descarte') badgeClass = 'bg-danger';
                 else if (row.Tipo_Novedad === 'Enfermedad' || row.Tipo_Novedad === 'Lesión') badgeClass = 'bg-warning text-dark';
                 else if (row.Tipo_Novedad === 'Traslado') badgeClass = 'bg-info text-dark';
-                
+
                 return <span className={`badge ${badgeClass}`}>{row.Tipo_Novedad}</span>;
             },
             sortable: true
@@ -47,8 +47,30 @@ const CrudNovedades = () => {
             selector: row => row.Causa_Motivo || '—'
         },
         {
-            name: 'Observaciones',
-            selector: row => row.Observaciones || '—'
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
         },
         {
             name: 'Acciones',
@@ -115,11 +137,11 @@ const CrudNovedades = () => {
         const causa = nov.Causa_Motivo?.toLowerCase() || '';
         const obs = nov.Observaciones?.toLowerCase() || '';
         const porcino = nov.porcino?.Nom_Porcino?.toLowerCase() || '';
-        
-        return tipo.includes(searchText) || 
-               causa.includes(searchText) || 
-               obs.includes(searchText) || 
-               porcino.includes(searchText);
+
+        return tipo.includes(searchText) ||
+            causa.includes(searchText) ||
+            obs.includes(searchText) ||
+            porcino.includes(searchText);
     });
 
     const hideModal = () => {

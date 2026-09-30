@@ -508,8 +508,8 @@ const CrudCiclos = () => {
                 </div>
             </div>
             {/* Modal Calendario */}
-            <div className="modal fade" ref={modalCalendarioRef} aria-hidden="true" data-bs-focus="false">
-                <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
+            <div className="modal fade calendario-modal" ref={modalCalendarioRef} aria-hidden="true" data-bs-focus="false">
+                <div className="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down" style={{ maxWidth: '95vw', width: '95vw', margin: '1.75rem auto' }}>
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title">
@@ -519,7 +519,7 @@ const CrudCiclos = () => {
                                 onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
                         </div>
 
-                        <div className="modal-body">
+                        <div className="modal-body p-0">
                             {calendarioEdit && (
                                 <CalendarioForm
                                     key={`edit-${calendarioEdit.Id_Calendario}`}

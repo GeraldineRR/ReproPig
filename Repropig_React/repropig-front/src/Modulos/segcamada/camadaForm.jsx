@@ -152,14 +152,36 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         setTextFormButton("Enviar");
     }
 
+    const toggleResponsable = (id) => {
+        const strId = String(id);
+        setIdResponsable(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(r => r !== strId) : [...arr, strId];
+        });
+    };
+
+    const toggleMedicamento = (id) => {
+        const strId = String(id);
+        setIdMedicamento(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(m => m !== strId) : [...arr, strId];
+        });
+    };
+
     const huboCambios = () => {
         if (!segcamadaEdit) return true;
+        const currentMeds = Id_Medicamento.map(String).sort().join(',');
+        const origMeds = parsearMultiples(segcamadaEdit.Id_Medicamento).map(String).sort().join(',');
+        const currentResps = Id_Responsable.map(String).sort().join(',');
+        const origResps = parsearMultiples(segcamadaEdit.Id_Responsable).map(String).sort().join(',');
+
         return !(
             Number(Id_Porcino) === Number(segcamadaEdit.Id_Porcino) &&
             Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
             Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
             parseFloat(Peso_Cria).toFixed(2) === parseFloat(segcamadaEdit.Peso_Cria).toFixed(2) &&
-            Number(Id_Medicamento || 0) === Number(segcamadaEdit.Id_Medicamento || 0) &&
+            currentMeds === origMeds &&
+            currentResps === origResps &&
             Observaciones === (segcamadaEdit.Observaciones || '')
         );
     }
@@ -396,46 +418,86 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         />
                     </div>
 
+                    {/* Responsables */}
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">👨‍🌾 Responsables (puedes elegir varios)</label>
-                        <select
-                            multiple
-                            className="form-select shadow-sm"
-                            style={{ height: '110px' }}
-                            value={Array.isArray(Id_Responsable) ? Id_Responsable.map(String) : (Id_Responsable ? [String(Id_Responsable)] : [])}
-                            onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setIdResponsable(selected);
-                            }}
-                        >
-                            {responsables.map((resp) => (
-                                <option key={resp.Id_Responsable} value={resp.Id_Responsable}>
-                                    {resp.Nombres} {resp.Apellidos}
-                                </option>
-                            ))}
-                        </select>
-                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
+                        <label className="form-label fw-semibold d-block">
+                            👨‍🌾 Responsables ({Id_Responsable.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {responsables.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay responsables registrados
+                                </span>
+                            ) : (
+                                responsables.map((resp) => {
+                                    const activo = Id_Responsable
+                                        .map(String)
+                                        .includes(String(resp.Id_Responsable));
+
+                                    return (
+                                        <span
+                                            key={resp.Id_Responsable}
+                                            onClick={() =>
+                                                toggleResponsable(resp.Id_Responsable)
+                                            }
+                                            className={`px-3 py-1 rounded-pill user-select-none ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                            style={{
+                                                cursor: "pointer",
+                                                fontSize: "13px"
+                                            }}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {resp.Nombres} {resp.Apellidos || ""}
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
+                    {/* Medicamentos */}
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">💊 Medicamentos (puedes elegir varios)</label>
-                        <select
-                            multiple
-                            className="form-select shadow-sm"
-                            style={{ height: '110px' }}
-                            value={Array.isArray(Id_Medicamento) ? Id_Medicamento.map(String) : (Id_Medicamento ? [String(Id_Medicamento)] : [])}
-                            onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setIdMedicamento(selected);
-                            }}
-                        >
-                            {medicamentos.map((med) => (
-                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>
-                                    {med.Nombre}
-                                </option>
-                            ))}
-                        </select>
-                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
+                        <label className="form-label fw-semibold d-block">
+                            💊 Medicamentos ({Id_Medicamento.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {medicamentos.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay medicamentos registrados
+                                </span>
+                            ) : (
+                                medicamentos.map((med) => {
+                                    const activo = Id_Medicamento
+                                        .map(String)
+                                        .includes(String(med.Id_Medicamento));
+
+                                    return (
+                                        <span
+                                            key={med.Id_Medicamento}
+                                            onClick={() =>
+                                                toggleMedicamento(med.Id_Medicamento)
+                                            }
+                                            className={`px-3 py-1 rounded-pill user-select-none ${activo
+                                                    ? "bg-success text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                }`}
+                                            style={{
+                                                cursor: "pointer",
+                                                fontSize: "13px"
+                                            }}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {med.Nombre}
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
                     <div className="mb-3">
