@@ -81,23 +81,13 @@ const CrudRazas = () => {
         {
             name: 'Acciones',
             cell: row => (
-                <div className="d-flex gap-1">
-                    <button
-                        className="btn btn-sm bg-info"
-                        onClick={() => handleEdit(row)}
-                        title="Editar"
-                    >
-                        <i className="fa-solid fa-pencil"></i>
-                    </button>
-                    <button
-                        className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
-                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
-                        onClick={() => toggleEstado(row)}
-                        disabled={loadingId === row.Id_Raza}
-                    >
-                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
-                    </button>
-                </div>
+                <button
+                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                    onClick={() => handleEdit(row)}
+                    title="Editar"
+                >
+                    <i className="fa-solid fa-pencil text-xs"></i>
+                </button>
             )
         }
     ]
@@ -136,7 +126,7 @@ const CrudRazas = () => {
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <div className="input-group">
                             <span className="input-group-text">
                                 🔍
@@ -151,7 +141,7 @@ const CrudRazas = () => {
                         </div>
                     </div>
 
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <button
                             type="button"
                             className="btn btn-success"

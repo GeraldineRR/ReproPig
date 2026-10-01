@@ -99,9 +99,8 @@ const CrudColecta = () => {
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
         {
             name: 'Vigencia', cell: row => {
-                if (row.Tipo !== 'Interno') return <span className="badge bg-secondary">N/A</span>;
-                if (!row.Fecha) return <span className="badge bg-secondary">—</span>;
-
+                if (row.Tipo !== 'Interno') return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">N/A</span>;
+                if (!row.Fecha) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">—</span>;
                 const fechaColecta = new Date(row.Fecha);
                 const expirationDate = new Date(fechaColecta);
                 expirationDate.setDate(expirationDate.getDate() + 3);
@@ -109,9 +108,8 @@ const CrudColecta = () => {
 
                 const diffTime = expirationDate.getTime() - today.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                if (diffDays <= 0) return <span className="badge bg-danger">Vencida</span>;
-                return <span className="badge bg-warning text-dark">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
+                if (diffDays <= 0) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Vencida</span>;
+                return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
             }
         },
         { name: 'Uso', selector: row => row.Uso_colecta },
@@ -172,18 +170,17 @@ const CrudColecta = () => {
         },
         {
             name: 'Acciones', cell: row => (
-                <div className="d-flex gap-1">
+                <div className="flex gap-2 items-center justify-end w-full">
                     {/* Editar */}
-                    <button className="btn btn-sm btn-info"
+                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                         onClick={() => setRowToEdit(row)}
                         data-bs-toggle="modal" data-bs-target="#exampleModal">
-                        <i className="fa-solid fa-pencil"></i>
+                        <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
-                    {/* ✅ Toggle Estado con confirmación */}
-                    <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
-                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
-                        onClick={() => toggleEstado(row)}>
-                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
+                    {/* ✅ Eliminar */}
+                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                        onClick={() => handleDelete(row)}>
+                        <i className="fa-solid fa-trash text-xs"></i>
                     </button>
                 </div>
             )
@@ -240,7 +237,7 @@ const CrudColecta = () => {
                         🧪 Mostrando colecta <strong>#{filtroDesdeInseminacion.Id_colecta}</strong>
                     </span>
                     <button
-                        className="btn btn-sm btn-outline-secondary"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                         onClick={() => navigate(-1)}>
                         ← Volver a Inseminaciones
                     </button>

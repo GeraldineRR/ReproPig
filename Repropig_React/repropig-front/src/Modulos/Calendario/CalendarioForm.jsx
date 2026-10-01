@@ -234,7 +234,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         }
 
         return (
-            <div className="d-flex gap-1">
+            <div className="flex gap-2 items-center justify-end w-full">
                 <button
                     className="cal-btn-editar"
                     onClick={() => abrirPanelRevision(evento, data)}

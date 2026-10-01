@@ -27,7 +27,6 @@ const CrudCiclos = () => {
     const [calendarioData, setCalendarioData] = useState(null)
     const [calendarioEdit, setCalendarioEdit] = useState(null)
     const [calendarioIsInactive, setCalendarioIsInactive] = useState(false)
-    const [selectedReproduccion, setSelectedReproduccion] = useState(null)
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
@@ -145,7 +144,6 @@ const CrudCiclos = () => {
     const hideModalCalendario = async () => {
         setCalendarioData(null)
         setCalendarioEdit(null)
-        setSelectedReproduccion(null)
         cerrarModal(modalCalendarioInstanceRef)
         await getAllCiclos()
     }
@@ -260,8 +258,7 @@ const CrudCiclos = () => {
             width: '180px',
             cell: row => {
                 const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
-                const badgeClass = isActivo ? 'bg-success text-white' : 'bg-secondary text-white';
-                const icon = isActivo ? '🟢' : '⚫';
+                const badgeClass = isActivo ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10';
                 const estado = row.Estado || 'Inactivo';
                 
                 // Calcular progreso
@@ -282,42 +279,38 @@ const CrudCiclos = () => {
                 const isTerminado = isActivo && dias >= 114;
 
                 return (
-                    <div className="w-100" style={{ cursor: 'pointer' }} onClick={() => handleToggleActivo(row)}>
-                        <div className="d-flex justify-content-between mb-1">
-                            <span className={`badge ${badgeClass}`} style={{ fontSize: '11px' }}>
-                                {icon} {estado}
+                    <div className="w-full py-1" style={{ cursor: 'pointer' }} onClick={() => handleToggleActivo(row)}>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${badgeClass}`}>
+                                {isActivo ? <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> : <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>}
+                                {estado}
                             </span>
                             {isActivo && (
-                                <small className={`fw-bold ${isTerminado ? 'text-danger' : 'text-muted'}`} style={{ fontSize: '10px' }}>
+                                <span className={`text-xs font-bold ${isTerminado ? 'text-red-500' : 'text-gray-400'}`}>
                                     {progreso}%
-                                </small>
+                                </span>
                             )}
                         </div>
                         {isActivo && (
-                            <>
-                                <div className="progress" style={{ height: '5px' }}>
-                                    <div className={`progress-bar ${isTerminado ? 'bg-danger' : 'bg-success'}`} role="progressbar" style={{ width: `${progreso}%` }} aria-valuenow={progreso} aria-valuemin="0" aria-valuemax="100"></div>
+                            <div className="mt-1">
+                                <div className="w-full bg-gray-100 rounded-full h-1.5 mb-1 overflow-hidden">
+                                    <div className={`h-1.5 rounded-full transition-all duration-500 ${isTerminado ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${progreso}%` }}></div>
                                 </div>
                                 {isTerminado && (
-                                    <>
-                                        <small className="text-danger fw-bold d-block mt-1" style={{ fontSize: '9px' }}>
-                                            ⚠️ Ciclo terminado, continúa con el parto.
-                                        </small>
-                                        <div className="mt-2 text-center">
-                                            <button 
-                                                className="btn btn-sm btn-danger px-3 py-0 fw-bold" 
-                                                style={{ fontSize: '10px', borderRadius: '12px' }}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigate('/partos', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda } });
-                                                }}
-                                            >
-                                                Registrar parto <i className="fa-solid fa-arrow-right"></i>
-                                            </button>
-                                        </div>
-                                    </>
+                                    <div className="mt-2 text-center bg-red-50 p-2 rounded-lg border border-red-100">
+                                        <p className="text-red-600 text-[10px] font-bold mb-1">⚠️ Ciclo terminado</p>
+                                        <button 
+                                            className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold py-1 px-3 rounded-full shadow-sm transition-colors" 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate('/partos', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda } });
+                                            }}
+                                        >
+                                            Registrar parto <i className="fa-solid fa-arrow-right ml-1"></i>
+                                        </button>
+                                    </div>
                                 )}
-                            </>
+                            </div>
                         )}
                     </div>
                 );
@@ -326,13 +319,7 @@ const CrudCiclos = () => {
         {
             name: 'F. Servicio',
             width: '120px',
-            cell: row => {
-                const fechas = [
-                    ...((row.montas || []).map(m => m.Fec_hora).filter(Boolean)),
-                    ...((row.inseminaciones || []).map(i => i.Fec_hora).filter(Boolean))
-                ].sort();
-                return <span>{fechas.length ? fechas[0].split('T')[0] : '-'}</span>;
-            },
+            cell: row => <span>{getFechaServicio(row) || '-'}</span>,
             selector: row => getFechaServicio(row) || '-',
             sortable: true
         },
@@ -355,56 +342,51 @@ const CrudCiclos = () => {
         //     sortable: true
         // },
         {
-
             name: 'Montas',
             width: '100px',
             cell: row => (
-                <span
-                    className="badge bg-warning text-dark"
-                    style={{ cursor: 'pointer', fontSize: '13px' }}
-                    title="Ver montas"
+                <div 
                     onClick={() => navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-pink-100 transition-colors"
+                    title="Ver montas"
                 >
-                    🐷 {row.montas?.length || 0}
-                </span>
+                    <span className="text-sm">🐷</span> {row.montas?.length || 0}
+                </div>
             )
         },
         {
             name: 'Inseminaciones',
             width: '140px',
             cell: row => (
-                <span
-                    className="badge bg-primary"
-                    style={{ cursor: 'pointer', fontSize: '13px' }}
-                    title="Ver inseminaciones"
+                <div 
                     onClick={() => navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-blue-100 transition-colors"
+                    title="Ver inseminaciones"
                 >
-                    💉 {row.inseminaciones?.length || 0}
-                </span>
+                    <span className="text-sm">💉</span> {row.inseminaciones?.length || 0}
+                </div>
             )
         },
 
         {
             name: 'Acciones',
-            width: '140px',
+            width: '120px',
             cell: row => (
-                <div className="d-flex gap-1 align-items-center">
+                <div className="flex gap-2 items-center justify-end w-full">
                     <button
-                        className="btn btn-sm btn-success"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
                         title="Calendario"
                         onClick={() => handleAgregarCalendario(row)}
                     >
-                        📅
+                        <i className="fa-regular fa-calendar text-sm"></i>
                     </button>
-
-                    <button className="btn btn-sm btn-info" title="Editar"
-                        onClick={() => handleEdit(row)}>
-                        <i className="fa-solid fa-pencil"></i>
+                    <button 
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" 
+                        title="Editar"
+                        onClick={() => handleEdit(row)}
+                    >
+                        <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
-                    {/* <button className="btn btn-sm btn-danger" title="Eliminar"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button> */}
                 </div>
             )
         }
@@ -511,9 +493,9 @@ const CrudCiclos = () => {
             <div className="modal fade calendario-modal" ref={modalCalendarioRef} aria-hidden="true" data-bs-focus="false">
                 <div className="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down" style={{ maxWidth: '95vw', width: '95vw', margin: '1.75rem auto' }}>
                     <div className="modal-content">
-                        <div className="modal-header">
+                        <div className="modal-header bg-info bg-opacity-10">
                             <h5 className="modal-title">
-                                📅 Calendario Reproductivo
+                                {calendarioEdit ? '📅 Actualizar Calendario' : '📅 Agregar Calendario'}
                             </h5>
                             <button type="button" className="btn-close"
                                 onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
@@ -528,7 +510,6 @@ const CrudCiclos = () => {
                                     hideModal={hideModalCalendario}
                                     reload={getAllCiclos}
                                     isInactive={calendarioIsInactive}
-                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                             {!calendarioEdit && calendarioData && (
@@ -542,7 +523,6 @@ const CrudCiclos = () => {
                                         Fecha_Servicio: calendarioData.fechaServicio
                                     }}
                                     isInactive={calendarioIsInactive}
-                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                         </div>

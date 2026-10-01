@@ -48,8 +48,8 @@ const CrudResponsables = () => {
             name: 'Estado',
             cell: row => (
                 row.Estado === 'Activo'
-                    ? <span className="badge bg-success">Activo</span>
-                    : <span className="badge bg-danger">Inactivo</span>
+                    ? <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">Activo</span>
+                    : <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Inactivo</span>
             )
         },
         {
@@ -57,14 +57,14 @@ const CrudResponsables = () => {
             width: '160px',
             cell: row => (
                 <>
-                    <button className="btn btn-sm bg-info me-2"
+                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors mr-2"
                         onClick={() => setRowToEdit(row)}
                         data-bs-toggle='modal'
                         data-bs-target="#exampleModal">
-                        <i className="fa-solid fa-pencil"></i>
+                        <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
                     <button
-                        className={`btn btn-sm ${row.Estado === 'Activo' ? 'btn-danger' : 'btn-success'}`}
+                        className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset transition-colors ${row.Estado === 'Activo' ? 'bg-red-50 text-red-700 ring-red-600/20 hover:bg-red-100' : 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100'}`}
                         onClick={() => cambiarEstado(row)}>
                         {row.Estado === 'Activo' ? 'Desactivar' : 'Activar'}
                     </button>

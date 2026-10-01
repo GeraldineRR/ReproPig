@@ -33,8 +33,8 @@ PorcinoModel.belongsTo(PartosModel, { foreignKey: 'Id_parto', as: 'parto' })
 PartosModel.hasMany(PorcinoModel, { foreignKey: 'Id_parto', as: 'lechones' })
 
 
-// MedicamentosModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Medicamento', as: 'actividades_camada' })
-// ActividadesCamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
+MedicamentosModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_Medicamento', as: 'actividades_camada' })
+ActividadesCamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
 
 NovedadesModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
@@ -61,6 +61,8 @@ ciclosModel.hasMany(inseminacionModel, { foreignKey: 'Id_Ciclo', as: 'inseminaci
 responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
 
+PorcinoModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Porcino', as: 'Seguimiento Cerda' })
+SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: 'porcino' })
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
