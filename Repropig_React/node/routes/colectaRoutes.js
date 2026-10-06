@@ -1,11 +1,12 @@
 import express from 'express';
-import { getAllcolecta, getcolecta, createcolecta, updatecolecta, deletecolecta } from '../controllers/colectaController.js'
+import { getAllcolecta, getcolecta, createcolecta, updatecolecta, deletecolecta, toggleEstadocolecta } from '../controllers/colectaController.js'
 
 const router = express.Router()
 
 router.get('/', getAllcolecta);
 router.get('/:id', getcolecta);
 router.post('/', createcolecta);
+router.put('/:id/toggle-estado', toggleEstadocolecta);
 router.put('/:id', updatecolecta);
 router.delete('/:id', deletecolecta);
 

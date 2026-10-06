@@ -10,7 +10,7 @@ const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
-    const filtroDesdeCiclo = location.state || null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
+    const filtroDesdeCiclo = (location.state && location.state.Id_Ciclo) ? location.state : null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
 
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
@@ -36,6 +36,40 @@ const CrudMonta = () => {
                 return r ? `${r.Nombres} ${r.Apellidos}` : `#${id}`
             }).join(', ')
         } catch { return Id_Responsable }
+    }
+
+    // 🔹 Toggle Estado Monta con confirmación SweetAlert
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
+
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} esta monta?`,
+            text: `La monta #${row.Id_Monta} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.put(`/monta/${row.Id_Monta}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                getAllMontas();
+            } catch (error) {
+                try {
+                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
+                    await apiAxios.put(`/monta/${row.Id_Monta}`, { ...row, Estado: nuevoEstado });
+                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                    getAllMontas();
+                } catch (err) {
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
+                }
+            }
+        }
     }
 
     const handleDelete = async (row) => {
@@ -69,6 +103,21 @@ const CrudMonta = () => {
         { name: 'Observaciones', selector: row => row.Observaciones },
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
+            name: 'Estado',
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {esActivo ? 'Activo' : 'Inactivo'}
+                    </button>
+                );
+            }
+        },
+        {
             name: 'Acciones', cell: row => {
                 let isInactive = false;
                 if (filtroDesdeCiclo) {
@@ -94,6 +143,12 @@ const CrudMonta = () => {
                             disabled={isInactive}
                             title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
                             <i className="fa-solid fa-trash text-xs"></i>
+                        </button>
+                        <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                            onClick={() => toggleEstado(row)}
+                            disabled={isInactive}
+                            title={isInactive ? "El ciclo está inactivo" : row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}>
+                            <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
                         </button>
                     </div>
                 );

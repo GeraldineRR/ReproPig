@@ -2,57 +2,23 @@ import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
 import DataTable from 'react-data-table-component';
 import PartosForm from "./PartoForm.jsx";
+import Swal from 'sweetalert2';
+import WithReactContent from 'sweetalert2-react-content';
+import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { useNavigate } from "react-router-dom";
 
 const CrudPartos = () => {
 
     const [partos, setPartos] = useState([]);
+    const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState("");
     const [rowToEdit, setRowToEdit] = useState({});
+    const [loadingId, setLoadingId] = useState(null);
+    const navigate = useNavigate();
 
-    // 🔹 Cerrar modal y refrescar tabla
-    const hideModal = () => {
-        const closeButton = document.getElementById('closeModal');
-        if (closeButton) {
-            closeButton.click();
-        }
-        getAllPartos();
-    };
-
-    // 🔹 Columnas de la tabla
-    const columnsTable = [
-        { name: 'Id_Porcino', selector: row => row.porcinos?.Nom_Porcino, sortable: true },
-        { name: 'Fec_inicio', selector: row => row.Fec_inicio },
-        { name: 'Hor_inicial', selector: row => row.Hor_inicial },
-        { name: 'Nac_vivos', selector: row => row.Nac_vivos },
-        { name: 'Nac_momias', selector: row => row.Nac_momias },
-        { name: 'Nac_muertos', selector: row => row.Nac_muertos },
-        { name: 'Pes_camada', selector: row => row.Pes_camada },
-        { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Fec_fin', selector: row => row.Fec_fin },
-        { name: 'Hor_final', selector: row => row.Hor_final },
-        {
-            name: 'Acciones',
-            cell: (row) => (
-                <button
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                    data-bs-toggle="modal"
-                    data-bs-target="#exampleModal"
-                    onClick={() => setRowToEdit(row)}
-                >
-                    <i className="fa-solid fa-pencil text-xs"></i>
-                </button>
-            ),
-            ignoreRowClick: true,
-            allowOverflow: true,
-            button: true,
-        }
-    ];
+    const MySwal = WithReactContent(Swal);
 
     // 🔹 Cargar datos
-    useEffect(() => {
-        getAllPartos();
-    }, []);
-
     const getAllPartos = async () => {
         try {
             const response = await apiAxios.get('/partos/');
@@ -62,14 +28,185 @@ const CrudPartos = () => {
         }
     };
 
-    // 🔹 Filtro seguro
-    const newListPartos = partos.filter((row) => {
-        const textToSearch = filterText.toLowerCase();
+    const getResponsables = async () => {
+        try {
+            const res = await apiAxios.get('/responsables/');
+            setResponsables(res.data);
+        } catch (error) {
+            console.error("Error cargando responsables:", error);
+        }
+    };
+
+    useEffect(() => {
+        getAllPartos();
+        getResponsables();
+    }, []);
+
+    const parsearIDs = (valor) => {
+        if (!valor) return []
+        if (Array.isArray(valor)) return valor.map(Number)
+        if (typeof valor === 'string' && valor.startsWith('[')) {
+            try { return JSON.parse(valor).map(Number) } catch { return [] }
+        }
+        const num = Number(valor)
+        return isNaN(num) ? [] : [num]
+    };
+
+    const getNombresResponsables = (val) => {
+        const ids = parsearIDs(val)
+        if (ids.length === 0) return '—'
+        const nombres = ids.map(id => {
+            const r = responsables.find(resp => Number(resp.Id_Responsable) === Number(id))
+            return r ? `${r.Nombres} ${r.Apellidos || ''}`.trim() : `#${id}`
+        })
+        return nombres.join(', ')
+    };
+
+    // Función para alternar el estado del porcino 
+    const toggleEstado = async (id) => {
+        setLoadingId(id);
+
+        try {
+            const res = await apiAxios.put(`/Partos/${id}/toggle-estado`);
+
+            setPartos(prev =>
+                prev.map(p =>
+                    p.Id_parto === id
+                        ? { ...p, estado: res.data.estado }
+                        : p
+                )
+            );
+
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
+    const formatFecha = (fecha) => {
+        if (!fecha) return '—'
+        return new Date(fecha).toLocaleDateString()
+    }
+
+    const handleEdit = (row) => {
+        setRowToEdit(row);
+        const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
+        modal.show();
+    };
+
+    const hideModal = () => {
+        setRowToEdit({});
+        document.getElementById("closeModal").click();
+    };
+
+    const columnsTable = [
+        {
+            name: "Porcino",
+            selector: row => row.porcino?.Nom_Porcino || '—'
+        },
+        {
+            name: "Inicio",
+            cell: row => (
+                <div>
+                    <div>{formatFecha(row.Fec_inicio)}</div>
+                    <small className="text-muted">{row.Hor_inicial}</small>
+                </div>
+            )
+        },
+        {
+            name: "Vivos",
+            selector: row => row.Nac_vivos
+        },
+        {
+            name: "Muertos",
+            selector: row => row.Nac_muertos
+        },
+        {
+            name: "Momias",
+            selector: row => row.Nac_momias
+        },
+        {
+            name: "Peso Camada",
+            selector: row =>
+                row.Pes_camada
+                    ? <span className="badge" style={{ backgroundColor: '#587EB2' }}>
+                        {row.Pes_camada} kg
+                    </span>
+                    : '—'
+        },
+        {
+            name: "Responsables",
+            selector: row => getNombresResponsables(row.Id_Responsable),
+            wrap: true
+        },
+        {
+            name: "Observaciones",
+            selector: row => row.Observaciones || '—'
+        },
+        {
+            name: "Fin",
+            cell: row => (
+                <div>
+                    <div>{formatFecha(row.Fec_fin)}</div>
+                    <small className="text-muted">{row.Hor_final}</small>
+                </div>
+            )
+        },
+        {
+            name: 'Estado',
+            selector: row => (
+                <button
+                    className={`badge border-0 ${row.estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
+                    onClick={() => toggleEstado(row.Id_parto)}
+                    disabled={loadingId === row.Id_parto}
+                >
+                    {loadingId === row.Id_parto
+                        ? '...'
+                        : row.estado}
+                </button>
+            )
+        },
+        {
+            name: "Acciones",
+            cell: row => (
+                <div className="d-flex gap-2 flex-nowrap">
+                    <button
+                        className="btn btn-sm text-white"
+                        style={{ backgroundColor: '#975737' }}
+                        title="Ver Seguimiento"
+                        onClick={() => navigate(`/actividades_camada/parto/${row.Id_parto}`)}
+                    >
+                        📝
+                    </button>
+                    <button
+                        className="btn btn-sm bg-info"
+                        title="Editar Parto"
+                        onClick={() => handleEdit(row)}
+                    >
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                </div>
+            ),
+            minWidth: "150px"
+        },
+    ];
+
+    const filtered = partos.filter(row => {
+        const text = filterText.toLowerCase().trim();
+
+        const porcino = row.porcino?.Nom_Porcino?.toLowerCase().trim() || "";
+        const observaciones = row.Observaciones?.toLowerCase().trim() || "";
+        const fechaFin = row.Fec_fin
+            ? new Date(row.Fec_fin).toLocaleDateString()
+            : "";
+        const resps = getNombresResponsables(row.Id_Responsable).toLowerCase().trim();
 
         return (
-            row.Id_parto?.toString().includes(textToSearch) ||
-            row.Id_Porcino?.toString().includes(textToSearch) ||
-            (row.Observaciones?.toLowerCase() || "").includes(textToSearch)
+            porcino.includes(text) ||
+            observaciones.includes(text) ||
+            fechaFin.includes(text) ||
+            resps.includes(text)
         );
     });
 
@@ -103,7 +240,7 @@ const CrudPartos = () => {
                 <DataTable
                     title="Registro de Partos"
                     columns={columnsTable}
-                    data={newListPartos}
+                    data={filtered}
                     keyField="Id_parto"
                     pagination
                     highlightOnHover

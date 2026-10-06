@@ -7,6 +7,7 @@ import RutaProtegida from "./components/RutaProtegida"
 import Landing from "./pages/landing"
 import Contactanos from "./pages/Contactanos"
 import Login from "./pages/Login"
+import QuienesSomos from "./pages/QuienesSomos"
 import Dashboard from "./pages/dashboard"
 import ForgotPassword from "./Forgotpassword"
 import ResetPassword from "./Resetpassword"
@@ -36,6 +37,7 @@ function App() {
     <Routes>
       {/* públicas */}
       <Route path="/" element={<Landing />} />
+      <Route path="/quienes-somos" element={<QuienesSomos />} />
       <Route path="/contactanos" element={<Contactanos />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />

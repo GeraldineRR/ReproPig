@@ -10,7 +10,7 @@ const inseminacionModel = db.define('inseminacion', {
     Id_colecta: { type: DataTypes.INTEGER },
     Observaciones: { type: DataTypes.STRING },
     Id_Ciclo: { type: DataTypes.INTEGER },
-    estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
 }, {
     freezeTableName: true,
     timestamps: false

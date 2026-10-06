@@ -70,3 +70,17 @@ export const deletecolecta = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+// toggle estado colecta
+export const toggleEstadocolecta = async (req, res) => {
+    try {
+        const colecta = await colectaModel.findByPk(req.params.id);
+        if (!colecta) return res.status(404).json({ message: "Colecta no encontrada" });
+
+        const nuevoEstado = (colecta.Estado === 'Inactivo' || colecta.Estado === 'I') ? 'Activo' : 'Inactivo';
+        await colecta.update({ Estado: nuevoEstado });
+        res.status(200).json({ message: `Estado cambiado a ${nuevoEstado}`, Estado: nuevoEstado });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}

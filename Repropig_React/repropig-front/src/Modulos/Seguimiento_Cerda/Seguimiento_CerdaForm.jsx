@@ -12,14 +12,17 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Hora, setHora] = useState('')
     const [Observaciones, setObservaciones] = useState('')
     const [Id_Porcino, setId_Porcino] = useState('')
-    const [Id_Responsable, setId_Responsable] = useState('')
-    const [Id_Medicamento, setId_Medicamento] = useState('')
+    const [Id_Responsable, setId_Responsable] = useState([])
+    const [Id_Medicamento, setId_Medicamento] = useState([])
     const [Id_Ciclo, setId_Ciclo] = useState('')
 
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
     const [ciclosActivas, setCiclosActivas] = useState([])
+
+    const [showResponsables, setShowResponsables] = useState(false)
+    const [showMedicamentos, setShowMedicamentos] = useState(false)
 
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
@@ -29,15 +32,24 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         getMedicamentos()
     }, [])
 
+    const parsearMultiples = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(String);
+        if (typeof val === 'string' && val.startsWith('[')) {
+            try { return JSON.parse(val).map(String); } catch { return []; }
+        }
+        return [String(val)];
+    };
+
     useEffect(() => {
         if (Seguimiento_CerdaEdit) {
             setId_Seguimiento_Cerda(Seguimiento_CerdaEdit.Id_Seguimiento_Cerda ?? '')
-            setFecha(Seguimiento_CerdaEdit.Fecha ?? '')
+            setFecha(Seguimiento_CerdaEdit.Fecha?.split('T')[0] ?? '')
             setHora(Seguimiento_CerdaEdit.Hora ?? '')
             setObservaciones(Seguimiento_CerdaEdit.Observaciones ?? '')
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
-            setId_Responsable(Seguimiento_CerdaEdit.Id_Responsable ?? '')
-            setId_Medicamento(Seguimiento_CerdaEdit.Id_Medicamento ?? '')
+            setId_Responsable(parsearMultiples(Seguimiento_CerdaEdit.Id_Responsable))
+            setId_Medicamento(parsearMultiples(Seguimiento_CerdaEdit.Id_Medicamento))
             setId_Ciclo(Seguimiento_CerdaEdit.Id_Ciclo ?? '')
             setTextFormButton("Actualizar")
 
@@ -51,8 +63,8 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setHora('')
             setObservaciones('')
             setId_Porcino('')
-            setId_Responsable('')
-            setId_Medicamento('')
+            setId_Responsable([])
+            setId_Medicamento([])
             setId_Ciclo('')
             setCiclosActivas([])
             setTextFormButton("Enviar")
@@ -126,16 +138,36 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         getCiclosActivas(val)
     }
 
+    const toggleResponsable = (id) => {
+        setId_Responsable(prev =>
+            prev.includes(String(id)) ? prev.filter(r => r !== String(id)) : [...prev, String(id)]
+        )
+    }
+
+    const toggleMedicamento = (id) => {
+        setId_Medicamento(prev =>
+            prev.includes(String(id)) ? prev.filter(m => m !== String(id)) : [...prev, String(id)]
+        )
+    }
+
     const gestionarForm = async (e) => {
         e.preventDefault()
+
+        const formatMultiField = (val) => {
+            if (!val || (Array.isArray(val) && val.length === 0)) return null;
+            if (Array.isArray(val)) {
+                return val.length === 1 ? val[0] : JSON.stringify(val);
+            }
+            return val;
+        };
 
         const data = {
             Fecha,
             Hora,
             Observaciones,
             Id_Porcino,
-            Id_Responsable,
-            Id_Medicamento,
+            Id_Responsable: formatMultiField(Id_Responsable),
+            Id_Medicamento: formatMultiField(Id_Medicamento),
             Id_Ciclo: Id_Ciclo || null
         }
 
@@ -245,38 +277,76 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
                 {/* RESPONSABLE */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">👨‍🌾 Responsable</label>
-                    <select
-                        className="form-select shadow-sm"
-                        value={Id_Responsable}
-                        onChange={(e) => setId_Responsable(e.target.value)}
-                        required
+                    <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
+                    
+                    <div 
+                        className="form-select shadow-sm d-flex justify-content-between align-items-center" 
+                        onClick={() => setShowResponsables(!showResponsables)}
+                        style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                        <option value="">Seleccione</option>
-                        {responsables.map((responsable) => (
-                            <option key={responsable.Id_Responsable} value={responsable.Id_Responsable}>
-                                {responsable.Nombres} {responsable.Apellidos}
-                            </option>
-                        ))}
-                    </select>
+                        <span>{Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}</span>
+                    </div>
+
+                    {showResponsables && (
+                        <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3" style={{ maxHeight: "200px", overflowY: "auto", width: "95%" }}>
+                            <div className="d-flex flex-wrap gap-2">
+                                {responsables.map((r) => {
+                                    const activo = Id_Responsable.includes(String(r.Id_Responsable))
+                                    return (
+                                        <span
+                                            key={r.Id_Responsable}
+                                            onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
+                                            className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                                activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                            }`}
+                                            style={{ cursor: "pointer", fontSize: "13px" }}
+                                        >
+                                            {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
+                                        </span>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* MEDICAMENTO */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">💊 Medicamento</label>
-                    <select
-                        className="form-select shadow-sm"
-                        value={Id_Medicamento}
-                        onChange={(e) => setId_Medicamento(e.target.value)}
-                        required
+                    <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
+                    
+                    <div 
+                        className="form-select shadow-sm d-flex justify-content-between align-items-center" 
+                        onClick={() => setShowMedicamentos(!showMedicamentos)}
+                        style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                        <option value="">Seleccione</option>
-                        {medicamentos.map((medicamento) => (
-                            <option key={medicamento.Id_Medicamento} value={medicamento.Id_Medicamento}>
-                                {medicamento.Nombre}
-                            </option>
-                        ))}
-                    </select>
+                        <span>{Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}</span>
+                    </div>
+
+                    {showMedicamentos && (
+                        <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3" style={{ maxHeight: "200px", overflowY: "auto", width: "95%" }}>
+                            <div className="d-flex flex-wrap gap-2">
+                                {medicamentos.map((m) => {
+                                    const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
+                                    return (
+                                        <span
+                                            key={m.Id_Medicamento}
+                                            onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}
+                                            className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                                activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                            }`}
+                                            style={{ cursor: "pointer", fontSize: "13px" }}
+                                        >
+                                            {activo ? "✓ " : "+ "}{m.Nombre}
+                                        </span>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* OBSERVACIONES */}

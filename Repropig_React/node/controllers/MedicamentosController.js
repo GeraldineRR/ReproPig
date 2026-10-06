@@ -57,3 +57,17 @@ export const deleteMedicamento = async(req, res) => {
         res.status(400).json({message: error.message})
     }
 }
+
+export const toggleEstadoMedicamento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { default: MedicamentosModel } = await import("../models/MedicamentosModel.js");
+        const med = await MedicamentosModel.findByPk(id);
+        if (!med) return res.status(404).json({ message: "Medicamento no encontrado" });
+        const nuevoEstado = (med.Estado === 'Inactivo' || med.estado === 'Inactivo') ? 'Activo' : 'Inactivo';
+        await MedicamentosModel.update({ Estado: nuevoEstado }, { where: { Id_Medicamento: id } });
+        res.json({ message: "Estado actualizado", Estado: nuevoEstado });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}

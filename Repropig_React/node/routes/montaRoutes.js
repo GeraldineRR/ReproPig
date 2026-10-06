@@ -6,8 +6,8 @@ const router = express.Router()
 router.get('/', getAllmonta);
 router.get('/:id', getmonta);
 router.post('/', createmonta);
-router.put('/:id', updatemonta);
 router.put('/:id/toggle-estado', toggleEstadoMonta);
+router.put('/:id', updatemonta);
 router.delete('/:id', deletemonta);
 
 export default router;

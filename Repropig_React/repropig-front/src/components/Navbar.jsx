@@ -1,5 +1,5 @@
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 import NotificacionesCamada from "./NotificacionesCamada";
 
@@ -7,6 +7,7 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
 
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -43,12 +44,30 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/contactanos")}
-          className="text-pink-600 font-bold hover:text-pink-800 transition-colors px-2"
-        >
-          Contáctanos
-        </button>
+        {!usuario && (
+          <div className="flex items-center gap-2 sm:gap-4 mr-2">
+            <button
+              onClick={() => navigate("/")}
+              className={`font-bold transition-colors px-3 py-1.5 rounded-lg text-sm sm:text-base ${
+                location.pathname === "/"
+                  ? "text-pink-600 bg-white/70 shadow-sm"
+                  : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+              }`}
+            >
+              Inicio
+            </button>
+            <button
+              onClick={() => navigate("/quienes-somos")}
+              className={`font-bold transition-colors px-3 py-1.5 rounded-lg text-sm sm:text-base ${
+                location.pathname === "/quienes-somos"
+                  ? "text-pink-600 bg-white/70 shadow-sm"
+                  : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+              }`}
+            >
+              ¿Quiénes somos?
+            </button>
+          </div>
+        )}
 
         {usuario ? (
           <>

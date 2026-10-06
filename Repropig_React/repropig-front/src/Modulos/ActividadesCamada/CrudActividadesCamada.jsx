@@ -23,6 +23,39 @@ const CrudActividadesCamada = () => {
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
+
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} este seguimiento de camada?`,
+            text: `El seguimiento #${row.Id_SegCamada} pasará a estar ${esActivo ? 'Inactivo' : 'Activo'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.put(`/segcamada/${row.Id_SegCamada}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                getAllActividades();
+            } catch (error) {
+                try {
+                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
+                    await apiAxios.put(`/segcamada/${row.Id_SegCamada}`, { ...row, Estado: nuevoEstado });
+                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                    getAllActividades();
+                } catch (err) {
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
+                }
+            }
+        }
+    };
+
     const columnsTable = [
         {
             name: 'Lechón',
@@ -84,6 +117,21 @@ const CrudActividadesCamada = () => {
             selector: row => row.Observaciones || '—'
         },
         {
+            name: 'Estado',
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {esActivo ? 'Activo' : 'Inactivo'}
+                    </button>
+                );
+            }
+        },
+        {
             name: 'Acciones',
             cell: row => {
                 const hasNewer = actividades.some(item =>
@@ -102,6 +150,13 @@ const CrudActividadesCamada = () => {
                             </button>
                         </span>
                         <button
+                            className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                            title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
+                            onClick={() => toggleEstado(row)}
+                        >
+                            <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
+                        </button>
+                        <button
                             className="btn btn-sm btn-primary text-white"
                             title="Ver Actividades"
                             onClick={() => handleOpenSubActividades(row)}
@@ -118,7 +173,7 @@ const CrudActividadesCamada = () => {
                     </div>
                 );
             },
-            minWidth: '240px'
+            minWidth: '280px'
         }
     ]
 
@@ -127,7 +182,7 @@ const CrudActividadesCamada = () => {
     }, [])
 
     const getAllActividades = async () => {
-        const response = await apiAxios.get('/segcamada/')
+        const response = await apiAxios.get('/segcamada')
         setActividades(response.data)
     }
 

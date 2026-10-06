@@ -21,7 +21,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [textFormButton, setTextFormButton] = useState('Registrar')
-    const [tieneSeguimiento, setTieneSeguimiento] = useState(false)
+    const [showResponsables, setShowResponsables] = useState(false)
 
     // 🔢 Total automático
     const totalNacidos =
@@ -76,10 +76,8 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             setHor_final(rowToEdit.Hor_final || '')
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setTextFormButton("Actualizar")
-            checkTieneSeguimiento(rowToEdit.Id_parto)
         } else {
             resetForm()
-            setTieneSeguimiento(false)
         }
     }, [rowToEdit])
 
@@ -96,7 +94,6 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
         setHor_final('')
         setId_Responsable([])
         setTextFormButton("Registrar")
-        setTieneSeguimiento(false)
     }
 
     const toggleResponsable = (id) => {
@@ -165,9 +162,14 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
     return (
         <form onSubmit={gestionarForm}>
 
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">🐖 {rowToEdit?.Id_parto ? 'Editar Parto' : 'Registrar Parto'}</h5>
+                <small className="text-muted">Gestión de partos</small>
+            </div>
+
             {/* Porcino */}
             <div className="mb-3">
-                <label className="form-label fw-semibold">Porcino</label>
+                <label className="form-label fw-semibold">🐷 Porcino</label>
                 <select
                     className="form-control"
                     value={Id_Porcino}
@@ -186,93 +188,103 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload }) => {
             {/* Inicio */}
             <div className="row mb-3">
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">Fecha inicio</label>
+                    <label className="form-label fw-semibold">📅 Fecha inicio</label>
                     <input type="date" className="form-control" value={Fec_inicio} onChange={(e) => setFec_inicio(e.target.value)} required />
                 </div>
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">Hora inicio</label>
+                    <label className="form-label fw-semibold">🕒 Hora inicio</label>
                     <input type="time" className="form-control" value={Hor_inicial} onChange={(e) => setHor_inicial(e.target.value)} required />
                 </div>
             </div>
 
             {/* Responsables */}
-            <div className="mb-3">
+            <div className="mb-3 position-relative">
                 <label className="form-label fw-semibold d-block">
                     👨‍🌾 Responsables ({Id_Responsable.length})
                 </label>
-                <div className="d-flex flex-wrap gap-2">
-                    {responsables.length === 0 ? (
-                        <span className="text-muted small">No hay responsables registrados</span>
-                    ) : (
-                        responsables.map(r => {
-                            const activo = Id_Responsable.includes(Number(r.Id_Responsable))
-                            return (
-                                <span
-                                    key={r.Id_Responsable}
-                                    onClick={() => toggleResponsable(r.Id_Responsable)}
-                                    className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                        activo
-                                            ? "bg-success text-white shadow-sm fw-bold"
-                                            : "bg-white border text-secondary"
-                                    }`}
-                                    style={{ cursor: "pointer", fontSize: "13px" }}
-                                >
-                                    {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos || ''}
-                                </span>
-                            )
-                        })
-                    )}
+                
+                <div 
+                    className="form-select text-start shadow-sm" 
+                    onClick={() => setShowResponsables(!showResponsables)}
+                    style={{ cursor: "pointer", userSelect: "none" }}
+                >
+                    {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
                 </div>
+
+                {showResponsables && (
+                    <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                        {responsables.length === 0 ? (
+                            <li className="dropdown-item text-muted small">No hay responsables registrados</li>
+                        ) : (
+                            responsables.map(r => {
+                                const activo = Id_Responsable.includes(Number(r.Id_Responsable))
+                                return (
+                                    <li key={r.Id_Responsable} onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}>
+                                        <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                className="form-check-input m-0" 
+                                                checked={activo}
+                                                readOnly
+                                            />
+                                            {r.Nombres} {r.Apellidos || ''}
+                                        </a>
+                                    </li>
+                                )
+                            })
+                        )}
+                    </ul>
+                )}
             </div>
 
             {/* Nacimientos */}
             <div className="row">
                 <div className="col">
-                    <label className="form-label fw-semibold">Vivos</label>
+                    <label className="form-label fw-semibold">🐖 Vivos</label>
                     <input type="number" min="0" className="form-control" value={Nac_vivos} onChange={(e) => setNac_vivos(e.target.value)} />
                 </div>
                 <div className="col">
-                    <label className="form-label fw-semibold">Muertos</label>
+                    <label className="form-label fw-semibold">☠️ Muertos</label>
                     <input type="number" min="0" className="form-control" value={Nac_muertos} onChange={(e) => setNac_muertos(e.target.value)} />
                 </div>
                 <div className="col">
-                    <label className="form-label fw-semibold">Momias</label>
+                    <label className="form-label fw-semibold">🪨 Momias</label>
                     <input type="number" min="0" className="form-control" value={Nac_momias} onChange={(e) => setNac_momias(e.target.value)} />
                 </div>
             </div>
 
             {/* Total automático */}
-            <div className="mt-2">
+            <div className="mt-2 mb-3">
                 <span className="badge bg-dark">
-                    Total nacidos: {totalNacidos}
+                    📊 Total nacidos: {totalNacidos}
                 </span>
             </div>
 
             {/* Peso */}
             <div className="mb-3 mt-3">
-                <label className="form-label fw-semibold">Peso camada (kg)</label>
+                <label className="form-label fw-semibold">⚖️ Peso camada (kg)</label>
                 <input type="number" step="0.01" className="form-control" value={Pes_camada} onChange={(e) => setPes_camada(e.target.value)} />
             </div>
 
             {/* Observaciones */}
             <div className="mb-3">
-                <label className="form-label fw-semibold">Observaciones</label>
+                <label className="form-label fw-semibold">📝 Observaciones</label>
                 <textarea className="form-control" value={Observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
 
             {/* Fin */}
             <div className="row mb-3">
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">Fecha fin</label>
+                    <label className="form-label fw-semibold">📅 Fecha fin</label>
                     <input type="date" className="form-control" value={Fec_fin} onChange={(e) => setFec_fin(e.target.value)} required />
                 </div>
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">Hora fin</label>
+                    <label className="form-label fw-semibold">🕒 Hora fin</label>
                     <input type="time" className="form-control" value={Hor_final} onChange={(e) => setHor_final(e.target.value)} required />
                 </div>
             </div>
 
-            <button className="btn btn-primary w-100 shadow-sm fw-bold py-2">
+            <button type="submit" className="btn btn-primary w-100 shadow-sm fw-bold py-2">
                 {textFormButton}
             </button>
 
