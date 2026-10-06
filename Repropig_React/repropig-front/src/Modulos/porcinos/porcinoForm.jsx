@@ -276,9 +276,9 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
                 {razas.filter((raza) => raza.Estado !== 'Inactivo').length === 0 ? (
                     <div className="alert alert-danger" role="alert">
-                    <p>
-                        No hay razas disponibles. Registra una raza primero.
-                    </p>
+                        <p>
+                            No hay razas disponibles. Registra una raza primero.
+                        </p>
                     </div>
                 ) : (
                     <select id="Id_Raza" className="form-control" value={Id_Raza} onChange={(e) => setRaza(e.target.value)} required>
@@ -294,7 +294,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
             <div className="mb-3">
                 <label htmlFor="Fec_Llegada" className="form-label">Fecha de Llegada</label>
-                <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"} required />
+                <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"} />
             </div>
 
             <div className="mb-3">
