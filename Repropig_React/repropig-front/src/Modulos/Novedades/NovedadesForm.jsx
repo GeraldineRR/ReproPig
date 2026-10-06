@@ -125,8 +125,14 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
 
     return (
         <form onSubmit={gestionarForm} className="col-12">
+            
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">⚠️ {novedadEdit ? 'Editar Novedad' : 'Registrar Novedad'}</h5>
+                <small className="text-muted">Eventos y eventualidades</small>
+            </div>
+
             <div className="mb-3">
-                <label className="form-label d-block">Filtrar lista de porcinos por:</label>
+                <label className="form-label fw-semibold d-block">🔍 Filtrar lista de porcinos por:</label>
                 <div className="btn-group mb-2 w-100" role="group">
                     <input type="radio" className="btn-check" name="btnradio" id="btnradio1" autoComplete="off" checked={filtroTipo === 'Todos'} onChange={() => setFiltroTipo('Todos')} />
                     <label className="btn btn-outline-primary" htmlFor="btnradio1">Todos</label>
@@ -138,7 +144,7 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
                     <label className="btn btn-outline-primary" htmlFor="btnradio3">Solo Lechones</label>
                 </div>
                 
-                <label className="form-label">Seleccionar Porcino</label>
+                <label className="form-label fw-semibold mt-2">🐷 Seleccionar Porcino</label>
                 <select
                     className="form-control"
                     value={Id_Porcino}
@@ -157,7 +163,7 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Tipo de Novedad</label>
+                <label className="form-label fw-semibold">📋 Tipo de Novedad</label>
                 <select
                     className="form-control"
                     value={Tipo_Novedad}
@@ -176,7 +182,7 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Fecha de Novedad</label>
+                <label className="form-label fw-semibold">📅 Fecha de Novedad</label>
                 <input
                     type="date"
                     className="form-control"
@@ -187,7 +193,7 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Causa / Motivo</label>
+                <label className="form-label fw-semibold">❓ Causa / Motivo</label>
                 <input
                     type="text"
                     className="form-control"
@@ -198,7 +204,7 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Observaciones Adicionales</label>
+                <label className="form-label fw-semibold">📝 Observaciones Adicionales</label>
                 <textarea
                     className="form-control"
                     value={Observaciones}
@@ -207,8 +213,8 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
                 />
             </div>
 
-            <div className="mb-3">
-                <input type="submit" className="btn btn-primary" value={textFormButton} />
+            <div className="mb-3 mt-4">
+                <input type="submit" className="btn btn-primary w-100 fw-bold py-2 shadow-sm" value={textFormButton} />
             </div>
         </form>
     );

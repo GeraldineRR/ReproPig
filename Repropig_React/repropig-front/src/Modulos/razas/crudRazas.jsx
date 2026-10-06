@@ -136,7 +136,7 @@ const CrudRazas = () => {
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <div className="input-group">
                             <span className="input-group-text">
                                 🔍
@@ -151,7 +151,7 @@ const CrudRazas = () => {
                         </div>
                     </div>
 
-                    <div className="d-flex gap-2">
+                    <div className="flex gap-2 items-center justify-end w-full">
                         <button
                             type="button"
                             className="btn btn-success"

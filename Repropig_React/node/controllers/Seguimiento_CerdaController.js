@@ -20,7 +20,6 @@ export const getAllSeguimiento_Cerda = async (req, res) => {
         );
 
     } catch (error) {
-
         console.error(
             "ERROR GET Seguimiento_Cerda:",
             error

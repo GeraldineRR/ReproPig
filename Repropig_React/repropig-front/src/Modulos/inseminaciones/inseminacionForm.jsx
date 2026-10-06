@@ -33,8 +33,24 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
     const getPorcinos = async () => {
         try {
-            const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
+            const [response, ciclosRes] = await Promise.all([
+                apiAxios.get('/porcino'),
+                apiAxios.get('/ciclos')
+            ]);
+            
+            const activeCiclosSows = new Set(
+                ciclosRes.data
+                    .filter(c => (c.Estado || '').toUpperCase() === 'ACTIVO')
+                    .map(c => String(c.Id_Cerda))
+            );
+
+            const cerdaPermitida = String(rowToEdit?.Id_Porcino || preloaded?.Id_Porcino || '');
+
+            setPorcinos(response.data.filter(p => 
+                p.Gen_Porcino === 'H' && 
+                p.Tipo_Cerdo === 'Adulto' &&
+                (activeCiclosSows.has(String(p.Id_Porcino)) || String(p.Id_Porcino) === cerdaPermitida)
+            ))
             setMachos(response.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'))
         } catch (error) { console.error('Error al obtener porcinos:', error) }
     }
@@ -61,7 +77,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             const response = await apiAxios.get('/ciclos/')
             const activas = response.data.filter(r =>
                 r.Id_Cerda == idPorcino &&
-                (r.activo || r.Activo || '').toUpperCase() === 'S'
+                (r.Estado || '').toUpperCase() === 'ACTIVO'
             )
             setCiclosActivas(activas)
         } catch (error) { console.error('Error al obtener ciclos:', error) }
@@ -297,7 +313,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         className="form-select shadow-sm"
                         value={Id_colecta}
                         onChange={e => setId_colecta(e.target.value)}
-                        disabled={!!preloaded.Id_colecta || !Fec_hora}
+                        disabled={!!preloaded.Id_colecta}
                         required
                     >
                         <option value="">
@@ -306,39 +322,54 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                         {(() => {
                             const opcionesFiltradas = colectas.filter(c => {
                                 if (filtroCerdo && c.Id_Porcino != filtroCerdo) return false;
-                                if (c.Id_colecta == Id_colecta) return true; // Siempre mostrar la ya seleccionada
                                 if (!Fec_hora || !c.Fecha) return false;
-                                
-                                const tInsem = new Date(Fec_hora + 'T00:00:00').getTime();
-                                const tCol = new Date(c.Fecha.split('T')[0] + 'T00:00:00').getTime();
-                                const diasDif = Math.round((tInsem - tCol) / (1000 * 60 * 60 * 24));
-
-                                if (diasDif < 0) return false; // Colecta posterior a la fecha de inseminación
-                                if (c.Tipo === 'Interno' && diasDif !== 0) return false; // Interna: solo el mismo día
-                                if (c.Tipo === 'Externo' && diasDif > 3) return false; // Externa: hasta 3 días
-
                                 return true;
                             });
 
                             if (Fec_hora && opcionesFiltradas.length === 0 && !Id_colecta) {
-                                return <option value="" disabled>No hay colectas válidas o vigentes para esta fecha</option>;
+                                return <option value="" disabled>No hay colectas para esta fecha o cerdo</option>;
                             }
 
                             return opcionesFiltradas.map(c => {
                                 const disponibles = (c.cant_generada || 0) - (c.cant_utilizada || 0)
                                 
-                                // Para mostrar mensaje visual si es la seleccionada pero no cumple las reglas (datos viejos)
                                 let mensajeVencida = "";
+                                let isVencida = false;
                                 if (Fec_hora && c.Fecha) {
-                                    const tInsem = new Date(Fec_hora + 'T00:00:00').getTime();
-                                    const tCol = new Date(c.Fecha.split('T')[0] + 'T00:00:00').getTime();
-                                    const diasDif = Math.round((tInsem - tCol) / (1000 * 60 * 60 * 24));
-                                    if (c.Tipo === 'Interno' && diasDif !== 0) mensajeVencida = " (Vencida)";
-                                    if (c.Tipo === 'Externo' && diasDif > 3) mensajeVencida = " (Vencida)";
+                                    // Utilizar UTC explícitamente para evitar saltos de zona horaria
+                                    // Fec_hora es YYYY-MM-DD
+                                    const tInsemDate = new Date(Fec_hora + 'T12:00:00Z');
+                                    // c.Fecha puede tener horas y usar espacio en vez de T, tomamos los primeros 10 caracteres
+                                    const fechaColStr = c.Fecha.substring(0, 10);
+                                    const tColDate = new Date(fechaColStr + 'T12:00:00Z');
+
+                                    // Diferencia en días exactos
+                                    const diasDif = Math.round((tInsemDate.getTime() - tColDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    
+                                    if (isNaN(diasDif)) {
+                                        isVencida = false;
+                                    } else if (diasDif < 0) {
+                                        mensajeVencida = " (Colecta futura)";
+                                        isVencida = true;
+                                    } else if (c.Tipo === 'Interno' && diasDif > 3) {
+                                        mensajeVencida = " (Vencida - +3 días)";
+                                        isVencida = true;
+                                    } else if (c.Tipo === 'Externo' && diasDif > 5) {
+                                        // Las externas suelen durar un poco más o no controlarse igual, dejaremos un límite razonable o el que usen
+                                        mensajeVencida = " (Vencida)";
+                                        isVencida = true;
+                                    }
                                 }
 
+                                if (disponibles <= 0) {
+                                    mensajeVencida += " (Agotada)";
+                                }
+
+                                // Bloquear la selección si está vencida o no hay pajillas
+                                const debeDeshabilitar = (disponibles <= 0 || isVencida) && c.Id_colecta != Id_colecta;
+
                                 return (
-                                    <option key={c.Id_colecta} value={c.Id_colecta} disabled={disponibles <= 0 && c.Id_colecta != Id_colecta}>
+                                    <option key={c.Id_colecta} value={c.Id_colecta} disabled={debeDeshabilitar}>
                                         #{c.Id_colecta} — {c.porcino?.Nom_Porcino || `Cerdo #${c.Id_Porcino}`} — {disponibles} disponibles {mensajeVencida}
                                     </option>
                                 )
@@ -384,7 +415,9 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                     👨‍🌾 Responsables ({Id_Responsable.length})
                 </label>
                 <div className="d-flex flex-wrap gap-2">
-                    {responsables.map(r => {
+                    {responsables
+                        .filter(r => r.Estado === 'Activo' || Id_Responsable.includes(r.Id_Responsable))
+                        .map(r => {
                         const activo = Id_Responsable.includes(r.Id_Responsable)
                         return (
                             <span
@@ -396,7 +429,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                     }`}
                                 style={{ cursor: "pointer", fontSize: "13px", transition: "0.2s" }}
                             >
-                                {r.Nombres}
+                                {r.Nombres} {r.Apellidos}
                             </span>
                         )
                     })}

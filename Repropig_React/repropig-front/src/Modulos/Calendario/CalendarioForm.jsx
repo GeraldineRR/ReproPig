@@ -216,9 +216,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         const estado = getEstado(evento)
         const data = getEventoData(evento)
 
-        if (isInactive) return null
         if (estado === 'no_aplica') return null
-        if (!fechaServicio) return null
 
         const isDisabledByNext = isSiguienteRegistrado(evento.key)
 
@@ -227,7 +225,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                 <button
                     className="cal-btn-registrar"
                     onClick={() => abrirPanelRevision(evento, data)}
-                    disabled={isInactive || isDisabledByNext}
+                    disabled={isDisabledByNext}
                     title={isDisabledByNext ? "No se puede registrar porque ya hay revisiones posteriores" : "Registrar revisión"}
                 >
                     Registrar revisión
@@ -236,12 +234,12 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         }
 
         return (
-            <div className="d-flex gap-1">
+            <div className="flex gap-2 items-center justify-end w-full">
                 <button
                     className="cal-btn-editar"
                     onClick={() => abrirPanelRevision(evento, data)}
                     title={isDisabledByNext ? "No se puede editar porque ya hay revisiones posteriores" : "Editar revisión"}
-                    disabled={isInactive || isDisabledByNext}
+                    disabled={isDisabledByNext}
                 >
                     ✏️
                 </button>
@@ -299,13 +297,26 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
             setCalendario(response.data)
             cerrarPanelRevision()
 
-            MySwal.fire({
-                icon: 'success',
-                title: 'Revisión registrada',
-                text: `${revisionPanel.nombre} actualizado correctamente`,
-                timer: 2000,
-                showConfirmButton: false
-            })
+            if (revisionPanel.esRecelo && revResultado === 'recelo_detectado') {
+                try {
+                    await apiAxios.put(`/ciclos/${cal.Id_Ciclo}`, { Estado: 'Inactivo' })
+                    MySwal.fire({
+                        icon: 'warning',
+                        title: 'Ciclo inactivado',
+                        text: 'Recelo detectado. El ciclo actual se ha inactivado. Debe iniciar un nuevo ciclo para la cerda.',
+                    })
+                } catch (e) {
+                    console.error("Error inactivando ciclo:", e)
+                }
+            } else {
+                MySwal.fire({
+                    icon: 'success',
+                    title: 'Revisión registrada',
+                    text: `${revisionPanel.nombre} actualizado correctamente`,
+                    timer: 2000,
+                    showConfirmButton: false
+                })
+            }
 
             reload && reload()
 

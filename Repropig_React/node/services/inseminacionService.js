@@ -52,11 +52,37 @@ class inseminacionService {
         const cantidadNueva = Number(data.cantidad)
         const idColecta = data.Id_colecta || inseminacion.Id_colecta
 
+        if (idColecta !== inseminacion.Id_colecta && inseminacion.Id_colecta) {
+            // Cambió la colecta: devolver a la vieja, descontar de la nueva
+            const oldColecta = await colectaModel.findByPk(inseminacion.Id_colecta)
+            const newColecta = await colectaModel.findByPk(idColecta)
+            if (!newColecta) throw new Error('Nueva colecta no encontrada')
+
+            const disponiblesNueva = Number(newColecta.cant_generada) - Number(newColecta.cant_utilizada)
+            if (cantidadNueva > disponiblesNueva) {
+                throw new Error(`No hay suficientes pajillas en la nueva colecta. Disponibles: ${disponiblesNueva}`)
+            }
+
+            await inseminacionModel.update(data, { where: { Id_Inseminacion: id } })
+
+            if (oldColecta) {
+                await colectaModel.update(
+                    { cant_utilizada: Math.max(0, Number(oldColecta.cant_utilizada) - cantidadAnterior) },
+                    { where: { Id_colecta: inseminacion.Id_colecta } }
+                )
+            }
+            await colectaModel.update(
+                { cant_utilizada: Number(newColecta.cant_utilizada) + cantidadNueva },
+                { where: { Id_colecta: idColecta } }
+            )
+            return true
+        }
+
         if (idColecta && data.cantidad !== undefined) {
             const colecta = await colectaModel.findByPk(idColecta)
             if (!colecta) throw new Error('Colecta no encontrada')
 
-            // Diferencia entre cantidad nueva y anterior
+            // Diferencia entre cantidad nueva y anterior (misma colecta)
             const diferencia = cantidadNueva - cantidadAnterior
             const disponibles = Number(colecta.cant_generada) - Number(colecta.cant_utilizada)
 

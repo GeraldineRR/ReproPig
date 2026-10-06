@@ -126,7 +126,7 @@ const CrudCalendario = () => {
                 noDataComponent="No hay calendarios registrados"
             />
 
-            <div className="modal fade" id="calendarioModal" tabIndex="-1">
+            <div className="modal fade" id="calendarioModal" data-bs-focus="false">
                 <div className="modal-dialog modal-xl">
                     <div className="modal-content">
 

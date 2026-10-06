@@ -108,6 +108,7 @@ const CrudSeguimiento_Cerda = () => {
     // CARGAR AL INICIAR
     // ==========================================
 
+
     useEffect(() => {
 
         getAllSeguimiento_Cerda();

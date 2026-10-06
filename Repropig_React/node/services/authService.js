@@ -17,7 +17,7 @@ class AuthService {
             throw new Error('Email o contraseña incorrectos')
 
         if (responsable.Estado === 'Inactivo')
-            throw new Error('Tu cuenta está inactiva. Contacta al administrador.')
+            throw new Error('Tu cuenta está inactiva. Contacta al instructor.')
 
         console.log('🔑 Hash en BD:', responsable.Password)
         console.log('🔑 Password recibida:', password)

@@ -225,29 +225,34 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
     return (
 
         <form onSubmit={gestionarForm} encType="multipart/form-data" className="col-12 col-md-12">
+            
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">🐷 {porcinoEdit ? 'Editar Porcino' : 'Registrar Porcino'}</h5>
+                <small className="text-muted">Gestión de animales</small>
+            </div>
 
             <div className="mb-3">
-                <label htmlFor="Nom_Porcino" className="form-label">Nombre</label>
+                <label htmlFor="Nom_Porcino" className="form-label fw-semibold">🏷️ Nombre</label>
                 <input type="text" id="Nom_Porcino" className="form-control" value={Nom_Porcino} onChange={(e) => setNombre(e.target.value)} required />
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Num_Chapeta" className="form-label">Chapeta</label>
+                <label htmlFor="Num_Chapeta" className="form-label fw-semibold">🔖 Chapeta</label>
                 <input type="number" id="Num_Chapeta" className="form-control" value={Num_Chapeta} onChange={(e) => setNumChapeta(e.target.value)} required />
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Plac_Sena_Porcino" className="form-label">Placa Sena</label>
+                <label htmlFor="Plac_Sena_Porcino" className="form-label fw-semibold">🪪 Placa Sena</label>
                 <input type="number" id="Plac_Sena_Porcino" className="form-control" value={Plac_Sena_Porcino} onChange={(e) => setPlacaSena(e.target.value)} required />
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Fec_Nac_Porcino" className="form-label">Fecha de Nacimiento</label>
+                <label htmlFor="Fec_Nac_Porcino" className="form-label fw-semibold">🎂 Fecha de Nacimiento</label>
                 <input type="date" id="Fec_Nac_Porcino" className="form-control" value={Fec_Nac_Porcino} onChange={(e) => setFecNacimiento(e.target.value)} required />
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Genero_Porcino" className="form-label">Sexo</label>
+                <label htmlFor="Genero_Porcino" className="form-label fw-semibold">⚥ Sexo</label>
                 <select id="Genero_Porcino" className="form-control" value={Gen_Porcino} onChange={(e) => setGenero(e.target.value)} required>
                     <option value="">Selecciona...</option>
                     <option value="H">Hembra</option>
@@ -256,7 +261,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Proc_Porcino" className="form-label">Procedencia</label>
+                <label htmlFor="Proc_Porcino" className="form-label fw-semibold">📍 Procedencia</label>
                 <select id="Proc_Porcino" className="form-control" value={Proc_Porcino} onChange={(e) => setProcedencia(e.target.value)} required>
                     <option value="">Selecciona...</option>
                     <option value="Externo">Externo</option>
@@ -266,13 +271,13 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
             {Proc_Porcino === "Externo" && (
                 <div className="mb-3">
-                    <label htmlFor="Lug_Proc_Porcino" className="form-label">Lugar Procedencia</label>
+                    <label htmlFor="Lug_Proc_Porcino" className="form-label fw-semibold">🗺️ Lugar Procedencia</label>
                     <input type="text" id="Lug_Proc_Porcino" className="form-control" value={Lug_Proc_Porcino} onChange={(e) => setLugarProc(e.target.value)} />
                 </div>
             )}
 
             <div className="mb-3">
-                <label htmlFor="Id_Raza" className="form-label">Raza</label>
+                <label htmlFor="Id_Raza" className="form-label fw-semibold">🧬 Raza</label>
 
                 {razas.filter((raza) => raza.Estado !== 'Inactivo').length === 0 ? (
                     <div className="alert alert-danger" role="alert">
@@ -293,17 +298,17 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Fec_Llegada" className="form-label">Fecha de Llegada</label>
+                <label htmlFor="Fec_Llegada" className="form-label fw-semibold">📅 Fecha de Llegada</label>
                 <input type="date" className="form-control" value={Fec_Llegada} onChange={(e) => setFecLlegada(e.target.value)} disabled={Proc_Porcino === "Interno"} required />
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Peso_Llegada" className="form-label">Peso de Llegada</label>
+                <label htmlFor="Peso_Llegada" className="form-label fw-semibold">⚖️ Peso de Llegada</label>
                 <input type="number" step="0.01" className="form-control" value={Peso_Llegada} onChange={(e) => setPesoLlegada(e.target.value)} />
             </div>
 
-            <div className="mb-3">
-                <input type="submit" className="btn btn-primary" value={textFormButton} />
+            <div className="mb-3 mt-4">
+                <input type="submit" className="btn btn-primary w-100 fw-bold py-2 shadow-sm" value={textFormButton} />
             </div>
 
         </form>

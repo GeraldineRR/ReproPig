@@ -265,7 +265,7 @@ export default function MiPerfil() {
                                             <p className="font-bold text-gray-800">Nivel de Acceso</p>
                                             <p className="text-sm text-gray-600">
                                                 {usuario.cargo === 'instructor'
-                                                    ? 'Acceso total al sistema. Eres administrador.'
+                                                    ? 'Acceso total al sistema. Eres instructor.'
                                                     : 'Acceso a registros operativos y visualización.'}
                                             </p>
                                         </div>

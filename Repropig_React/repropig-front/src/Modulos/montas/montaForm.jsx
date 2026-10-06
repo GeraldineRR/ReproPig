@@ -76,7 +76,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
             const res = await apiAxios.get('/ciclos');
             const activas = res.data.filter(r =>
-                r.Id_Cerda == preloaded.Id_Porcino && (r.activo || r.Activo || '').toUpperCase() === 'S'
+                r.Id_Cerda == preloaded.Id_Porcino && (r.Estado || '').toUpperCase() === 'ACTIVO'
             );
             setCiclosActivas(activas);
         };
@@ -85,8 +85,24 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     }, [preloaded?.Id_Porcino, preloaded?.Id_Ciclo]);
 
     const getPorcinos = async () => {
-        const res = await apiAxios.get('/porcino');
-        setHembras(res.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'));
+        const [res, ciclosRes] = await Promise.all([
+            apiAxios.get('/porcino'),
+            apiAxios.get('/ciclos')
+        ]);
+        
+        const activeCiclosSows = new Set(
+            ciclosRes.data
+                .filter(c => (c.Estado || '').toUpperCase() === 'ACTIVO')
+                .map(c => String(c.Id_Cerda))
+        );
+
+        const cerdaPermitida = String(rowToEdit?.Id_Porcino || preloaded?.Id_Porcino || '');
+
+        setHembras(res.data.filter(p => 
+            p.Gen_Porcino === 'H' && 
+            p.Tipo_Cerdo === 'Adulto' && 
+            (activeCiclosSows.has(String(p.Id_Porcino)) || String(p.Id_Porcino) === cerdaPermitida)
+        ));
         setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
     };
 
@@ -120,7 +136,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     const getCiclosActivasSolo = async (id) => {
         if (!id) return setCiclosActivas([]);
         const res = await apiAxios.get('/ciclos');
-        const activas = res.data.filter(r => r.Id_Cerda == id && (r.activo || r.Activo || '').toUpperCase() === 'S');
+        const activas = res.data.filter(r => r.Id_Cerda == id && (r.Estado || '').toUpperCase() === 'ACTIVO');
         setCiclosActivas(activas);
     };
 
@@ -278,7 +294,9 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             <div className="mt-4">
                 <label className="form-label fw-semibold">👨‍🌾 Responsables</label>
                 <div className="d-flex flex-wrap gap-2">
-                    {responsables.map(r => {
+                    {responsables
+                        .filter(r => r.Estado === 'Activo' || Id_Responsable.includes(r.Id_Responsable))
+                        .map(r => {
                         const activo = Id_Responsable.includes(r.Id_Responsable);
                         return (
                             <span

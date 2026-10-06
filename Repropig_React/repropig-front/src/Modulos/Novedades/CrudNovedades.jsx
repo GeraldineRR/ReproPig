@@ -33,7 +33,7 @@ const CrudNovedades = () => {
                 else if (row.Tipo_Novedad === 'Enfermedad' || row.Tipo_Novedad === 'Lesión') badgeClass = 'bg-warning text-dark';
                 else if (row.Tipo_Novedad === 'Traslado') badgeClass = 'bg-info text-dark';
                 
-                return <span className={`badge ${badgeClass}`}>{row.Tipo_Novedad}</span>;
+                return <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${badgeClass}`}>{row.Tipo_Novedad}</span>;
             },
             sortable: true
         },
@@ -53,20 +53,20 @@ const CrudNovedades = () => {
         {
             name: 'Acciones',
             cell: row => (
-                <div className="d-flex gap-2">
+                <div className="flex gap-2 items-center justify-end w-full">
                     <button
-                        className="btn btn-sm btn-info"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                         title="Editar Novedad"
                         onClick={() => handleEdit(row)}
                     >
-                        <i className="fa-solid fa-pencil"></i>
+                        <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
                     <button
-                        className="btn btn-sm btn-danger"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                         title="Eliminar Novedad"
                         onClick={() => handleDelete(row.Id_Novedad)}
                     >
-                        <i className="fa-solid fa-trash"></i>
+                        <i className="fa-solid fa-trash text-xs"></i>
                     </button>
                 </div>
             )

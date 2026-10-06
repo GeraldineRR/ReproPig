@@ -21,6 +21,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const [responsables, setResponsables] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
     const [Fecha_Programada, setFechaProgramada] = useState('');
+    const [showResponsables, setShowResponsables] = useState(false);
+    const [showMedicamentos, setShowMedicamentos] = useState(false);
     const [textFormButton, setTextFormButton] = useState('Enviar');
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
@@ -164,6 +166,18 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         );
     }
 
+    const toggleResponsable = (id) => {
+        setIdResponsable(prev =>
+            prev.includes(String(id)) ? prev.filter(r => r !== String(id)) : [...prev, String(id)]
+        )
+    }
+
+    const toggleMedicamento = (id) => {
+        setIdMedicamento(prev =>
+            prev.includes(String(id)) ? prev.filter(m => m !== String(id)) : [...prev, String(id)]
+        )
+    }
+
     const gestionarForm = async (e) => {
         e.preventDefault();
 
@@ -284,9 +298,15 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
+            {/* HEADER */}
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">📊 {segcamadaEdit ? 'Editar Seguimiento' : 'Registrar Seguimiento de Camada'}</h5>
+                <small className="text-muted">Control y crecimiento de lechones</small>
+            </div>
+
             {/* PARTO */}
             <div className="mb-3">
-                <label className="form-label">Parto</label>
+                <label className="form-label fw-semibold">🐖 Parto</label>
 
                 {segcamadaEdit && !modoCorreccion ? (
                     <input
@@ -317,7 +337,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             {(Id_parto || segcamadaEdit) && (
                 <>
                     <div className="mb-3">
-                        <label className="form-label">Lechón</label>
+                        <label className="form-label fw-semibold">🐷 Lechón</label>
 
                         {segcamadaEdit && !modoCorreccion ? (
                             <input
@@ -354,7 +374,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     )}
 
                     <div className="mb-3">
-                        <label className="form-label">Día Programado</label>
+                        <label className="form-label fw-semibold">🗓️ Día Programado</label>
                         <input
                             type="number"
                             className="form-control"
@@ -364,7 +384,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Fecha Programada</label>
+                        <label className="form-label fw-semibold">📅 Fecha Programada</label>
                         <input
                             type="date"
                             className="form-control"
@@ -374,7 +394,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Fecha Real</label>
+                        <label className="form-label fw-semibold">✅ Fecha Real</label>
                         <input
                             type="date"
                             className="form-control"
@@ -385,7 +405,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Peso Lechón (kg)</label>
+                        <label className="form-label fw-semibold">⚖️ Peso Lechón (kg)</label>
                         <input
                             type="number"
                             step="0.01"
@@ -396,50 +416,80 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold">👨‍🌾 Responsables (puedes elegir varios)</label>
-                        <select
-                            multiple
-                            className="form-select shadow-sm"
-                            style={{ height: '110px' }}
-                            value={Array.isArray(Id_Responsable) ? Id_Responsable.map(String) : (Id_Responsable ? [String(Id_Responsable)] : [])}
-                            onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setIdResponsable(selected);
-                            }}
+                    <div className="mb-3 position-relative">
+                        <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
+                        
+                        <div 
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center" 
+                            onClick={() => setShowResponsables(!showResponsables)}
+                            style={{ cursor: "pointer", userSelect: "none" }}
                         >
-                            {responsables.map((resp) => (
-                                <option key={resp.Id_Responsable} value={resp.Id_Responsable}>
-                                    {resp.Nombres} {resp.Apellidos}
-                                </option>
-                            ))}
-                        </select>
-                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
+                            <span>{Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}</span>
+                        </div>
+
+                        {showResponsables && (
+                            <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3 w-100" style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1000 }}>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {responsables.map((r) => {
+                                        const activo = Id_Responsable.includes(String(r.Id_Responsable))
+                                        return (
+                                            <span
+                                                key={r.Id_Responsable}
+                                                onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                                    activo
+                                                        ? "bg-primary text-white shadow-sm fw-bold"
+                                                        : "bg-white border text-secondary"
+                                                }`}
+                                                style={{ cursor: "pointer", fontSize: "13px" }}
+                                            >
+                                                {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-3 position-relative">
+                        <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
+                        
+                        <div 
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center" 
+                            onClick={() => setShowMedicamentos(!showMedicamentos)}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                        >
+                            <span>{Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}</span>
+                        </div>
+
+                        {showMedicamentos && (
+                            <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3 w-100" style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1000 }}>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {medicamentos.map((m) => {
+                                        const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
+                                        return (
+                                            <span
+                                                key={m.Id_Medicamento}
+                                                onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${
+                                                    activo
+                                                        ? "bg-primary text-white shadow-sm fw-bold"
+                                                        : "bg-white border text-secondary"
+                                                }`}
+                                                style={{ cursor: "pointer", fontSize: "13px" }}
+                                            >
+                                                {activo ? "✓ " : "+ "}{m.Nombre}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">💊 Medicamentos (puedes elegir varios)</label>
-                        <select
-                            multiple
-                            className="form-select shadow-sm"
-                            style={{ height: '110px' }}
-                            value={Array.isArray(Id_Medicamento) ? Id_Medicamento.map(String) : (Id_Medicamento ? [String(Id_Medicamento)] : [])}
-                            onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setIdMedicamento(selected);
-                            }}
-                        >
-                            {medicamentos.map((med) => (
-                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>
-                                    {med.Nombre}
-                                </option>
-                            ))}
-                        </select>
-                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
-                    </div>
-
-                    <div className="mb-3">
-                        <label className="form-label">Observaciones</label>
+                        <label className="form-label fw-semibold">📝 Observaciones</label>
                         <textarea
                             className="form-control"
                             value={Observaciones}
@@ -451,7 +501,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     <div className="mb-3">
                         <input
                             type="submit"
-                            className="btn btn-primary"
+                            className="btn btn-primary w-100 fw-bold py-2 shadow-sm"
                             value={textFormButton}
                         />
                     </div>

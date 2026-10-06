@@ -11,10 +11,12 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import Swal from "sweetalert2"
 import WithReactContent from "sweetalert2-react-content"
 import CalendarioForm from "../Calendario/CalendarioForm.jsx"
+import { useAuth } from "../../context/AuthContext.jsx"
 
 
 const CrudCiclos = () => {
-
+    const auth = useAuth() || {};
+    const { usuario } = auth;
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const [ciclos, setCiclos] = useState([])
@@ -25,7 +27,6 @@ const CrudCiclos = () => {
     const [calendarioData, setCalendarioData] = useState(null)
     const [calendarioEdit, setCalendarioEdit] = useState(null)
     const [calendarioIsInactive, setCalendarioIsInactive] = useState(false)
-    const [selectedReproduccion, setSelectedReproduccion] = useState(null)
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
@@ -143,7 +144,6 @@ const CrudCiclos = () => {
     const hideModalCalendario = async () => {
         setCalendarioData(null)
         setCalendarioEdit(null)
-        setSelectedReproduccion(null)
         cerrarModal(modalCalendarioInstanceRef)
         await getAllCiclos()
     }
@@ -179,6 +179,15 @@ const CrudCiclos = () => {
     }
 
     const handleToggleActivo = async (row) => {
+        if (usuario?.Cargo !== 'Gestor') {
+            MySwal.fire({
+                icon: 'warning',
+                title: 'Acceso denegado',
+                text: 'Pídele permiso al instructor para activar o inactivar el ciclo.'
+            })
+            return
+        }
+
         const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
         const accion = isActivo ? 'inactivar' : 'activar'
         const result = await MySwal.fire({
@@ -210,6 +219,27 @@ const CrudCiclos = () => {
         }
     }
 
+    const getFechaServicio = (row) => {
+        const fechas = [
+            ...(row.montas || []).map(m => m.Fec_hora).filter(Boolean),
+            ...(row.inseminaciones || []).map(i => i.Fec_hora).filter(Boolean)
+        ];
+        return fechas.length ? fechas.sort()[0].split('T')[0] : null;
+    };
+
+    const calcularDiasGestacion = (row) => {
+        const fec = getFechaServicio(row);
+        if (!fec) return '-';
+        try {
+            const servicio = new Date(fec + 'T00:00:00');
+            const hoy = new Date();
+            const dias = Math.floor((hoy - servicio) / (1000 * 60 * 60 * 24));
+            return dias > 0 ? dias : 0;
+        } catch (e) {
+            return '-';
+        }
+    }
+
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_Ciclo, sortable: true, width: '60px' },
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || 'Sin nombre', sortable: true },
@@ -224,24 +254,72 @@ const CrudCiclos = () => {
             }
         },
         {
-            name: 'Estado',
-            width: '130px',
+            name: 'Estado / Progreso',
+            width: '180px',
             cell: row => {
                 const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
+                const badgeClass = isActivo ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10';
+                const estado = row.Estado || 'Inactivo';
+                
+                // Calcular progreso
+                let progreso = 0;
+                let dias = 0;
+                const fecServicio = getFechaServicio(row);
+                if (fecServicio) {
+                    try {
+                        const servicio = new Date(fecServicio + 'T00:00:00')
+                        const hoy = new Date()
+                        hoy.setHours(0, 0, 0, 0) // Normalizar a medianoche para evitar diferencias de zona horaria
+                        dias = Math.round((hoy - servicio) / (1000 * 60 * 60 * 24))
+                        if (dias < 0) dias = 0;
+                        progreso = Math.min(100, Math.floor((dias / 114) * 100));
+                    } catch(e) { console.error(e) }
+                }
+
+                const isTerminado = isActivo && dias >= 114;
+
                 return (
-                    <span
-                        className={`badge ${badgeClass}`}
-                        style={{ fontSize: '12px' }}
-                    >
-                        {icon} {estado}
-                    </span>
+                    <div className="w-full py-1" style={{ cursor: 'pointer' }} onClick={() => handleToggleActivo(row)}>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold ${badgeClass}`}>
+                                {isActivo ? <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div> : <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>}
+                                {estado}
+                            </span>
+                            {isActivo && (
+                                <span className={`text-xs font-bold ${isTerminado ? 'text-red-500' : 'text-gray-400'}`}>
+                                    {progreso}%
+                                </span>
+                            )}
+                        </div>
+                        {isActivo && (
+                            <div className="mt-1">
+                                <div className="w-full bg-gray-100 rounded-full h-1.5 mb-1 overflow-hidden">
+                                    <div className={`h-1.5 rounded-full transition-all duration-500 ${isTerminado ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${progreso}%` }}></div>
+                                </div>
+                                {isTerminado && (
+                                    <div className="mt-2 text-center bg-red-50 p-2 rounded-lg border border-red-100">
+                                        <p className="text-red-600 text-[10px] font-bold mb-1">⚠️ Ciclo terminado</p>
+                                        <button 
+                                            className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold py-1 px-3 rounded-full shadow-sm transition-colors" 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate('/partos', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda } });
+                                            }}
+                                        >
+                                            Registrar parto <i className="fa-solid fa-arrow-right ml-1"></i>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 );
             }
         },
         {
             name: 'F. Servicio',
             width: '120px',
-            selector: row => row.Fec_servicio ? row.Fec_servicio.split('T')[0] : '-',
+            selector: row => getFechaServicio(row) || '-',
             sortable: true
         },
         {
@@ -266,52 +344,48 @@ const CrudCiclos = () => {
             name: 'Montas',
             width: '100px',
             cell: row => (
-                <span
-                    className="badge bg-warning text-dark"
-                    style={{ cursor: 'pointer', fontSize: '13px' }}
-                    title="Ver montas"
+                <div 
                     onClick={() => navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-pink-100 transition-colors"
+                    title="Ver montas"
                 >
-                    🐷 {row.montas?.length || 0}
-                </span>
+                    <span className="text-sm">🐷</span> {row.montas?.length || 0}
+                </div>
             )
         },
         {
             name: 'Inseminaciones',
             width: '140px',
             cell: row => (
-                <span
-                    className="badge bg-primary"
-                    style={{ cursor: 'pointer', fontSize: '13px' }}
-                    title="Ver inseminaciones"
+                <div 
                     onClick={() => navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-blue-100 transition-colors"
+                    title="Ver inseminaciones"
                 >
-                    💉 {row.inseminaciones?.length || 0}
-                </span>
+                    <span className="text-sm">💉</span> {row.inseminaciones?.length || 0}
+                </div>
             )
         },
 
         {
             name: 'Acciones',
-            width: '140px',
+            width: '120px',
             cell: row => (
-                <div className="d-flex gap-1 align-items-center">
+                <div className="flex gap-2 items-center justify-end w-full">
                     <button
-                        className="btn btn-sm btn-success"
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors"
                         title="Calendario"
                         onClick={() => handleAgregarCalendario(row)}
                     >
-                        📅
+                        <i className="fa-regular fa-calendar text-sm"></i>
                     </button>
-
-                    <button className="btn btn-sm btn-info" title="Editar"
-                        onClick={() => handleEdit(row)}>
-                        <i className="fa-solid fa-pencil"></i>
+                    <button 
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" 
+                        title="Editar"
+                        onClick={() => handleEdit(row)}
+                    >
+                        <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
-                    {/* <button className="btn btn-sm btn-danger" title="Eliminar"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash"></i>
-                    </button> */}
                 </div>
             )
         }
@@ -413,12 +487,12 @@ const CrudCiclos = () => {
                 </div>
             </div>
             {/* Modal Calendario */}
-            <div className="modal fade" ref={modalCalendarioRef} tabIndex="-1" aria-hidden="true">
+            <div className="modal fade" ref={modalCalendarioRef} aria-hidden="true" data-bs-focus="false">
                 <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
                     <div className="modal-content">
-                        <div className="modal-header">
+                        <div className="modal-header bg-info bg-opacity-10">
                             <h5 className="modal-title">
-                                📅 Calendario Reproductivo
+                                {calendarioEdit ? '📅 Actualizar Calendario' : '📅 Agregar Calendario'}
                             </h5>
                             <button type="button" className="btn-close"
                                 onClick={() => cerrarModal(modalCalendarioInstanceRef)}></button>
@@ -433,7 +507,6 @@ const CrudCiclos = () => {
                                     hideModal={hideModalCalendario}
                                     reload={getAllCiclos}
                                     isInactive={calendarioIsInactive}
-                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                             {!calendarioEdit && calendarioData && (
@@ -447,7 +520,6 @@ const CrudCiclos = () => {
                                         Fecha_Servicio: calendarioData.fechaServicio
                                     }}
                                     isInactive={calendarioIsInactive}
-                                    reproduccionData={selectedReproduccion}
                                 />
                             )}
                         </div>

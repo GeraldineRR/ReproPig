@@ -1,18 +1,18 @@
 import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import DataTable from "react-data-table-component";
+import DataTable from 'react-data-table-component';
 import PartosForm from "./PartoForm.jsx";
 import Swal from 'sweetalert2';
 import WithReactContent from 'sweetalert2-react-content';
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { useNavigate } from "react-router-dom";
 
 const CrudPartos = () => {
 
     const [partos, setPartos] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState("");
-    const [partoEdit, setPartoEdit] = useState(null);
+    const [rowToEdit, setRowToEdit] = useState({});
     const [loadingId, setLoadingId] = useState(null);
     const navigate = useNavigate();
 
@@ -21,10 +21,10 @@ const CrudPartos = () => {
     // 🔹 Cargar datos
     const getAllPartos = async () => {
         try {
-            const res = await apiAxios.get("/Partos/");
-            setPartos(res.data);
+            const response = await apiAxios.get('/partos/');
+            setPartos(response.data);
         } catch (error) {
-            console.error("Error cargando partos:", error);
+            console.error("Error al obtener partos:", error);
         }
     };
 
@@ -38,9 +38,9 @@ const CrudPartos = () => {
     };
 
     useEffect(() => {
-    getAllPartos();
-    getResponsables();
-}, []);
+        getAllPartos();
+        getResponsables();
+    }, []);
 
     const parsearIDs = (valor) => {
         if (!valor) return []
@@ -90,13 +90,13 @@ const CrudPartos = () => {
     }
 
     const handleEdit = (row) => {
-        setPartoEdit(row);
+        setRowToEdit(row);
         const modal = new bootstrap.Modal(document.getElementById('exampleModal'));
         modal.show();
     };
 
     const hideModal = () => {
-        setPartoEdit(null);
+        setRowToEdit({});
         document.getElementById("closeModal").click();
     };
 
@@ -203,7 +203,6 @@ const CrudPartos = () => {
         const resps = getNombresResponsables(row.Id_Responsable).toLowerCase().trim();
 
         return (
-            row.Id_parto?.toString().includes(text) ||
             porcino.includes(text) ||
             observaciones.includes(text) ||
             fechaFin.includes(text) ||
@@ -215,29 +214,25 @@ const CrudPartos = () => {
         <>
             <div className="container mt-5">
 
-                <div className="row mb-3 justify-content-between">
+                <div className="row d-flex justify-content-between">
                     <div className="col-4">
-                        <div className="input-group">
-                            <span className="input-group-text">
-                                🔍
-                            </span>
-                            <input
-                                className="form-control"
-                                placeholder="Buscar por porcino, responsable, observaciones..."
-                                value={filterText}
-                                onChange={(e) => setFilterText(e.target.value)}
-                            />
-                        </div>
+                        <input
+                            className="form-control"
+                            placeholder="Buscar..."
+                            value={filterText}
+                            onChange={(e) => setFilterText(e.target.value)}
+                        />
                     </div>
 
-                    <div className="col-2">
+                    <div className="col-8 text-end">
                         <button
-                            className="btn btn-success"
+                            type="button"
+                            className="btn btn-primary"
                             data-bs-toggle="modal"
                             data-bs-target="#exampleModal"
-                            onClick={() => setPartoEdit(null)}
+                            onClick={() => setRowToEdit({})}
                         >
-                            + Registrar parto
+                            Nuevo Registro
                         </button>
                     </div>
                 </div>
@@ -250,20 +245,22 @@ const CrudPartos = () => {
                     pagination
                     highlightOnHover
                     striped
-                    responsive
                 />
 
                 {/* Modal */}
-                <div className="modal fade" id="exampleModal">
-                    <div className="modal-dialog">
+                <div
+                    className="modal fade"
+                    id="exampleModal"
+                    tabIndex="-1"
+                    aria-hidden="true"
+                >
+                    <div className="modal-dialog modal-lg">
                         <div className="modal-content">
 
                             <div className="modal-header">
-                                <h5 className="modal-title">
-                                    {partoEdit ? "Editar Parto" : "Nuevo Parto"}
-                                </h5>
-
+                                <h1 className="modal-title fs-5">Partos</h1>
                                 <button
+                                    type="button"
                                     className="btn-close"
                                     data-bs-dismiss="modal"
                                     id="closeModal"
@@ -272,10 +269,8 @@ const CrudPartos = () => {
 
                             <div className="modal-body">
                                 <PartosForm
-                                    key={partoEdit ? partoEdit.Id_parto : 'new'}
                                     hideModal={hideModal}
-                                    rowToEdit={partoEdit}
-                                    reload={getAllPartos}
+                                    rowToEdit={rowToEdit}
                                 />
                             </div>
 
@@ -288,5 +283,4 @@ const CrudPartos = () => {
     );
 };
 
-
-export default CrudPartos
+export default CrudPartos;
