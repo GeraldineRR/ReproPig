@@ -69,7 +69,6 @@ const CrudSeguimiento_Cerda = () => {
                 text: "No se pudieron cargar los seguimientos."
             });
         }
-        }
     };
     // ==========================================
     // CARGAR AL INICIAR
@@ -353,7 +352,6 @@ const CrudSeguimiento_Cerda = () => {
                                 color: "#9d174d",
                                 fontSize: "0.85rem"
                             }}
->>>>>>> origin/main
                         >
                             {p.Nom_Porcino}
                         </span>
@@ -552,7 +550,7 @@ const CrudSeguimiento_Cerda = () => {
             {/* TABLA */}
             <div className="table-responsive">
                 <DataTable
-                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">{cerdaSeleccionadaObj ? `Seguimiento de Cerda: ${cerdaSeleccionadaObj.Nom_Porcino}` : "Seguimiento Diario de Cerdas"}</h4>}
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">{partoIdParams ? `Seguimiento de Cerda (Parto #${partoIdParams})` : "Seguimiento Diario de Cerdas"}</h4>}
                     columns={columnsTable}
                     data={newListSeguimiento_Cerda}
                     keyField="Id_Seguimiento_Cerda"
