@@ -7,6 +7,7 @@ import SubActividades from "./SubActividades.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudActividadesCamada = () => {
 
@@ -15,18 +16,37 @@ const CrudActividadesCamada = () => {
     const [actividadEdit, setActividadEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
     const [diaFiltro, setDiaFiltro] = useState(null)
+    const [partosList, setPartosList] = useState([])
+    const [partoFiltro, setPartoFiltro] = useState('')
     const [selectedSegCamada, setSelectedSegCamada] = useState(null)
     const [novedadPorcino, setNovedadPorcino] = useState(null)
     const [novedadForm, setNovedadForm] = useState({ Tipo_Novedad: '', Fecha_Novedad: '', Causa_Motivo: '', Observaciones: '' })
     const { id: partoIdParams } = useParams()
     const navigate = useNavigate()
 
+    useEffect(() => {
+        if (partoIdParams) {
+            setPartoFiltro(partoIdParams)
+        }
+    }, [partoIdParams])
+
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
     const columnsTable = [
         {
             name: 'Lechón',
-            selector: row => row.porcino?.Nom_Porcino || `Lechón #${row.Id_Porcino}`
+            selector: row => row.porcino?.Nom_Porcino || `Lechón #${row.Id_Porcino}`,
+            sortable: true
+        },
+        {
+            name: 'Cerda / Camada',
+            selector: row => row.porcino?.parto?.porcino?.Nom_Porcino || row.porcino?.Nom_Porcino?.replace(/Lechón #\d+ /, '') || '—',
+            cell: row => (
+                <span className="fw-bold text-success">
+                    {row.porcino?.parto?.porcino?.Nom_Porcino || row.porcino?.Nom_Porcino?.replace(/Lechón #\d+ /, '')}
+                </span>
+            ),
+            sortable: true
         },
         {
             name: 'Día',
@@ -109,7 +129,7 @@ const CrudActividadesCamada = () => {
                             <i className="fa-solid fa-syringe"></i> Actividades
                         </button>
                         <button
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
+                            className="btn btn-sm btn-warning text-dark d-inline-flex align-items-center gap-1"
                             title="Registrar Novedad"
                             onClick={() => handleOpenNovedad(row)}
                         >
@@ -118,17 +138,31 @@ const CrudActividadesCamada = () => {
                     </div>
                 );
             },
-            minWidth: '240px'
+            minWidth: '310px'
         }
     ]
 
     useEffect(() => {
         getAllActividades()
+        getPartos()
     }, [])
 
     const getAllActividades = async () => {
-        const response = await apiAxios.get('/segcamada/')
-        setActividades(response.data)
+        try {
+            const response = await apiAxios.get('/segcamada/')
+            setActividades(response.data)
+        } catch (e) {
+            console.error("Error al obtener seguimiento de camada:", e)
+        }
+    }
+
+    const getPartos = async () => {
+        try {
+            const response = await apiAxios.get('/partos/')
+            setPartosList(response.data)
+        } catch (e) {
+            console.error("Error al obtener partos:", e)
+        }
     }
 
     const newListActividades = actividades.filter(act => {
@@ -136,17 +170,26 @@ const CrudActividadesCamada = () => {
         const medicamento = act.medicamentos?.Nombre?.toLowerCase() || ''
         const observaciones = act.Observaciones?.toLowerCase() || ''
         const nombre = act.porcino?.Nom_Porcino?.toLowerCase() || ''
-        const matchesText = medicamento.includes(textToSearch) || observaciones.includes(textToSearch) || nombre.includes(textToSearch)
+        const cerdaNombre = act.porcino?.parto?.porcino?.Nom_Porcino?.toLowerCase() || ''
+        const matchesText = medicamento.includes(textToSearch) || observaciones.includes(textToSearch) || nombre.includes(textToSearch) || cerdaNombre.includes(textToSearch)
+        
         let matchesParto = true
-        if (partoIdParams) {
-            matchesParto = String(act.porcino?.Id_parto) === String(partoIdParams)
+        const targetParto = partoFiltro || partoIdParams
+        if (targetParto) {
+            matchesParto = String(act.porcino?.Id_parto) === String(targetParto)
         }
+
         let matchesDia = true
         if (diaFiltro !== null) {
             matchesDia = Number(act.Dia_Programado) === diaFiltro
         }
         return matchesText && matchesParto && matchesDia
     })
+
+    const partoSeleccionadoObj = partosList.find(p => String(p.Id_parto) === String(partoFiltro || partoIdParams))
+    const tituloTabla = partoSeleccionadoObj
+        ? `Seguimiento de Camada — Cerda: ${partoSeleccionadoObj.porcino?.Nom_Porcino || `#${partoSeleccionadoObj.Id_Porcino}`} (Parto #${partoSeleccionadoObj.Id_parto})`
+        : "Seguimiento de Camada"
 
     const handleOpenSubActividades = (row) => {
         setSelectedSegCamada(row)
@@ -182,6 +225,7 @@ const CrudActividadesCamada = () => {
     const hideModal = () => {
         setActividadEdit(null)
         document.getElementById('closeModalActividades').click()
+        getAllActividades()
     }
 
     const handleEdit = (actividad) => {
@@ -198,26 +242,42 @@ const CrudActividadesCamada = () => {
             <div className="container mt-5">
 
                 <div className="row d-flex mb-3 justify-content-between align-items-center">
-                    <div className="col-4 d-flex gap-2">
-                        {partoIdParams && (
-                            <button className="btn btn-secondary" onClick={() => navigate('/partos')} title="Volver a Partos">
-                                <i className="fa-solid fa-arrow-left"></i>
+                    <div className="col-7 d-flex gap-2 align-items-center">
+                        {(partoIdParams || partoFiltro) && (
+                            <button className="btn btn-secondary" onClick={() => { setPartoFiltro(''); navigate('/actividades_camada') }} title="Mostrar todas las camadas">
+                                <i className="fa-solid fa-arrow-left me-1"></i> Ver Todas
                             </button>
                         )}
-                        <div className="input-group">
+                        <div className="input-group" style={{ maxWidth: '240px' }}>
                             <span className="input-group-text">🔍</span>
                             <input
-                            className="form-control"
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            placeholder="Buscar por lechón, medicamento, observaciones..."
-                        />
+                                className="form-control"
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                placeholder="Buscar lechón, obs..."
+                            />
                         </div>
+                        <select
+                            className="form-select"
+                            style={{ maxWidth: '260px' }}
+                            value={partoFiltro || partoIdParams || ''}
+                            onChange={(e) => {
+                                setPartoFiltro(e.target.value)
+                                if (!e.target.value && partoIdParams) navigate('/actividades_camada')
+                            }}
+                        >
+                            <option value="">🐖 Todas las Camadas / Cerdas</option>
+                            {partosList.map(p => (
+                                <option key={p.Id_parto} value={p.Id_parto}>
+                                    Camada Cerda {p.porcino?.Nom_Porcino || `#${p.Id_Porcino}`} ({p.Fec_inicio ? p.Fec_inicio.split('T')[0] : '—'})
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
-                    <div className="col-5">
-                        <div className="d-flex align-items-center gap-2 flex-wrap">
-                            <span className="fw-bold">Filtrar Día:</span>
+                    <div className="col-5 text-end d-flex justify-content-end align-items-center gap-2">
+                        <div className="d-flex align-items-center gap-1 flex-wrap me-2">
+                            <span className="fw-bold small">Día:</span>
                             <button
                                 className={`btn btn-sm ${diaFiltro === null ? 'btn-primary' : 'btn-outline-primary'}`}
                                 onClick={() => setDiaFiltro(null)}
@@ -234,9 +294,7 @@ const CrudActividadesCamada = () => {
                                 </button>
                             ))}
                         </div>
-                    </div>
 
-                    <div className="col-3 text-end">
                         <button
                             type="button"
                             className="btn btn-success"
@@ -244,13 +302,13 @@ const CrudActividadesCamada = () => {
                             data-bs-target="#modalActividadesCamada"
                             onClick={() => setActividadEdit(null)}
                         >
-                            + Registrar seguimiento
+                            + Registrar
                         </button>
                     </div>
                 </div>
 
                 <DataTable
-                    title="Seguimiento de Camada"
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">{tituloTabla}</h4>}
                     columns={columnsTable}
                     data={newListActividades}
                     keyField="Id_SegCamada"
@@ -258,6 +316,8 @@ const CrudActividadesCamada = () => {
                     highlightOnHover
                     pointerOnHover
                     striped
+                    customStyles={customTableStyles}
+                    noDataComponent="No hay registros para la camada o día seleccionado"
                 />
 
                 {/* Modal SubActividades */}

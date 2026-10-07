@@ -378,6 +378,7 @@ const CrudPorcinos = () => {
     const [porcinoQR, setPorcinoQR] = useState(null)
     const [filterText, setFilterText] = useState('')
     const [filterTipo, setFilterTipo] = useState('Todos')
+    const [partosMap, setPartosMap] = useState({})
 
     const columnsTable = [
         { name: 'Nombre', selector: row => row.Nom_Porcino, },
@@ -438,6 +439,32 @@ const CrudPorcinos = () => {
             },
         },
         {
+            name: 'Rendimiento',
+            selector: row => {
+                const isHembra = row.Gen_Porcino?.trim().toLowerCase() === 'h'
+                if (!isHembra) return <span className="text-gray-400 text-xs">—</span>
+                
+                const infoPartos = partosMap[row.Id_Porcino]
+                if (!infoPartos || infoPartos.totalPartos === 0) {
+                    return <span className="text-gray-400 text-xs">Sin partos</span>
+                }
+
+                const promedio = Number((infoPartos.totalNacidos / infoPartos.totalPartos).toFixed(1))
+                if (promedio < 14) {
+                    return (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20" title={`Promedio de ${promedio} lechones por parto (< 14)`}>
+                            ⚠️ Mala ({promedio})
+                        </span>
+                    )
+                }
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" title={`Promedio de ${promedio} lechones por parto (≥ 14)`}>
+                        ⭐ Excelente ({promedio})
+                    </span>
+                )
+            }
+        },
+        {
             name: 'Estado',
             selector: row => (
                 <button
@@ -480,8 +507,25 @@ const CrudPorcinos = () => {
     }, [])
 
     const getAllPorcinos = async () => {
-        const response = await apiAxios.get('/porcino/')
-        setPorcinos(response.data)
+        try {
+            const [resPorcinos, resPartos] = await Promise.all([
+                apiAxios.get('/porcino/'),
+                apiAxios.get('/partos/').catch(() => ({ data: [] }))
+            ])
+            setPorcinos(resPorcinos.data)
+
+            const map = {}
+            resPartos.data.forEach(p => {
+                const idCerda = p.Id_Porcino
+                if (!map[idCerda]) map[idCerda] = { totalPartos: 0, totalNacidos: 0 }
+                map[idCerda].totalPartos += 1
+                const nacidosParto = (p.Nac_vivos || 0) + (p.Nac_muertos || 0) + (p.Nac_momias || 0)
+                map[idCerda].totalNacidos += nacidosParto
+            })
+            setPartosMap(map)
+        } catch (err) {
+            console.error("Error al cargar porcinos o partos:", err)
+        }
     }
 
     const newListPorcinos = porcinos.filter(porcino => {

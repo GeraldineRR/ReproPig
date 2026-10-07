@@ -13,6 +13,8 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
     const [Tipo, setTipo] = useState('')
     const [Presentacion, setPresentacion] = useState('')
     const [Cantidad, setCantidad] = useState('')
+    const [Unidad_Medida, setUnidadMedida] = useState('')
+    const [Precio_Unitario, setPrecioUnitario] = useState('')
     const [Observaciones, setObservaciones] = useState('')
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
@@ -23,6 +25,8 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             setTipo(medicamentoEdit.Tipo ?? '')
             setPresentacion(medicamentoEdit.Presentacion ?? '')
             setCantidad(medicamentoEdit.Cantidad ?? '')
+            setUnidadMedida(medicamentoEdit.Unidad_Medida ?? '')
+            setPrecioUnitario(medicamentoEdit.Precio_Unitario ?? '')
             setObservaciones(medicamentoEdit.Observaciones ?? '')
             setTextFormButton("Actualizar")
         } else {
@@ -31,6 +35,8 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             setTipo('')
             setPresentacion('')
             setCantidad('')
+            setUnidadMedida('')
+            setPrecioUnitario('')
             setObservaciones('')
             setTextFormButton("Enviar")
         }
@@ -44,6 +50,8 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             Tipo,
             Presentacion,
             Cantidad: Cantidad !== '' ? Number(Cantidad) : null,
+            Unidad_Medida: Unidad_Medida || null,
+            Precio_Unitario: Precio_Unitario !== '' ? Number(Precio_Unitario) : null,
             Observaciones
         }
 
@@ -111,23 +119,57 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             <div className="mb-3">
                 <label className="form-label">Presentación</label>
                 <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     className="form-control"
+                    placeholder="Ej. Frasco x 100 ml"
                     value={Presentacion}
                     onChange={(e) => setPresentacion(e.target.value)}
                     required
                 />
             </div>
 
+            <div className="row mb-3">
+                <div className="col-md-6">
+                    <label className="form-label">Cantidad</label>
+                    <input
+                        type="number"
+                        min="0"
+                        className="form-control"
+                        value={Cantidad}
+                        onChange={(e) => setCantidad(e.target.value)}
+                    />
+                </div>
+                <div className="col-md-6">
+                    <label className="form-label">Unidad de Medida</label>
+                    <select
+                        className="form-control"
+                        value={Unidad_Medida}
+                        onChange={(e) => setUnidadMedida(e.target.value)}
+                    >
+                        <option value="">Selecciona...</option>
+                        <option value="ml">ml (Mililitros)</option>
+                        <option value="L">L (Litros)</option>
+                        <option value="mg">mg (Miligramos)</option>
+                        <option value="g">g (Gramos)</option>
+                        <option value="kg">kg (Kilos)</option>
+                        <option value="Dosis">Dosis</option>
+                        <option value="Frasco">Frasco</option>
+                        <option value="Caja">Caja</option>
+                        <option value="Ampolla">Ampolla</option>
+                    </select>
+                </div>
+            </div>
+
             <div className="mb-3">
-                <label className="form-label">Cantidad</label>
+                <label className="form-label">Precio Unitario ($)</label>
                 <input
                     type="number"
+                    step="0.01"
                     min="0"
+                    placeholder="Ej. 25000"
                     className="form-control"
-                    value={Cantidad}
-                    onChange={(e) => setCantidad(e.target.value)}
+                    value={Precio_Unitario}
+                    onChange={(e) => setPrecioUnitario(e.target.value)}
                 />
             </div>
 

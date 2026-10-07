@@ -3,6 +3,7 @@ import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudActividades = () => {
     const MySwal = withReactContent(Swal)
@@ -176,12 +177,13 @@ const CrudActividades = () => {
             </div>
 
             <DataTable
-                title="Todas las Actividades"
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Todas las Actividades</h4>}
                 columns={columns}
                 data={filteredActividades}
                 pagination
                 highlightOnHover
                 striped
+                customStyles={customTableStyles}
                 noDataComponent="No hay actividades registradas"
             />
         </div>

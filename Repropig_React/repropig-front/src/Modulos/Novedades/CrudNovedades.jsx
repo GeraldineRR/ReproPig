@@ -5,6 +5,7 @@ import NovedadesForm from "./NovedadesForm.jsx";
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { customTableStyles } from "../../styles/tableStyles.js";
 
 const CrudNovedades = () => {
     const MySwal = withReactContent(Swal);
@@ -162,13 +163,14 @@ const CrudNovedades = () => {
             </div>
 
             <DataTable
-                title="Registro de Novedades"
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Registro de Novedades</h4>}
                 columns={columns}
                 data={filteredNovedades}
                 pagination
                 highlightOnHover
                 pointerOnHover
                 striped
+                customStyles={customTableStyles}
                 noDataComponent="No hay novedades registradas"
             />
 

@@ -4,6 +4,7 @@ import DataTable from 'react-data-table-component'
 import ResponsablesForm from "./responsablesForm.jsx";
 import RegisterUsuario from "./RegisterUsuario.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { customTableStyles } from "../../styles/tableStyles.js";
 
 const CrudResponsables = () => {
 
@@ -119,11 +120,12 @@ const newlistResponsables = responsables.filter(responsable => {
                 </div>
 
                 <DataTable
-                    title="Responsables"
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Responsables</h4>}
                     columns={columnsTable}
                     data={newlistResponsables}
                     keyField="Id_Responsable"
                     pagination highlightOnHover striped
+                    customStyles={customTableStyles}
                 />
 
                 {/* Modal Responsable */}

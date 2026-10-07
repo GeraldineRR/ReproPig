@@ -9,13 +9,7 @@ class Seguimiento_CerdaService {
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [
-                {
-                    model: PartosModel,
-                    as: 'partos',
-                    include: [
-                        { model: PorcinoModel, as: 'porcino' }
-                    ]
-                },
+                { model: PorcinoModel, as: 'porcino' },
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
                 { model: ciclosModel, as: 'ciclo' },
@@ -26,15 +20,10 @@ class Seguimiento_CerdaService {
     async getById(id) {
         const Seguimiento_Cerda = await Seguimiento_CerdaModel.findByPk(id, {
             include: [
-                {
-                    model: PartosModel,
-                    as: 'partos',
-                    include: [
-                        { model: PorcinoModel, as: 'porcino' }
-                    ]
-                },
+                { model: PorcinoModel, as: 'porcino' },
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
+                { model: ciclosModel, as: 'ciclo' },
             ]
         })
         if (!Seguimiento_Cerda) throw new Error('Seguimiento_Cerda no encontrado')

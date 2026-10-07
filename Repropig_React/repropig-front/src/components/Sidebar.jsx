@@ -1,11 +1,16 @@
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
-import { TbHome, TbPig, TbChevronDown, TbActivityHeartbeat, TbStethoscope, TbUsers } from 'react-icons/tb'
+import { 
+  TbHome, TbPig, TbChevronDown, TbActivityHeartbeat, 
+  TbStethoscope, TbUsers, TbMilk, TbAlertTriangle, TbCalendar
+} from 'react-icons/tb'
 
 export default function Sidebar({ isOpen }) {
   const [animalesOpen, setAnimalesOpen] = useState(true)
   const [reproOpen, setReproOpen] = useState(true)
+  const [maternidadOpen, setMaternidadOpen] = useState(true)
+  const [novedadesOpen, setNovedadesOpen] = useState(false)
   const [sanidadOpen, setSanidadOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const { usuario } = useAuth()
@@ -29,50 +34,79 @@ export default function Sidebar({ isOpen }) {
           <TbHome className="w-5 h-5" /> Inicio
         </NavLink>
 
-        {/* Animales */}
+        {/* 1. Plantel Porcino (Animales) */}
         <div>
           <button className={buttonClass} onClick={() => setAnimalesOpen(!animalesOpen)}>
             <div className="flex items-center gap-2">
-              <TbPig className="w-5 h-5 text-pink-500" /> Animales
+              <TbPig className="w-5 h-5 text-pink-500" /> Plantel Porcino
             </div>
             <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${animalesOpen ? 'rotate-180' : ''}`} />
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${animalesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/razas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
               <NavLink to="/porcinos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
-              <NavLink to="/novedades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Novedades</NavLink>
+              <NavLink to="/razas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
             </div>
           </div>
         </div>
 
-        {/* Ciclos */}
+        {/* 2. Reproducción & Ciclos */}
         <div>
           <button className={buttonClass} onClick={() => setReproOpen(!reproOpen)}>
             <div className="flex items-center gap-2">
-              <TbActivityHeartbeat className="w-5 h-5 text-purple-500" /> Ciclos
+              <TbActivityHeartbeat className="w-5 h-5 text-purple-500" /> Reproducción & Ciclos
             </div>
             <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${reproOpen ? 'rotate-180' : ''}`} />
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${reproOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/ciclos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos</NavLink>
-              <NavLink to="/montas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas</NavLink>
-              <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas</NavLink>
+              <NavLink to="/calendario" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Calendario Reproductivo</NavLink>
+              <NavLink to="/ciclos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos Reproductivos</NavLink>
+              <NavLink to="/montas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas Naturales</NavLink>
               <NavLink to="/inseminaciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
-              <NavLink to="/partos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
-              <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
-              <NavLink to="/actividades_camada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Camada</NavLink>
-              <NavLink to="/actividades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Todas las Actividades</NavLink>
+              <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas de Semen</NavLink>
             </div>
           </div>
         </div>
 
-        {/* Sanidad */}
+        {/* 3. Maternidad & Camadas */}
+        <div>
+          <button className={buttonClass} onClick={() => setMaternidadOpen(!maternidadOpen)}>
+            <div className="flex items-center gap-2">
+              <TbMilk className="w-5 h-5 text-blue-500" /> Maternidad & Camadas
+            </div>
+            <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${maternidadOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <div className={`overflow-hidden transition-all duration-300 ${maternidadOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
+            <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
+              <NavLink to="/partos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
+              <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
+              <NavLink to="/actividades_camada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Camada</NavLink>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Novedades & Registro */}
+        <div>
+          <button className={buttonClass} onClick={() => setNovedadesOpen(!novedadesOpen)}>
+            <div className="flex items-center gap-2">
+              <TbAlertTriangle className="w-5 h-5 text-amber-500" /> Novedades & Control
+            </div>
+            <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${novedadesOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <div className={`overflow-hidden transition-all duration-300 ${novedadesOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
+            <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
+              <NavLink to="/novedades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Novedades</NavLink>
+              <NavLink to="/actividades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Historial de Actividades</NavLink>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Sanidad & Medicamentos */}
         <div>
           <button className={buttonClass} onClick={() => setSanidadOpen(!sanidadOpen)}>
             <div className="flex items-center gap-2">
-              <TbStethoscope className="w-5 h-5 text-green-500" /> Sanidad
+              <TbStethoscope className="w-5 h-5 text-green-500" /> Sanidad & Medicamentos
             </div>
             <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${sanidadOpen ? 'rotate-180' : ''}`} />
           </button>
@@ -83,7 +117,7 @@ export default function Sidebar({ isOpen }) {
           </div>
         </div>
 
-        {/* Administración */}
+        {/* 6. Administración */}
         {(usuario?.Cargo?.toLowerCase().includes("instructor") || usuario?.cargo?.toLowerCase().includes("instructor")) && (
           <div>
             <button className={buttonClass} onClick={() => setAdminOpen(!adminOpen)}>

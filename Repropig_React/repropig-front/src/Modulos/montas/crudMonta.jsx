@@ -6,6 +6,8 @@ import MontaForm from "./montaForm.jsx";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
 
+import { customTableStyles } from "../../styles/tableStyles.js"
+
 const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
@@ -58,6 +60,14 @@ const CrudMonta = () => {
                 MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
             }
         }
+    }
+
+    const addDays = (dateStr, days) => {
+        if (!dateStr) return '—'
+        const d = new Date(dateStr)
+        if (isNaN(d.getTime())) return '—'
+        d.setDate(d.getDate() + days)
+        return d.toISOString().split('T')[0]
     }
 
     const columnsTable = [
@@ -183,8 +193,15 @@ const CrudMonta = () => {
                 </div>
             </div>
 
-            <DataTable title="Montas" columns={columnsTable} data={newListMontas}
-                keyField="Id_Monta" pagination highlightOnHover striped />
+            <DataTable 
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Montas Naturales</h4>} 
+                columns={columnsTable} 
+                data={newListMontas}
+                keyField="Id_Monta" 
+                pagination 
+                highlightOnHover 
+                customStyles={customTableStyles} 
+            />
 
             <div className="modal fade" id="exampleModal" tabIndex="-1">
                 <div className="modal-dialog">

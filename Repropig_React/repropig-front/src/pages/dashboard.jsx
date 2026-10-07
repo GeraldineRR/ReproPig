@@ -53,16 +53,31 @@ const Dashboard = () => {
     cargarDatos()
   }, [])
 
+  const [partosStats, setPartosStats] = useState({
+    totalPartos: 0,
+    promedioGlobal: 0,
+    cerdasBuenas: 0,
+    cerdasMalas: 0
+  });
+
+  const [tableroData, setTableroData] = useState({
+    proximas: [],
+    gestantes: [],
+    recelo: [],
+    lactantes: []
+  });
+
   const cargarDatos = async () => {
     setIsLoading(true)
     try {
-      const [porcinos, colectas, montas, inseminaciones, ciclos] =
+      const [porcinos, colectas, montas, inseminaciones, ciclos, partos] =
         await Promise.all([
           apiAxios.get("/porcino").catch(() => ({ data: [] })),
           apiAxios.get("/colectas").catch(() => ({ data: [] })),
           apiAxios.get("/monta").catch(() => ({ data: [] })),
           apiAxios.get("/inseminacion").catch(() => ({ data: [] })),
-          apiAxios.get("/ciclos/").catch(() => ({ data: [] }))
+          apiAxios.get("/ciclos/").catch(() => ({ data: [] })),
+          apiAxios.get("/partos/").catch(() => ({ data: [] }))
         ])
 
       setStats({
@@ -85,6 +100,88 @@ const Dashboard = () => {
           hembras: hembrasCount,
           machos: machosCount
       });
+
+      // Clasificación de cerdas (< 14 lechones promedio = Mala)
+      const sowMap = {}
+      let sumTotalNacidos = 0
+      partos.data.forEach(p => {
+        const id = p.Id_Porcino
+        if (!id) return
+        if (!sowMap[id]) sowMap[id] = { id, partosCount: 0, totalNacidos: 0 }
+        sowMap[id].partosCount += 1
+        const totalP = (p.Nac_vivos || 0) + (p.Nac_muertos || 0) + (p.Nac_momias || 0)
+        sowMap[id].totalNacidos += totalP
+        sumTotalNacidos += totalP
+      })
+
+      let buenas = 0
+      let malas = 0
+
+      Object.values(sowMap).forEach(s => {
+        const prom = s.totalNacidos / s.partosCount
+        if (prom < 14) malas++
+        else buenas++
+      })
+
+      setPartosStats({
+        totalPartos: partos.data.length,
+        promedioGlobal: partos.data.length > 0 ? Number((sumTotalNacidos / partos.data.length).toFixed(1)) : 0,
+        cerdasBuenas: buenas,
+        cerdasMalas: malas
+      })
+
+      // Agrupar cerdas en el Tablero de Control Reproductivo
+      const proximas = []
+      const gestantes = []
+      const recelo = []
+      const lactantes = []
+
+      ciclos.data.forEach(c => {
+        const estadoLower = (c.Estado || '').toLowerCase()
+        const isActivo = estadoLower === 'activa' || estadoLower === 'activo' || c.activo === 'S' || c.Activo === 'S' || estadoLower === 'lactante'
+        if (!isActivo && !c.calendario?.real_parto) return
+
+        const cerdaNombre = c.porcino?.Nom_Porcino || `Cerda #${c.Id_Cerda}`
+        const numChapeta = c.porcino?.Num_Chapeta || '—'
+        const fechaServicio = c.calendario?.fecha_servicio || c.montas?.[0]?.Fec_hora || c.inseminaciones?.[0]?.Fec_hora
+
+        let diasGestacion = 0
+        let fppStr = '—'
+        if (fechaServicio) {
+          const fServ = new Date(fechaServicio)
+          const hoy = new Date()
+          const diffTime = Math.max(0, hoy - fServ)
+          diasGestacion = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+          const fppDate = new Date(fServ)
+          fppDate.setDate(fppDate.getDate() + 114)
+          fppStr = fppDate.toLocaleDateString()
+        }
+
+        const item = {
+          idCiclo: c.Id_Ciclo,
+          idCerda: c.Id_Cerda,
+          nombre: cerdaNombre,
+          chapeta: numChapeta,
+          diasGestacion,
+          fpp: fppStr,
+          realParto: c.calendario?.real_parto,
+          idParto: c.partos?.[0]?.Id_parto || null,
+          partoObj: c.partos?.[0] || null
+        }
+
+        if (c.calendario?.real_parto || estadoLower === 'lactante') {
+          lactantes.push(item)
+        } else if (diasGestacion >= 107) {
+          proximas.push(item)
+        } else if (diasGestacion >= 42) {
+          gestantes.push(item)
+        } else {
+          recelo.push(item)
+        }
+      })
+
+      setTableroData({ proximas, gestantes, recelo, lactantes })
 
       const ultimas = [...ciclos.data].reverse().slice(0, 5)
       setUltimasCiclos(ultimas)
@@ -150,13 +247,18 @@ const Dashboard = () => {
       { name: 'Inactivos', cantidad: chartData.inactivos, color: '#94a3b8' } // slate-400
     ];
 
+    const dataProductividad = [
+      { name: 'Excelente (≥14)', cantidad: partosStats.cerdasBuenas, color: '#10b981' }, // emerald-500
+      { name: 'Baja (<14)', cantidad: partosStats.cerdasMalas, color: '#ef4444' }       // red-500
+    ];
+
     return (
-      <div className="flex flex-col md:flex-row gap-8 mt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
         {/* Gráfico 1: Población */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-pink-50 rounded-full blur-3xl opacity-50 -mr-10 -mt-10 pointer-events-none"></div>
           <h4 className="text-sm font-bold text-gray-500 mb-6 uppercase tracking-wider text-center relative z-10">Población (Hembras vs Machos)</h4>
-          <div className="h-64 w-full relative z-10">
+          <div className="h-56 w-full relative z-10">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dataPoblacion} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -174,10 +276,10 @@ const Dashboard = () => {
         </div>
 
         {/* Gráfico 2: Ciclos */}
-        <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-3xl opacity-50 -mr-10 -mt-10 pointer-events-none"></div>
           <h4 className="text-sm font-bold text-gray-500 mb-6 uppercase tracking-wider text-center relative z-10">Estado de Ciclos</h4>
-          <div className="h-64 w-full relative z-10">
+          <div className="h-56 w-full relative z-10">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dataCiclos} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -192,6 +294,152 @@ const Dashboard = () => {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Gráfico 3: Clasificación Cerdas */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full blur-3xl opacity-50 -mr-10 -mt-10 pointer-events-none"></div>
+          <h4 className="text-sm font-bold text-gray-500 mb-6 uppercase tracking-wider text-center relative z-10">Rendimiento Cerdas (&lt; 14 Lech.)</h4>
+          <div className="h-56 w-full relative z-10">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dataProductividad} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11, fontWeight: 600}} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                <Bar dataKey="cantidad" radius={[8, 8, 0, 0]} maxBarSize={60}>
+                  {dataProductividad.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderTableroControl = () => {
+    if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-400 animate-pulse">Cargando tablero de control...</div>;
+
+    const columnas = [
+      {
+        titulo: "🚨 Próximas a Parir (Día 107+)",
+        badgeBg: "bg-red-500 text-white",
+        borderColor: "border-red-200",
+        headerBg: "bg-red-50",
+        items: tableroData.proximas,
+        icono: "⚠️",
+        btnTexto: "Registrar Parto",
+        btnRuta: "/partos"
+      },
+      {
+        titulo: "🤰 En Gestación (Día 42 - 106)",
+        badgeBg: "bg-blue-600 text-white",
+        borderColor: "border-blue-200",
+        headerBg: "bg-blue-50",
+        items: tableroData.gestantes,
+        icono: "🤰",
+        btnTexto: "Ver Calendario",
+        btnRuta: "/calendario"
+      },
+      {
+        titulo: "🔍 Revisión de Celo (Día 1 - 41)",
+        badgeBg: "bg-amber-500 text-white",
+        borderColor: "border-amber-200",
+        headerBg: "bg-amber-50",
+        items: tableroData.recelo,
+        icono: "🔍",
+        btnTexto: "Revisar Celo",
+        btnRuta: "/calendario"
+      },
+      {
+        titulo: "🐽 En Lactancia / Parto",
+        badgeBg: "bg-emerald-600 text-white",
+        borderColor: "border-emerald-200",
+        headerBg: "bg-emerald-50",
+        items: tableroData.lactantes,
+        icono: "🐽",
+        btnTexto: "Ver Camada",
+        btnRuta: "/actividades_camada"
+      }
+    ];
+
+    return (
+      <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 mt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-700 text-xs font-bold uppercase tracking-wider mb-1">
+              📌 Tablero de Control de la Granja
+            </div>
+            <h3 className="text-2xl font-black text-gray-800 tracking-tight">Monitoreo de Cerdas en Tiempo Real</h3>
+            <p className="text-sm text-gray-500">Estado de gestación, recelo, partos y lactancia del plantel porcino</p>
+          </div>
+          <button onClick={() => navigate('/calendario')} className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm">
+            📅 Abrir Calendario Completo
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {columnas.map((col, idx) => (
+            <div key={idx} className={`rounded-2xl border ${col.borderColor} bg-slate-50/50 overflow-hidden flex flex-col`}>
+              <div className={`${col.headerBg} p-4 border-b ${col.borderColor} flex items-center justify-between`}>
+                <span className="font-bold text-gray-800 text-sm truncate">{col.titulo}</span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-black shadow-sm ${col.badgeBg}`}>
+                  {col.items.length}
+                </span>
+              </div>
+
+              <div className="p-3 space-y-3 flex-1 overflow-y-auto max-h-[420px]">
+                {col.items.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 text-xs font-medium border border-dashed border-gray-200 rounded-xl bg-white">
+                    Sin cerdas en esta etapa
+                  </div>
+                ) : (
+                  col.items.map(item => (
+                    <div key={item.idCiclo} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 hover:shadow-md transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-extrabold text-gray-800 text-sm">{item.nombre}</span>
+                        <span className="bg-slate-100 text-slate-700 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                          Chapeta #{item.chapeta}
+                        </span>
+                      </div>
+
+                      {col.titulo.includes("Lactancia") ? (
+                        <div className="text-xs text-gray-500 space-y-1 mb-3">
+                          <p>📅 Parto real: <strong className="text-gray-800">{item.realParto || 'Registrado'}</strong></p>
+                          {item.partoObj && (
+                            <p>🐷 Camada: <strong className="text-green-600 font-bold">{item.partoObj.Nac_vivos || 0} vivos</strong> · {item.partoObj.Nac_muertos || 0} m. · {item.partoObj.Nac_momias || 0} mom.</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-500 space-y-1 mb-3">
+                          <div className="flex justify-between items-center">
+                            <span>Gestación:</span>
+                            <strong className="text-pink-600 font-bold">{item.diasGestacion} / 114 días</strong>
+                          </div>
+                          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                            <div className="bg-pink-500 h-full rounded-full" style={{ width: `${Math.min(100, Math.floor((item.diasGestacion / 114) * 100))}%` }}></div>
+                          </div>
+                          <p className="text-[11px] text-gray-400 mt-1">FPP: <span className="font-bold text-gray-700">{item.fpp}</span></p>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2">
+                        <button onClick={() => navigate(col.btnRuta)} className="flex-1 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[11px] font-bold py-1.5 rounded-lg transition-colors text-center">
+                          {col.btnTexto}
+                        </button>
+                        <button onClick={() => navigate(`/perfil-cerda/${item.idCerda}`)} className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1.5 rounded-lg text-xs" title="Ver Perfil Cerda">
+                          👁️
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -345,6 +593,9 @@ const Dashboard = () => {
           {renderChart()}
           
         </div>
+
+        {/* --- TABLERO DE CONTROL VISUAL DE LA GRANJA EN TIEMPO REAL --- */}
+        {renderTableroControl()}
 
         {/* Bottom Grid Layout */}
         <div className="grid lg:grid-cols-12 gap-8 mt-4">

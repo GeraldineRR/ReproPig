@@ -1,13 +1,16 @@
 import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import DataTable from 'react-data-table-component';
 import PartosForm from "./PartoForm.jsx";
+import { customTableStyles } from "../../styles/tableStyles.js";
 
 const CrudPartos = () => {
 
     const [partos, setPartos] = useState([]);
     const [filterText, setFilterText] = useState("");
     const [rowToEdit, setRowToEdit] = useState({});
+    const navigate = useNavigate();
 
     // 🔹 Cerrar modal y refrescar tabla
     const hideModal = () => {
@@ -20,31 +23,55 @@ const CrudPartos = () => {
 
     // 🔹 Columnas de la tabla
     const columnsTable = [
-        { name: 'Id_Porcino', selector: row => row.porcinos?.Nom_Porcino, sortable: true },
-        { name: 'Fec_inicio', selector: row => row.Fec_inicio },
-        { name: 'Hor_inicial', selector: row => row.Hor_inicial },
-        { name: 'Nac_vivos', selector: row => row.Nac_vivos },
-        { name: 'Nac_momias', selector: row => row.Nac_momias },
-        { name: 'Nac_muertos', selector: row => row.Nac_muertos },
-        { name: 'Pes_camada', selector: row => row.Pes_camada },
-        { name: 'Observaciones', selector: row => row.Observaciones },
-        { name: 'Fec_fin', selector: row => row.Fec_fin },
-        { name: 'Hor_final', selector: row => row.Hor_final },
+        { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.porcinos?.Nom_Porcino || `Cerda #${row.Id_Porcino}`, sortable: true },
+        { name: 'Fecha Inicio', selector: row => row.Fec_inicio ? row.Fec_inicio.split('T')[0] : '—', sortable: true },
+        { name: 'Hora Inicio', selector: row => row.Hor_inicial || '—' },
+        { name: 'Nac. Vivos', selector: row => row.Nac_vivos ?? 0, sortable: true },
+        { name: 'Nac. Muertos', selector: row => row.Nac_muertos ?? 0, sortable: true },
+        { name: 'Nac. Momias', selector: row => row.Nac_momias ?? 0, sortable: true },
+        { 
+            name: 'Total Nacidos', 
+            selector: row => (Number(row.Nac_vivos || 0) + Number(row.Nac_muertos || 0) + Number(row.Nac_momias || 0)), 
+            sortable: true,
+            cell: row => <span className="fw-bold text-dark">{(Number(row.Nac_vivos || 0) + Number(row.Nac_muertos || 0) + Number(row.Nac_momias || 0))}</span>
+        },
+        { name: 'Peso Camada (kg)', selector: row => row.Pes_camada ? `${row.Pes_camada} kg` : '—', sortable: true },
+        { name: 'Fecha Fin', selector: row => row.Fec_fin ? row.Fec_fin.split('T')[0] : '—' },
+        { name: 'Hora Fin', selector: row => row.Hor_final || '—' },
+        { name: 'Observaciones', selector: row => row.Observaciones || '—' },
         {
             name: 'Acciones',
             cell: (row) => (
-                <button
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                    data-bs-toggle="modal"
-                    data-bs-target="#exampleModal"
-                    onClick={() => setRowToEdit(row)}
-                >
-                    <i className="fa-solid fa-pencil text-xs"></i>
-                </button>
+                <div className="d-flex gap-2 align-items-center">
+                    <button
+                        className="btn btn-sm btn-primary text-white d-inline-flex align-items-center gap-1"
+                        title="Seguimiento de Camada"
+                        onClick={() => navigate(`/actividades_camada/parto/${row.Id_parto}`)}
+                    >
+                        <i className="fa-solid fa-baby"></i> Camada
+                    </button>
+                    <button
+                        className="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1"
+                        title="Seguimiento de Cerda"
+                        onClick={() => navigate(`/seguimiento_cerda/porcino/${row.Id_Porcino}`)}
+                    >
+                        <i className="fa-solid fa-notes-medical"></i> Cerda
+                    </button>
+                    <button
+                        className="btn btn-sm btn-light border"
+                        title="Editar Parto"
+                        data-bs-toggle="modal"
+                        data-bs-target="#exampleModal"
+                        onClick={() => setRowToEdit(row)}
+                    >
+                        <i className="fa-solid fa-pencil text-slate-600"></i>
+                    </button>
+                </div>
             ),
             ignoreRowClick: true,
             allowOverflow: true,
             button: true,
+            minWidth: '290px'
         }
     ];
 
@@ -101,13 +128,14 @@ const CrudPartos = () => {
                 </div>
 
                 <DataTable
-                    title="Registro de Partos"
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Registro de Partos</h4>}
                     columns={columnsTable}
                     data={newListPartos}
                     keyField="Id_parto"
                     pagination
                     highlightOnHover
                     striped
+                    customStyles={customTableStyles}
                 />
 
                 {/* Modal */}

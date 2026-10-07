@@ -453,7 +453,7 @@ const CrudCiclos = () => {
 
             <div className="table-responsive">
                 <DataTable
-                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Ciclos</h4>}
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Ciclos Reproductivos</h4>}
                     columns={columnsTable}
                     data={filteredCiclos}
                     keyField="Id_Ciclo"
@@ -488,7 +488,7 @@ const CrudCiclos = () => {
             </div>
             {/* Modal Calendario */}
             <div className="modal fade" ref={modalCalendarioRef} aria-hidden="true" data-bs-focus="false">
-                <div className="modal-dialog modal-lg modal-fullscreen-sm-down">
+                <div className="modal-dialog modal-xl modal-fullscreen-sm-down">
                     <div className="modal-content">
                         <div className="modal-header bg-info bg-opacity-10">
                             <h5 className="modal-title">

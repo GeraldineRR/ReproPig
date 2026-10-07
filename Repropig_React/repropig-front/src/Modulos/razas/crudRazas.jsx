@@ -3,6 +3,7 @@ import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import RazaForm from "./razaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudRazas = () => {
 
@@ -48,7 +49,7 @@ const CrudRazas = () => {
             name: 'Estado',
             selector: row => (
                 <button
-                    className={`badge border-0 ${row.Estado === 'Activo' ? 'bg-success' : 'bg-danger'}`}
+                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset transition-colors ${row.Estado === 'Activo' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' : 'bg-red-50 text-red-700 ring-red-600/20 hover:bg-red-100'}`}
                     onClick={() => toggleEstado(row.Id_Raza)}
                     disabled={loadingId === row.Id_Raza}
                 >
@@ -101,18 +102,18 @@ const CrudRazas = () => {
 
     return (
         <>
-            <div className="container mt-5" style={{ maxWidth: "10000px" }}>
+            <div className="container mt-5">
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
-                    <div className="flex gap-2 items-center justify-end w-full">
+                    <div className="flex gap-2 items-center justify-start w-full">
                         <div className="input-group">
                             <span className="input-group-text">
                                 🔍
                             </span>
                             <input
                                 className="form-control"
-                                style={{ width: '290px' }}
+                                style={{ maxWidth: '350px' }}
                                 value={filterText}
                                 onChange={(e) => setFilterText(e.target.value)}
                                 placeholder="Buscar raza..."
@@ -133,20 +134,16 @@ const CrudRazas = () => {
                     </div>
                 </div>
 
-
-                <div className="card-body px-9">
-                    <DataTable
-                        title="Razas"
-                        columns={columnsTable}
-                        data={newListRazas}
-                        keyField="Id_Raza"
-                        pagination
-                        highlightOnHover
-                        pointerOnHover
-                        striped
-                    />
-
-                </div>
+                <DataTable
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Razas</h4>}
+                    columns={columnsTable}
+                    data={newListRazas}
+                    keyField="Id_Raza"
+                    pagination
+                    highlightOnHover
+                    pointerOnHover
+                    customStyles={customTableStyles}
+                />
 
                 <div
                     className="modal fade"

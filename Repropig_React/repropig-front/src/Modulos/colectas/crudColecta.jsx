@@ -5,6 +5,7 @@ import DataTable from "react-data-table-component";
 import ColectaForm from "./colectaForm.jsx";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
+import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudColecta = () => {
     const MySwal = WithReactContent(Swal)
@@ -179,11 +180,17 @@ const CrudColecta = () => {
                 </div>
             </div>
 
-            <DataTable title="Colectas" columns={columnsTable}
+            <DataTable 
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Colectas de Semen</h4>} 
+                columns={columnsTable}
                 data={newListcolecta.filter(c =>
                     !filtroDesdeInseminacion || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
                 )}
-                keyField="Id_colecta" pagination highlightOnHover striped />
+                keyField="Id_colecta" 
+                pagination 
+                highlightOnHover 
+                customStyles={customTableStyles} 
+            />
 
             <div className="modal fade" id="exampleModal" tabIndex="-1"
                 aria-labelledby="exampleModalLabel" aria-hidden="true">

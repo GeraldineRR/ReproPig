@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import DataTable from 'react-data-table-component'
 import CalendarioForm from "../Calendario/CalendarioForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudCalendario = () => {
 
@@ -117,12 +118,13 @@ const CrudCalendario = () => {
             </div>
 
             <DataTable
-                title="Calendarios Reproductivos"
+                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Calendarios Reproductivos</h4>}
                 columns={columnsTable}
                 data={filtered}
                 pagination
                 highlightOnHover
                 striped
+                customStyles={customTableStyles}
                 noDataComponent="No hay calendarios registrados"
             />
 

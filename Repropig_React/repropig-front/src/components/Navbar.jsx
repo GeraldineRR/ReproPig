@@ -43,13 +43,6 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate("/contactanos")}
-          className="text-pink-600 font-bold hover:text-pink-800 transition-colors px-2"
-        >
-          Contáctanos
-        </button>
-
         {usuario ? (
           <>
             <NotificacionesCamada />
@@ -76,12 +69,20 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
             </button>
           </>
         ) : (
-          <button
-            onClick={() => navigate("/login")}
-            className="bg-pink-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-pink-600 transition-colors shadow-sm shadow-pink-200"
-          >
-            Iniciar sesión
-          </button>
+          <>
+            <button
+              onClick={() => navigate("/contactanos")}
+              className="text-pink-600 font-bold hover:text-pink-800 transition-colors px-2"
+            >
+              Contáctanos
+            </button>
+            <button
+              onClick={() => navigate("/login")}
+              className="bg-pink-500 text-white px-5 py-2 rounded-xl font-bold hover:bg-pink-600 transition-colors shadow-sm shadow-pink-200"
+            >
+              Iniciar sesión
+            </button>
+          </>
         )}
       </div>
 
