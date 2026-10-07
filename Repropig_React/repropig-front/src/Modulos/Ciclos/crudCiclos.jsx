@@ -114,6 +114,7 @@ const CrudCiclos = () => {
         // Construir cicloData con los datos del row (siempre disponible)
         const cicloInfo = {
             Id_Ciclo: sanitizedId,
+            Id_Porcino: row.Id_Cerda || row.Id_Porcino || '',
             TipoCiclo: tipoCiclo,
             activo: row.Estado || row.Estado || 'Activo',
             nombreCerda: row.porcino?.Nom_Porcino || `Cerda #${row.Id_Cerda || ''}`,
@@ -260,7 +261,7 @@ const CrudCiclos = () => {
                 const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
                 const badgeClass = isActivo ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10';
                 const estado = row.Estado || 'Inactivo';
-                
+
                 // Calcular progreso
                 let progreso = 0;
                 let dias = 0;
@@ -273,7 +274,7 @@ const CrudCiclos = () => {
                         dias = Math.round((hoy - servicio) / (1000 * 60 * 60 * 24))
                         if (dias < 0) dias = 0;
                         progreso = Math.min(100, Math.floor((dias / 114) * 100));
-                    } catch(e) { console.error(e) }
+                    } catch (e) { console.error(e) }
                 }
 
                 const isTerminado = isActivo && dias >= 114;
@@ -299,8 +300,8 @@ const CrudCiclos = () => {
                                 {isTerminado && (
                                     <div className="mt-2 text-center bg-red-50 p-2 rounded-lg border border-red-100">
                                         <p className="text-red-600 text-[10px] font-bold mb-1">⚠️ Ciclo terminado</p>
-                                        <button 
-                                            className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold py-1 px-3 rounded-full shadow-sm transition-colors" 
+                                        <button
+                                            className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold py-1 px-3 rounded-full shadow-sm transition-colors"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 navigate('/partos', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda } });
@@ -345,7 +346,7 @@ const CrudCiclos = () => {
             name: 'Montas',
             width: '100px',
             cell: row => (
-                <div 
+                <div
                     onClick={() => navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
                     className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-pink-100 transition-colors"
                     title="Ver montas"
@@ -358,7 +359,7 @@ const CrudCiclos = () => {
             name: 'Inseminaciones',
             width: '140px',
             cell: row => (
-                <div 
+                <div
                     onClick={() => navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
                     className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-blue-100 transition-colors"
                     title="Ver inseminaciones"
@@ -380,8 +381,8 @@ const CrudCiclos = () => {
                     >
                         <i className="fa-regular fa-calendar text-sm"></i>
                     </button>
-                    <button 
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" 
+                    <button
+                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                         title="Editar"
                         onClick={() => handleEdit(row)}
                     >
@@ -456,7 +457,7 @@ const CrudCiclos = () => {
 
             <div className="table-responsive">
                 <DataTable
-                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Ciclos</h4>}
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Ciclos Reproductivos</h4>}
                     columns={columnsTable}
                     data={filteredCiclos}
                     keyField="Id_Ciclo"

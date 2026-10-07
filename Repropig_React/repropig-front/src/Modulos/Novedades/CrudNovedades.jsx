@@ -159,11 +159,10 @@ const CrudNovedades = () => {
             <div className="row d-flex mb-3 justify-content-between align-items-center">
                 <div className="col-4">
                     <div className="input-group">
-                        <span className="input-group-text">🔍</span>
                         <input
                             type="text"
                             className="form-control"
-                            placeholder="Buscar por porcino, tipo, causa..."
+                            placeholder="🔍 Buscar por porcino, tipo, causa..."
                             value={filterText}
                             onChange={(e) => setFilterText(e.target.value)}
                         />

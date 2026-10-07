@@ -78,8 +78,13 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">💊 {medicamentoEdit ? 'Editar Medicamento' : 'Registrar Medicamento'}</h5>
+                <small className="text-muted">Gestión de salud</small>
+            </div>
+
             <div className="mb-3">
-                <label className="form-label">Nombre</label>
+                <label className="form-label fw-semibold">🏷️ Nombre</label>
                 <input
                     type="text"
                     id="Nombre"
@@ -91,7 +96,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Tipo</label>
+                <label className="form-label fw-semibold">📋 Tipo</label>
                 <select
                     id="Tipo"
                     className="form-control"
@@ -109,7 +114,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Presentación</label>
+                <label className="form-label fw-semibold">📦 Presentación (ml/gr)</label>
                 <input
                     type="number"
                     step="0.01"
@@ -121,7 +126,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Cantidad</label>
+                <label className="form-label fw-semibold">🔢 Cantidad (Stock)</label>
                 <input
                     type="number"
                     min="0"
@@ -132,7 +137,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             </div>
 
             <div className="mb-3">
-                <label className="form-label">Observaciones</label>
+                <label className="form-label fw-semibold">📝 Observaciones</label>
                 <textarea
                     className="form-control"
                     value={Observaciones}
@@ -143,7 +148,7 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
             <div className="mb-3">
                 <input
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary w-100 py-2 fw-bold shadow-sm"
                     value={textFormButton}
                 />
             </div>

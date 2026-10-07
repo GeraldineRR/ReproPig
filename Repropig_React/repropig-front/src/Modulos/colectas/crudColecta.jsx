@@ -177,6 +177,12 @@ const CrudColecta = () => {
                         data-bs-toggle="modal" data-bs-target="#exampleModal">
                         <i className="fa-solid fa-pencil text-xs"></i>
                     </button>
+                    {/* ✅ Toggle Estado con confirmación */}
+                    <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
+                        onClick={() => toggleEstado(row)}>
+                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
+                    </button>
                     {/* ✅ Eliminar */}
                     <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                         onClick={() => handleDelete(row)}>

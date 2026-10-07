@@ -88,8 +88,13 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
         <>
             <form onSubmit={GestionarForm} className="col-12 col-md-12">
 
+                <div className="text-center mb-4">
+                    <h5 className="fw-bold">👨‍🌾 {textformbutton === 'Actualizar Responsable' ? 'Editar Responsable' : 'Registrar Responsable'}</h5>
+                    <small className="text-muted">Personal de la granja</small>
+                </div>
+
                 <div className="mb-3">
-                    <label className="form-label">Nombres</label>
+                    <label className="form-label fw-semibold">👤 Nombres</label>
                     <input
                         type="text"
                         className="form-control"
@@ -99,7 +104,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Apellidos</label>
+                    <label className="form-label fw-semibold">👤 Apellidos</label>
                     <input
                         type="text"
                         className="form-control"
@@ -109,7 +114,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Documento</label>
+                    <label className="form-label fw-semibold">🪪 Documento</label>
                     <input
                         type="text"
                         className="form-control"
@@ -119,7 +124,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Cargo</label>
+                    <label className="form-label fw-semibold">💼 Cargo</label>
                     <select
                         className="form-control"
                         value={Cargo || ''}
@@ -133,7 +138,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Teléfono</label>
+                    <label className="form-label fw-semibold">📱 Teléfono</label>
                     <input
                         type="text"
                         className="form-control"
@@ -143,7 +148,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Email</label>
+                    <label className="form-label fw-semibold">📧 Email</label>
                     <input
                         type="email"
                         className="form-control"
@@ -153,8 +158,8 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">
-                        Contraseña 
+                    <label className="form-label fw-semibold">
+                        🔑 Contraseña 
                         {textformbutton === 'Actualizar Responsable' && (
                             <span className="text-muted ms-2" style={{ fontSize: '0.8em' }}>
                                 (Déjalo en blanco si no quieres cambiarla)
@@ -170,7 +175,7 @@ const ResponsablesForm = ({ hidemodal, rowToEdit, textformbutton, setTextformbut
                     />
                 </div>
 
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-primary w-100 fw-bold py-2 shadow-sm">
                     {textformbutton}
                 </button>
 

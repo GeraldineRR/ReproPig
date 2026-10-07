@@ -57,6 +57,15 @@ const CrudCalendario = () => {
         getAllCalendario().then(data => {
             handleOpenCicloFromUrl(data)
         })
+        return () => {
+            if (bsModalRef.current) {
+                bsModalRef.current.hide()
+            }
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+            document.body.classList.remove('modal-open')
+            document.body.style.removeProperty('overflow')
+            document.body.style.removeProperty('padding-right')
+        }
     }, [])
 
     const formatD = (dateStr) => {
@@ -73,11 +82,23 @@ const CrudCalendario = () => {
             sortable: true
         },
         { name: 'Fecha Servicio', selector: row => formatD(row.Fecha_Servicio), sortable: true },
-        { name: 'RC1', selector: row => formatD(row.rc1) },
-        { name: 'RC2', selector: row => formatD(row.rc2) },
-        { name: 'Cambio Alimento', selector: row => formatD(row.cambio_alimento) },
-        { name: 'Día 107', selector: row => formatD(row.dia_107) },
-        { name: 'Parto', selector: row => formatD(row.parto) },
+        { name: 'RC1', selector: row => formatD(row.real_rc1 || row.rc1) },
+        { name: 'RC2', selector: row => formatD(row.real_rc2 || row.rc2) },
+        { name: 'Cambio Alimento', selector: row => formatD(row.real_cambio_alimento || row.cambio_alimento) },
+        { name: 'Día 107', selector: row => formatD(row.real_dia_107 || row.dia_107) },
+        {
+            name: 'Parto',
+            selector: row => row.real_parto || row.parto,
+            cell: row => (
+                <div>
+                    <div>{formatD(row.real_parto || row.parto)}</div>
+                    {row.real_parto && (
+                        <span className="badge bg-success" style={{ fontSize: '10px' }}>Parió</span>
+                    )}
+                </div>
+            ),
+            sortable: true
+        },
         {
             name: 'Acciones',
             cell: row => (
@@ -126,6 +147,12 @@ const CrudCalendario = () => {
         if (bsModalRef.current) {
             bsModalRef.current.hide()
         }
+        setTimeout(() => {
+            document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+            document.body.classList.remove('modal-open')
+            document.body.style.removeProperty('overflow')
+            document.body.style.removeProperty('padding-right')
+        }, 150)
         getAllCalendario()
     }
 

@@ -443,37 +443,36 @@ const CrudActividadesCamada = () => {
         <>
             <div className="container mt-5">
 
-                <div className="row d-flex mb-3 justify-content-between align-items-center">
-                    <div className="col-4 d-flex gap-2">
+                <div className="row g-2 mb-3 align-items-center justify-content-between">
+                    <div className="col-12 col-lg-3 d-flex gap-2">
                         {partoIdParams && (
                             <button className="btn btn-secondary" onClick={() => navigate('/partos')} title="Volver a Partos">
                                 <i className="fa-solid fa-arrow-left"></i>
                             </button>
                         )}
                         <div className="input-group">
-                            <span className="input-group-text">🔍</span>
                             <input
                                 className="form-control"
                                 value={filterText}
                                 onChange={(e) => setFilterText(e.target.value)}
-                                placeholder="Buscar por lechón, medicamento, observaciones..."
+                                placeholder="🔍 Buscar..."
                             />
                         </div>
                     </div>
 
-                    <div className="col-5">
-                        <div className="d-flex align-items-center gap-2 flex-wrap">
-                            <span className="fw-bold">Filtrar Día:</span>
+                    <div className="col-12 col-lg-auto">
+                        <div className="d-flex align-items-center gap-1 flex-nowrap overflow-auto py-1">
+                            <span className="fw-bold text-nowrap me-1">Filtrar Día:</span>
                             <button
-                                className={`btn btn-sm ${diaFiltro === null ? 'btn-primary' : 'btn-outline-primary'}`}
+                                className={`btn btn-sm px-2 py-1 text-nowrap ${diaFiltro === null ? 'btn-primary' : 'btn-outline-primary'}`}
                                 onClick={() => setDiaFiltro(null)}
                             >
-                                Todos
+                                TODOS
                             </button>
                             {diasSeguimiento.map(dia => (
                                 <button
                                     key={dia}
-                                    className={`btn btn-sm ${diaFiltro === dia ? 'btn-primary' : 'btn-outline-primary'}`}
+                                    className={`btn btn-sm px-2 py-1 ${diaFiltro === dia ? 'btn-primary' : 'btn-outline-primary'}`}
                                     onClick={() => setDiaFiltro(dia)}
                                 >
                                     {dia}
@@ -482,10 +481,10 @@ const CrudActividadesCamada = () => {
                         </div>
                     </div>
 
-                    <div className="col-3 text-end">
+                    <div className="col-12 col-lg-auto text-end">
                         <button
                             type="button"
-                            className="btn btn-success"
+                            className="btn btn-success text-nowrap"
                             data-bs-toggle="modal"
                             data-bs-target="#modalActividadesCamada"
                             onClick={() => setActividadEdit(null)}

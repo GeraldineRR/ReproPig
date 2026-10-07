@@ -70,6 +70,10 @@ const CrudSeguimiento_Cerda = () => {
             });
         }
     };
+    // ==========================================
+    // CARGAR AL INICIAR
+    // ==========================================
+
 
     useEffect(() => {
         getAllSeguimiento_Cerda();
@@ -522,15 +526,12 @@ const CrudSeguimiento_Cerda = () => {
                     )}
 
                     <div className="input-group">
-                        <span className="input-group-text bg-white border-end-0">
-                            🔍
-                        </span>
                         <input
                             type="text"
                             className="form-control border-start-0"
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
-                            placeholder="Buscar por cerda, responsable, medicamento, fecha..."
+                            placeholder="🔍 Buscar por cerda, responsable, medicamento, fecha..."
                         />
                     </div>
                 </div>

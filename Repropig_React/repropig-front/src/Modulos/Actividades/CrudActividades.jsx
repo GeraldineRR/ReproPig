@@ -185,11 +185,10 @@ const CrudActividades = () => {
             <div className="row mb-3">
                 <div className="col-md-6">
                     <div className="input-group">
-                        <span className="input-group-text">🔍</span>
                         <input
                             type="text"
                             className="form-control"
-                            placeholder="Buscar por lechón, tipo, medicamentos, responsables, observaciones..."
+                            placeholder="🔍 Buscar por lechón, tipo, medicamentos, responsables, observaciones..."
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
                         />

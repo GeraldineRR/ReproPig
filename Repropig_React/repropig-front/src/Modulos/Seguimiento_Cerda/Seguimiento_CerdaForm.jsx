@@ -21,6 +21,9 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [medicamentos, setMedicamentos] = useState([])
     const [ciclosActivas, setCiclosActivas] = useState([])
 
+    const [showResponsables, setShowResponsables] = useState(false)
+    const [showMedicamentos, setShowMedicamentos] = useState(false)
+
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     useEffect(() => {
@@ -29,43 +32,24 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         getMedicamentos()
     }, [])
 
-    const parsearArray = (val) => {
-        if (!val) return []
-        if (Array.isArray(val)) return val.map(String)
-        if (typeof val === 'string' && val.trim().startsWith('[')) {
-            try { return JSON.parse(val).map(String) } catch { return [] }
+    const parsearMultiples = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(String);
+        if (typeof val === 'string' && val.startsWith('[')) {
+            try { return JSON.parse(val).map(String); } catch { return []; }
         }
-        if (typeof val === 'string' && val.includes(',')) {
-            return val.split(',').map(s => s.trim()).filter(Boolean)
-        }
-        return [String(val)]
-    }
-
-    const toggleResponsable = (id) => {
-        const strId = String(id)
-        setId_Responsable(prev => {
-            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : [])
-            return arr.includes(strId) ? arr.filter(r => r !== strId) : [...arr, strId]
-        })
-    }
-
-    const toggleMedicamento = (id) => {
-        const strId = String(id)
-        setId_Medicamento(prev => {
-            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : [])
-            return arr.includes(strId) ? arr.filter(m => m !== strId) : [...arr, strId]
-        })
-    }
+        return [String(val)];
+    };
 
     useEffect(() => {
         if (Seguimiento_CerdaEdit) {
             setId_Seguimiento_Cerda(Seguimiento_CerdaEdit.Id_Seguimiento_Cerda ?? '')
-            setFecha(Seguimiento_CerdaEdit.Fecha ? String(Seguimiento_CerdaEdit.Fecha).split('T')[0] : '')
-            setHora(Seguimiento_CerdaEdit.Hora ? String(Seguimiento_CerdaEdit.Hora).slice(0, 5) : '')
+            setFecha(Seguimiento_CerdaEdit.Fecha?.split('T')[0] ?? '')
+            setHora(Seguimiento_CerdaEdit.Hora ?? '')
             setObservaciones(Seguimiento_CerdaEdit.Observaciones ?? '')
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
-            setId_Responsable(parsearArray(Seguimiento_CerdaEdit.Id_Responsable))
-            setId_Medicamento(parsearArray(Seguimiento_CerdaEdit.Id_Medicamento))
+            setId_Responsable(parsearMultiples(Seguimiento_CerdaEdit.Id_Responsable))
+            setId_Medicamento(parsearMultiples(Seguimiento_CerdaEdit.Id_Medicamento))
             setId_Ciclo(Seguimiento_CerdaEdit.Id_Ciclo ?? '')
             setTextFormButton("Actualizar")
 
@@ -89,23 +73,17 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
     const getPorcinos = async () => {
         try {
-            const [porcinosRes, ciclosRes] = await Promise.all([
-                apiAxios.get('/porcino/'),
-                apiAxios.get('/ciclos/')
-            ]);
-            const activeCiclosSows = new Set(
-                ciclosRes.data
-                    .filter(c => (c.Estado || '').toUpperCase() === 'ACTIVO')
-                    .map(c => c.Id_Cerda)
-            );
-            
-            setPorcinos(porcinosRes.data.filter(p => 
-                p.Gen_Porcino === 'H' && 
-                p.Tipo_Cerdo === 'Adulto' &&
-                (activeCiclosSows.has(p.Id_Porcino) || (Seguimiento_CerdaEdit && Seguimiento_CerdaEdit.Id_Porcino === p.Id_Porcino))
-            ));
+            const porcinosRes = await apiAxios.get('/porcino/')
+            const lista = Array.isArray(porcinosRes.data) ? porcinosRes.data : []
+            setPorcinos(lista.filter(p => {
+                const gen = p.Gen_Porcino?.trim().toUpperCase()
+                const tipo = p.Tipo_Cerdo?.trim().toLowerCase()
+                const esHembra = gen === 'H' || gen === 'HEMBRA'
+                const esAdulta = !tipo || tipo === 'adulto' || tipo === 'adulta'
+                return esHembra && esAdulta
+            }))
         } catch (error) {
-            console.error('Error obteniendo porcinos y ciclos:', error)
+            console.error('Error obteniendo porcinos:', error)
             setPorcinos([])
         }
     }
@@ -114,7 +92,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         try {
             const res = await apiAxios.get('/responsables/')
             // Filtrar activos o si ya está seleccionado en edición
-            setResponsables(res.data.filter(r => 
+            setResponsables(res.data.filter(r =>
                 r.Estado === 'Activo' || (Seguimiento_CerdaEdit && Seguimiento_CerdaEdit.Id_Responsable === r.Id_Responsable)
             ))
         } catch (error) {
@@ -137,8 +115,10 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         if (!idPorcino) { setCiclosActivas([]); return }
         try {
             const response = await apiAxios.get('/ciclos/')
-            const activas = response.data.filter(r =>
-                r.Id_Cerda == idPorcino && (r.Estado || '').toUpperCase() === 'ACTIVO'
+            const lista = Array.isArray(response.data) ? response.data : []
+            const activas = lista.filter(r =>
+                (String(r.Id_Cerda) === String(idPorcino) || String(r.porcino?.Id_Porcino) === String(idPorcino)) &&
+                (!r.Estado || (r.Estado || '').toUpperCase() === 'ACTIVO')
             )
             setCiclosActivas(activas)
         } catch (error) {
@@ -154,15 +134,27 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         getCiclosActivas(val)
     }
 
+    const toggleResponsable = (id) => {
+        setId_Responsable(prev =>
+            prev.includes(String(id)) ? prev.filter(r => r !== String(id)) : [...prev, String(id)]
+        )
+    }
+
+    const toggleMedicamento = (id) => {
+        setId_Medicamento(prev =>
+            prev.includes(String(id)) ? prev.filter(m => m !== String(id)) : [...prev, String(id)]
+        )
+    }
+
     const gestionarForm = async (e) => {
         e.preventDefault()
 
         const formatMultiField = (val) => {
             if (!val || (Array.isArray(val) && val.length === 0)) return null;
             if (Array.isArray(val)) {
-                return val.length === 1 ? Number(val[0]) : JSON.stringify(val.map(Number));
+                return val.length === 1 ? val[0] : JSON.stringify(val);
             }
-            return Number(val);
+            return val;
         };
 
         const data = {
@@ -250,7 +242,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                         <option value="">Seleccione una cerda</option>
                         {porcinos.map((porcino) => (
                             <option key={porcino.Id_Porcino} value={porcino.Id_Porcino}>
-                                {porcino.Nom_Porcino}
+                                {porcino.Nom_Porcino || (porcino.Num_Chapeta ? `Chapeta ${porcino.Num_Chapeta}` : `Cerda #${porcino.Id_Porcino}`)}
                             </option>
                         ))}
                     </select>
@@ -294,11 +286,10 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                                     <span
                                         key={responsable.Id_Responsable}
                                         onClick={() => toggleResponsable(responsable.Id_Responsable)}
-                                        className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                            activo
+                                        className={`px-3 py-1.5 rounded-pill user-select-none ${activo
                                                 ? "bg-success text-white shadow-sm fw-bold"
                                                 : "bg-white border text-secondary"
-                                        }`}
+                                            }`}
                                         style={{ cursor: "pointer", fontSize: "13px" }}
                                     >
                                         {activo ? "✓ " : "+ "}{responsable.Nombres} {responsable.Apellidos || ""}
@@ -324,11 +315,10 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                                     <span
                                         key={medicamento.Id_Medicamento}
                                         onClick={() => toggleMedicamento(medicamento.Id_Medicamento)}
-                                        className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                            activo
+                                        className={`px-3 py-1.5 rounded-pill user-select-none ${activo
                                                 ? "bg-success text-white shadow-sm fw-bold"
                                                 : "bg-white border text-secondary"
-                                        }`}
+                                            }`}
                                         style={{ cursor: "pointer", fontSize: "13px" }}
                                     >
                                         {activo ? "✓ " : "+ "}{medicamento.Nombre}
