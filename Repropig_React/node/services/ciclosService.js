@@ -2,6 +2,7 @@ import ciclosModel from "../models/ciclosModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import MontaModel from "../models/montaModel.js";
 import InseminacionModel from "../models/inseminacionModel.js";
+import colectaModel from "../models/colectaModel.js";
 
 class ciclosService {
 
@@ -9,8 +10,22 @@ class ciclosService {
         return await ciclosModel.findAll({
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'], separate: true },
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'], separate: true }
+                {
+                    model: MontaModel,
+                    as: 'montas',
+                    separate: true,
+                    include: [{ model: PorcinoModel, as: 'cerdo', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
+                },
+                {
+                    model: InseminacionModel,
+                    as: 'inseminaciones',
+                    separate: true,
+                    include: [{
+                        model: colectaModel,
+                        as: 'colecta',
+                        include: [{ model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
+                    }]
+                }
             ]
         })
     }
@@ -19,8 +34,22 @@ class ciclosService {
         const ciclo = await ciclosModel.findByPk(id, {
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] },
-                { model: MontaModel, as: 'montas', attributes: ['Id_Monta', 'Fec_hora'], separate: true },
-                { model: InseminacionModel, as: 'inseminaciones', attributes: ['Id_Inseminacion', 'Fec_hora'], separate: true }
+                {
+                    model: MontaModel,
+                    as: 'montas',
+                    separate: true,
+                    include: [{ model: PorcinoModel, as: 'cerdo', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
+                },
+                {
+                    model: InseminacionModel,
+                    as: 'inseminaciones',
+                    separate: true,
+                    include: [{
+                        model: colectaModel,
+                        as: 'colecta',
+                        include: [{ model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
+                    }]
+                }
             ]
         })
         if (!ciclo) throw new Error('Ciclo no encontrada')

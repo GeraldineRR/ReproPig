@@ -10,7 +10,8 @@ const MedicamentosModel = db.define( "medicamentos", {
     Cantidad: { type: DataTypes.INTEGER, allowNull: true},
     Precio_Unitario: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
     Unidad_Medida: { type: DataTypes.STRING(50), allowNull: true },
-    Observaciones: { type: DataTypes.TEXT }
+    Observaciones: { type: DataTypes.TEXT },
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
   },{
     freezeTableName: true,
     timestamps: false

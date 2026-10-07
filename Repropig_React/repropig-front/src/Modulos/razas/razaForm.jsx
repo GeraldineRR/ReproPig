@@ -100,10 +100,15 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
     
     return (
         <form onSubmit={gestionarForm} className="col-12">
+            
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">🧬 {razaEdit ? 'Editar Raza' : 'Registrar Raza'}</h5>
+                <small className="text-muted">Gestión de genética</small>
+            </div>
 
             <div className="mb-3">
-                <label htmlFor="Nom_Raza" className="form-label">
-                    Nombre de la Raza
+                <label htmlFor="Nom_Raza" className="form-label fw-semibold">
+                    🏷️ Nombre de la Raza
                 </label>
 
                 <input
@@ -119,7 +124,7 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
             <div className="mb-3">
                 <input
                     type="submit"
-                    className="btn btn-primary"
+                    className="btn btn-primary w-100 fw-bold shadow-sm py-2"
                     value={textFormButton}
                 />
             </div>

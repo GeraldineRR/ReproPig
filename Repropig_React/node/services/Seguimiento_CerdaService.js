@@ -1,4 +1,5 @@
 import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
+import PartosModel from "../models/PartosModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import responsablesModel from "../models/responsablesModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
@@ -6,6 +7,9 @@ import ciclosModel from "../models/ciclosModel.js";
 
 class Seguimiento_CerdaService {
 
+    // ==========================================
+    // OBTENER TODOS LOS SEGUIMIENTOS
+    // ==========================================
     async getAll() {
         return await Seguimiento_CerdaModel.findAll({
             include: [
@@ -13,10 +17,15 @@ class Seguimiento_CerdaService {
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
                 { model: ciclosModel, as: 'ciclo' },
-            ]
-        })
+            ],
+            order: [["Id_Seguimiento_Cerda", "DESC"]]
+        });
     }
 
+
+    // ==========================================
+    // OBTENER UN SEGUIMIENTO POR ID
+    // ==========================================
     async getById(id) {
         const Seguimiento_Cerda = await Seguimiento_CerdaModel.findByPk(id, {
             include: [
@@ -30,31 +39,88 @@ class Seguimiento_CerdaService {
         return Seguimiento_Cerda
     }
 
+
+    // ==========================================
+    // OBTENER SEGUIMIENTOS POR PARTO
+    // ==========================================
     async getByParto(idParto) {
-        return await Seguimiento_CerdaModel.findAll({
-            where: { Id_parto: idParto },
-            order: [['Dia_Programado', 'ASC']]
-        })
+
+        // Buscar el parto
+        const parto = await PartosModel.findByPk(idParto);
+
+        if (!parto) {
+            throw new Error(
+                "Parto no encontrado"
+            );
+        }
+
+        // El seguimiento se relaciona con la cerda
+        // mediante Id_Porcino
+        const registros =
+            await Seguimiento_CerdaModel.findAll({
+                where: {
+                    Id_Porcino: parto.Id_Porcino
+                },
+                order: [
+                    ["Fecha", "ASC"],
+                    ["Hora", "ASC"]
+                ]
+            });
+
+        return registros;
     }
 
+
+    // ==========================================
+    // CREAR
+    // ==========================================
     async create(data) {
-        return await Seguimiento_CerdaModel.create(data)
+
+        const nuevoSeguimiento =
+            await Seguimiento_CerdaModel.create(data);
+
+        return nuevoSeguimiento;
     }
 
+
+    // ==========================================
+    // ACTUALIZAR
+    // ==========================================
     async update(id, data) {
-        const result = await Seguimiento_CerdaModel.update(data, { where: { Id_Seguimiento_Cerda: id } })
-        const update = result[0]
 
-        if (update === 0) throw new Error('Seguimiento_Cerda no encontrado o sin cambios')
-        return true
+        const seguimiento =
+            await Seguimiento_CerdaModel.findByPk(id);
+
+        if (!seguimiento) {
+            throw new Error(
+                "Seguimiento de cerda no encontrado"
+            );
+        }
+
+        await seguimiento.update(data);
+
+        return seguimiento;
     }
 
-    async delete(id) {
-        const deleted = await Seguimiento_CerdaModel.destroy({ where: { Id_Seguimiento_Cerda: id } })
 
-        if (!deleted) throw new Error('Seguimiento_Cerda no encontrado')
-        return true
+    // ==========================================
+    // ELIMINAR
+    // ==========================================
+    async delete(id) {
+
+        const seguimiento =
+            await Seguimiento_CerdaModel.findByPk(id);
+
+        if (!seguimiento) {
+            throw new Error(
+                "Seguimiento de cerda no encontrado"
+            );
+        }
+
+        await seguimiento.destroy();
+
+        return true;
     }
 }
 
-export default new Seguimiento_CerdaService()
+export default new Seguimiento_CerdaService();

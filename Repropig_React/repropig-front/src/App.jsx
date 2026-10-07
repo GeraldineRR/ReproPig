@@ -7,6 +7,8 @@ import RutaProtegida from "./components/RutaProtegida"
 import Landing from "./pages/landing"
 import Contactanos from "./pages/Contactanos"
 import Login from "./pages/Login"
+import QuienesSomos from "./pages/QuienesSomos"
+import Documentos from "./pages/Documentos"
 import Dashboard from "./pages/dashboard"
 import ForgotPassword from "./Forgotpassword"
 import ResetPassword from "./Resetpassword"
@@ -36,6 +38,8 @@ function App() {
     <Routes>
       {/* públicas */}
       <Route path="/" element={<Landing />} />
+      <Route path="/quienes-somos" element={<QuienesSomos />} />
+      <Route path="/documentos" element={<Documentos />} />
       <Route path="/contactanos" element={<Contactanos />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -57,6 +61,10 @@ function App() {
           <Route path="/ciclos" element={<CrudCiclos />} />
           <Route path="/partos" element={<CrudPartos />} />
           <Route path="/actividades_camada/parto/:id" element={<CrudActividadesCamada />} />
+          <Route path="/segcamada/parto/:id" element={<CrudActividadesCamada />} />
+          <Route path="/segcamada" element={<CrudActividadesCamada />} />
+          <Route path="/seguimiento_camada" element={<CrudActividadesCamada />} />
+          <Route path="/seguimiento_camada/parto/:id" element={<CrudActividadesCamada />} />
           <Route path="/seguimiento_cerda" element={<CrudSeguimiento_Cerda />} />
           <Route path="/seguimiento_cerda/porcino/:id" element={<CrudSeguimiento_Cerda />} />
           <Route path="/calendario" element={<CrudCalendario />} />

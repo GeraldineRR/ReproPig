@@ -4,13 +4,18 @@ import PorcinoModel from "../models/porcinoModel.js";
 class colectaService {
 
     async getAll() {
-        return await colectaModel.findAll({
-            include: [{
-                model: PorcinoModel,
-                as: 'porcino',
-                attributes: ['Nom_Porcino']
-            }]
-        })
+        try {
+            return await colectaModel.findAll({
+                include: [{
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    attributes: ['Nom_Porcino']
+                }]
+            })
+        } catch (err) {
+            console.error('Error al incluir porcino en colectas:', err)
+            return await colectaModel.findAll()
+        }
     }
 
     async getById(id) {

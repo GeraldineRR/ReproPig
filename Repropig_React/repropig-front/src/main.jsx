@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './Index.css'
+import './ModernForms.css'
 import App from './App.jsx'
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {

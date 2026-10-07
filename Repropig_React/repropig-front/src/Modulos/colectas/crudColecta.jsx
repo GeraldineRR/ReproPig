@@ -11,7 +11,7 @@ const CrudColecta = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
-    const filtroDesdeInseminacion = location.state || null // { Id_colecta }
+    const filtroDesdeInseminacion = (location.state && location.state.Id_colecta) ? location.state : null // { Id_colecta }
     const [colecta, setColecta] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [filterText, setFilterText] = useState('');
@@ -61,6 +61,40 @@ const CrudColecta = () => {
         }
     }
 
+    // 🔹 Toggle Estado Colecta con confirmación SweetAlert
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
+
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} esta colecta?`,
+            text: `La colecta #${row.Id_colecta} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await apiAxios.put(`/colectas/${row.Id_colecta}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                getAllColectas();
+            } catch (error) {
+                try {
+                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
+                    await apiAxios.put(`/colectas/${row.Id_colecta}`, { ...row, Estado: nuevoEstado });
+                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                    getAllColectas();
+                } catch (err) {
+                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
+                }
+            }
+        }
+    };
+
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_colecta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
@@ -68,22 +102,20 @@ const CrudColecta = () => {
             name: 'Vigencia', cell: row => {
                 if (row.Tipo !== 'Interno') return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">N/A</span>;
                 if (!row.Fecha) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">—</span>;
-                
                 const fechaColecta = new Date(row.Fecha);
                 const expirationDate = new Date(fechaColecta);
                 expirationDate.setDate(expirationDate.getDate() + 3);
                 const today = new Date();
-                
+
                 const diffTime = expirationDate.getTime() - today.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
                 if (diffDays <= 0) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Vencida</span>;
                 return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
             }
         },
         { name: 'Uso', selector: row => row.Uso_colecta },
         { name: 'Tipo', selector: row => row.Tipo },
-        { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' }, 
+        { name: 'Cerdo', selector: row => row.Tipo === 'Interno' ? (row.porcino?.Nom_Porcino || '—') : '' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
         { name: 'Volumen', selector: row => row.volumen },
         { name: 'Color', selector: row => row.color },
@@ -96,7 +128,47 @@ const CrudColecta = () => {
                 return <span className={disp <= 0 ? 'badge bg-danger' : disp <= 2 ? 'badge bg-warning' : 'badge bg-success'}>{disp}</span>
             }
         },
-        { name: 'Observaciones', selector: row => row.Observaciones },
+        {
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
+        },
+        {
+            name: 'Estado',
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {esActivo ? 'Activo' : 'Inactivo'}
+                    </button>
+                );
+            }
+        },
         {
             name: 'Acciones', cell: row => (
                 <div className="flex gap-2 items-center justify-end w-full">
@@ -105,6 +177,12 @@ const CrudColecta = () => {
                         onClick={() => setRowToEdit(row)}
                         data-bs-toggle="modal" data-bs-target="#exampleModal">
                         <i className="fa-solid fa-pencil text-xs"></i>
+                    </button>
+                    {/* ✅ Toggle Estado con confirmación */}
+                    <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
+                        onClick={() => toggleEstado(row)}>
+                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
                     </button>
                     {/* ✅ Eliminar */}
                     <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
@@ -122,9 +200,15 @@ const CrudColecta = () => {
     }, []);
 
     const getAllColectas = async () => {
-        const response = await apiAxios.get('/colectas');
-        const sortedData = response.data.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
-        setColecta(sortedData);
+        try {
+            const response = await apiAxios.get('/colectas');
+            const data = Array.isArray(response.data) ? response.data : (response.data?.colectas || []);
+            const sortedData = data.sort((a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0))
+            setColecta(sortedData);
+        } catch (error) {
+            console.error("Error al obtener colectas:", error);
+            setColecta([]);
+        }
     };
 
     const getResponsables = async () => {
@@ -184,7 +268,7 @@ const CrudColecta = () => {
                 title={<h4 className="fw-bold text-gray-800 m-0 py-2">Colectas de Semen</h4>} 
                 columns={columnsTable}
                 data={newListcolecta.filter(c =>
-                    !filtroDesdeInseminacion || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
+                    !filtroDesdeInseminacion || !filtroDesdeInseminacion.Id_colecta || c.Id_colecta == filtroDesdeInseminacion.Id_colecta
                 )}
                 keyField="Id_colecta" 
                 pagination 

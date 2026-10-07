@@ -4,6 +4,8 @@ import DataTable from 'react-data-table-component'
 import RazaForm from "./razaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import { customTableStyles } from "../../styles/tableStyles.js"
+import Swal from 'sweetalert2'
+import WithReactContent from 'sweetalert2-react-content'
 
 const CrudRazas = () => {
 
@@ -12,25 +14,41 @@ const CrudRazas = () => {
     const [razaEdit, setRazaEdit] = useState(null)
     const [filterText, setFilterText] = useState('')
 
-    // Función para alternar el estado de la raza
-    const toggleEstado = async (id) => {
-        setLoadingId(id);
+    const MySwal = WithReactContent(Swal)
 
-        try {
-            const res = await apiAxios.put(`/raza/${id}/toggle-estado`);
+    // Función para alternar el estado de la raza con confirmación SweetAlert
+    const toggleEstado = async (row) => {
+        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+        const accion = esActivo ? 'inactivar' : 'activar';
 
-            setRazas(prev =>
-                prev.map(p =>
-                    p.Id_Raza === id
-                        ? { ...p, Estado: res.data.Estado }
-                        : p
-                )
-            );
+        const result = await MySwal.fire({
+            title: `¿Deseas ${accion} esta raza?`,
+            text: `La raza ${row.Nom_Raza} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: esActivo ? '#d33' : '#198754',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: 'Cancelar'
+        });
 
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoadingId(null);
+        if (result.isConfirmed) {
+            setLoadingId(row.Id_Raza);
+            try {
+                const res = await apiAxios.put(`/raza/${row.Id_Raza}/toggle-estado`);
+                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
+                setRazas(prev =>
+                    prev.map(p =>
+                        p.Id_Raza === row.Id_Raza
+                            ? { ...p, Estado: res.data.Estado }
+                            : p
+                    )
+                );
+            } catch (error) {
+                MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado de la raza.' });
+            } finally {
+                setLoadingId(null);
+            }
         }
     };
 
@@ -47,27 +65,40 @@ const CrudRazas = () => {
         },
         {
             name: 'Estado',
-            selector: row => (
-                <button
-                    className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset transition-colors ${row.Estado === 'Activo' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' : 'bg-red-50 text-red-700 ring-red-600/20 hover:bg-red-100'}`}
-                    onClick={() => toggleEstado(row.Id_Raza)}
-                    disabled={loadingId === row.Id_Raza}
-                >
-                    {loadingId === row.Id_Raza
-                        ? '...'
-                        : row.Estado}
-                </button>
-            )
+            cell: row => {
+                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
+                return (
+                    <button
+                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
+                        onClick={() => toggleEstado(row)}
+                        disabled={loadingId === row.Id_Raza}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        {loadingId === row.Id_Raza ? '...' : (esActivo ? 'Activo' : 'Inactivo')}
+                    </button>
+                );
+            }
         },
         {
             name: 'Acciones',
             cell: row => (
-                <button
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                    onClick={() => handleEdit(row)}
-                >
-                    <i className="fa-solid fa-pencil text-xs"></i>
-                </button>
+                <div className="d-flex gap-1">
+                    <button
+                        className="btn btn-sm bg-info"
+                        onClick={() => handleEdit(row)}
+                        title="Editar"
+                    >
+                        <i className="fa-solid fa-pencil"></i>
+                    </button>
+                    <button
+                        className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
+                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
+                        onClick={() => toggleEstado(row)}
+                        disabled={loadingId === row.Id_Raza}
+                    >
+                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
+                    </button>
+                </div>
             )
         }
     ]
@@ -108,15 +139,12 @@ const CrudRazas = () => {
 
                     <div className="flex gap-2 items-center justify-start w-full">
                         <div className="input-group">
-                            <span className="input-group-text">
-                                🔍
-                            </span>
                             <input
                                 className="form-control"
                                 style={{ maxWidth: '350px' }}
                                 value={filterText}
                                 onChange={(e) => setFilterText(e.target.value)}
-                                placeholder="Buscar raza..."
+                                placeholder="🔍 Buscar raza..."
                             />
                         </div>
                     </div>

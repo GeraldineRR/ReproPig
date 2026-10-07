@@ -75,14 +75,14 @@ const CrudResponsables = () => {
     ];
 
     // ✅ Después — también busca por cargo
-const newlistResponsables = responsables.filter(responsable => {
-    const textToSearch = filterText.toLowerCase();
-    const nombre = responsable.Nombres?.toLowerCase() || '';
-    const apellido = responsable.Apellidos?.toLowerCase() || '';
-    const cargo = responsable.Cargo?.toLowerCase() || '';
-    return nombre.includes(textToSearch) || apellido.includes(textToSearch) || cargo.includes(textToSearch)
-})
-    .sort((a, b) => b.Id_Responsable - a.Id_Responsable) // Desc
+    const newlistResponsables = responsables.filter(responsable => {
+        const textToSearch = filterText.toLowerCase();
+        const nombre = responsable.Nombres?.toLowerCase() || '';
+        const apellido = responsable.Apellidos?.toLowerCase() || '';
+        const cargo = responsable.Cargo?.toLowerCase() || '';
+        return nombre.includes(textToSearch) || apellido.includes(textToSearch) || cargo.includes(textToSearch)
+    })
+        .sort((a, b) => b.Id_Responsable - a.Id_Responsable) // Desc
 
     const hidemodal = () => {
         document.getElementById('closeModal').click();
@@ -98,7 +98,7 @@ const newlistResponsables = responsables.filter(responsable => {
             <div className="container mt-5">
                 <div className="row d-flex mb-3 justify-content-between">
                     <div className="col-4">
-                        <input className="form-control" placeholder="Buscar..."
+                        <input className="form-control" placeholder="🔍 Buscar..."
                             value={filterText}
                             onChange={(e) => setFilterText(e.target.value)} />
                     </div>

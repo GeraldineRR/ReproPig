@@ -14,8 +14,9 @@ const colectaModel = db.define('colecta', {
     cant_generada: { type: DataTypes.INTEGER },
     cant_utilizada: { type: DataTypes.INTEGER },
     Observaciones: { type: DataTypes.STRING },
-
+    Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
 }, {
+    tableName: 'colecta',
     freezeTableName: true,
     timestamps: false
 })
