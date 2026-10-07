@@ -154,28 +154,38 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         setTextFormButton("Enviar");
     }
 
+    const toggleResponsable = (id) => {
+        const strId = String(id);
+        setIdResponsable(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(r => r !== strId) : [...arr, strId];
+        });
+    };
+
+    const toggleMedicamento = (id) => {
+        const strId = String(id);
+        setIdMedicamento(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(m => m !== strId) : [...arr, strId];
+        });
+    };
+
     const huboCambios = () => {
         if (!segcamadaEdit) return true;
+        const currentMeds = Id_Medicamento.map(String).sort().join(',');
+        const origMeds = parsearMultiples(segcamadaEdit.Id_Medicamento).map(String).sort().join(',');
+        const currentResps = Id_Responsable.map(String).sort().join(',');
+        const origResps = parsearMultiples(segcamadaEdit.Id_Responsable).map(String).sort().join(',');
+
         return !(
             Number(Id_Porcino) === Number(segcamadaEdit.Id_Porcino) &&
             Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
             Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
             parseFloat(Peso_Cria).toFixed(2) === parseFloat(segcamadaEdit.Peso_Cria).toFixed(2) &&
-            Number(Id_Medicamento || 0) === Number(segcamadaEdit.Id_Medicamento || 0) &&
+            currentMeds === origMeds &&
+            currentResps === origResps &&
             Observaciones === (segcamadaEdit.Observaciones || '')
         );
-    }
-
-    const toggleResponsable = (id) => {
-        setIdResponsable(prev =>
-            prev.includes(String(id)) ? prev.filter(r => r !== String(id)) : [...prev, String(id)]
-        )
-    }
-
-    const toggleMedicamento = (id) => {
-        setIdMedicamento(prev =>
-            prev.includes(String(id)) ? prev.filter(m => m !== String(id)) : [...prev, String(id)]
-        )
     }
 
     const gestionarForm = async (e) => {
@@ -416,82 +426,78 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         />
                     </div>
 
-                    <div className="mb-3 position-relative">
-                        <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
-                        
-                        <div 
-                            className="form-select text-start shadow-sm" 
-                            onClick={() => setShowResponsables(!showResponsables)}
-                            style={{ cursor: "pointer", userSelect: "none" }}
-                        >
-                            {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
+                    {/* Responsables */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold d-block">
+                            👨‍🌾 Responsables ({Id_Responsable.length})
+                        </label>
+                        <div className="d-flex flex-wrap gap-2">
+                            {responsables.length === 0 ? (
+                                <span className="text-muted small">No hay responsables registrados</span>
+                            ) : (
+                                responsables.map((responsable) => {
+                                    const activo = Id_Responsable.map(String).includes(String(responsable.Id_Responsable));
+                                    return (
+                                        <span
+                                            key={responsable.Id_Responsable}
+                                            onClick={() => toggleResponsable(responsable.Id_Responsable)}
+                                            className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-success text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                }`}
+                                            style={{ cursor: "pointer", fontSize: "13px" }}
+                                        >
+                                            {activo ? "✓ " : "+ "}{responsable.Nombres} {responsable.Apellidos || ""}
+                                        </span>
+                                    );
+                                })
+                            )}
                         </div>
-
-                        {showResponsables && (
-                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
-                                {responsables.length === 0 ? (
-                                    <li className="dropdown-item text-muted small">No hay responsables registrados</li>
-                                ) : (
-                                    responsables.map(r => {
-                                        const activo = Id_Responsable.includes(String(r.Id_Responsable))
-                                        return (
-                                            <li key={r.Id_Responsable} onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}>
-                                                <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="form-check-input m-0" 
-                                                        checked={activo}
-                                                        readOnly
-                                                    />
-                                                    {r.Nombres} {r.Apellidos || ''}
-                                                </a>
-                                            </li>
-                                        )
-                                    })
-                                )}
-                            </ul>
-                        )}
                     </div>
 
-                    <div className="mb-3 position-relative">
-                        <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
-                        
-                        <div 
-                            className="form-select text-start shadow-sm" 
-                            onClick={() => setShowMedicamentos(!showMedicamentos)}
-                            style={{ cursor: "pointer", userSelect: "none" }}
-                        >
-                            {Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}
-                        </div>
+                    {/* Medicamentos */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold d-block">
+                            💊 Medicamentos ({Id_Medicamento.length})
+                        </label>
 
-                        {showMedicamentos && (
-                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
-                                {medicamentos.length === 0 ? (
-                                    <li className="dropdown-item text-muted small">No hay medicamentos registrados</li>
-                                ) : (
-                                    medicamentos.map(m => {
-                                        const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
-                                        return (
-                                            <li key={m.Id_Medicamento} onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}>
-                                                <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="form-check-input m-0" 
-                                                        checked={activo}
-                                                        readOnly
-                                                    />
-                                                    {m.Nombre}
-                                                </a>
-                                            </li>
-                                        )
-                                    })
-                                )}
-                            </ul>
-                        )}
+                        <div className="d-flex flex-wrap gap-2">
+                            {medicamentos.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay medicamentos registrados
+                                </span>
+                            ) : (
+                                medicamentos.map((med) => {
+                                    const activo = Id_Medicamento
+                                        .map(String)
+                                        .includes(String(med.Id_Medicamento));
+
+                                    return (
+                                        <span
+                                            key={med.Id_Medicamento}
+                                            onClick={() =>
+                                                toggleMedicamento(med.Id_Medicamento)
+                                            }
+                                            className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                            style={{
+                                                cursor: "pointer",
+                                                fontSize: "13px"
+                                            }}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {med.Nombre}
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">📝 Observaciones</label>
+                        <label className="form-label">Observaciones</label>
                         <textarea
                             className="form-control"
                             value={Observaciones}

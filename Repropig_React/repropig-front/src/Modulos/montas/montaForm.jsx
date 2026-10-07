@@ -68,11 +68,11 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         const cargarPreloaded = async () => {
             setId_Porcino(String(preloaded.Id_Porcino));
             setId_Ciclo(String(preloaded.Id_Ciclo));
-            setFec_hora('')
-            setId_Cerdo('')
-            setId_Responsable([])
-            setObservaciones('')
-            setTextFormButton('Agregar Monta')
+            setFec_hora('');
+            setId_Cerdo('');
+            setId_Responsable([]);
+            setObservaciones('');
+            setTextFormButton('Agregar Monta');
 
             const res = await apiAxios.get('/ciclos');
             const activas = res.data.filter(r =>
@@ -108,27 +108,28 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
     const getResponsables = async () => {
         try {
-            const res = await apiAxios.get('/responsables/')
-            setResponsables(res.data)
+            const res = await apiAxios.get('/responsables/');
+            setResponsables(res.data);
         } catch (error) {
-            console.error("Error cargando responsables:", error)
+            console.error("Error cargando responsables:", error);
         }
-    }
+    };
 
     const getCiclosActivas = async (id) => {
         if (!id) return setCiclosActivas([]);
-        const res = await apiAxios.get('/ciclos');
-        // ✅ Al editar trae TODAS las ciclos de esa cerda (activas e inactivas)
-        // para que el select pueda mostrar la que ya tiene asignada
-        const todas = res.data.filter(r => r.Id_Cerda == id);
-        setCiclosActivas(todas);
+        try {
+            const res = await apiAxios.get('/ciclos');
+            const todas = (res.data || []).filter(r => r.Id_Cerda == id);
+            setCiclosActivas(todas);
+        } catch (error) {
+            console.error("Error cargando ciclos:", error);
+        }
     };
 
     const handlePorcinoChange = (e) => {
         const val = e.target.value;
         setId_Porcino(val);
         setId_Ciclo('');
-        // Al seleccionar nueva cerda, solo muestra activas
         getCiclosActivasSolo(val);
     };
 

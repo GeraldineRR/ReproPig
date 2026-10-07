@@ -18,6 +18,8 @@ const CrudActividadesCamada = () => {
     const [selectedSegCamada, setSelectedSegCamada] = useState(null)
     const [novedadPorcino, setNovedadPorcino] = useState(null)
     const [novedadForm, setNovedadForm] = useState({ Tipo_Novedad: '', Fecha_Novedad: '', Causa_Motivo: '', Observaciones: '' })
+    const [responsables, setResponsables] = useState([])
+    const [medicamentos, setMedicamentos] = useState([])
     const { id: partoIdParams } = useParams()
     const navigate = useNavigate()
 
@@ -109,12 +111,100 @@ const CrudActividadesCamada = () => {
             }
         },
         {
-            name: 'Medicamento',
-            selector: row => row.medicamentos?.Nombre ?? '—'
+            name: 'Responsables',
+            cell: row => {
+                const nombres = getResponsablesNames(row.Id_Responsable)
+
+                if (!nombres.length) {
+                    return <span className="text-muted">—</span>
+                }
+
+                return (
+                    <div
+                        className="d-flex flex-column gap-1 py-1"
+                        style={{
+                            width: '100%',
+                            whiteSpace: 'normal'
+                        }}
+                    >
+                        {nombres.map((nombre, index) => (
+                            <span
+                                key={index}
+                                className="text-dark"
+                                style={{
+                                    fontSize: '0.8rem',
+                                    lineHeight: '1.3'
+                                }}
+                            >
+                                {nombre}
+                            </span>
+                        ))}
+                    </div>
+                )
+            },
+            minWidth: '190px',
+            wrap: true
         },
         {
-            name: 'Observaciones',
-            selector: row => row.Observaciones || '—'
+            name: 'Medicamentos',
+            cell: row => {
+                const nombres = getMedicamentosNames(row.Id_Medicamento)
+
+                if (!nombres.length) {
+                    return <span className="text-muted">—</span>
+                }
+
+                return (
+                    <div
+                        className="d-flex flex-column gap-1 py-1"
+                        style={{
+                            width: '100%',
+                            whiteSpace: 'normal'
+                        }}
+                    >
+                        {nombres.map((nombre, index) => (
+                            <span
+                                key={index}
+                                className="text-dark"
+                                style={{
+                                    fontSize: '0.8rem',
+                                    lineHeight: '1.3'
+                                }}
+                            >
+                                {nombre}
+                            </span>
+                        ))}
+                    </div>
+                )
+            },
+            minWidth: '180px',
+            wrap: true
+        },
+        {
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
         },
         {
             name: 'Estado',
@@ -179,11 +269,112 @@ const CrudActividadesCamada = () => {
 
     useEffect(() => {
         getAllActividades()
+        getResponsables()
+        getMedicamentos()
     }, [])
 
     const getAllActividades = async () => {
         const response = await apiAxios.get('/segcamada')
         setActividades(response.data)
+    }
+
+    const getResponsables = async () => {
+        try {
+            const response = await apiAxios.get('/responsables/')
+            setResponsables(response.data)
+        } catch (error) {
+            console.error("Error cargando responsables:", error)
+        }
+    }
+
+    const getMedicamentos = async () => {
+        try {
+            const response = await apiAxios.get('/medicamentos/')
+            setMedicamentos(response.data)
+        } catch (error) {
+            console.error("Error cargando medicamentos:", error)
+        }
+    }
+
+    const parseIds = (valor) => {
+        if (valor === null || valor === undefined || valor === '') {
+            return []
+        }
+
+        if (Array.isArray(valor)) {
+            return valor.map(String).filter(Boolean)
+        }
+
+        if (typeof valor === 'number') {
+            return [String(valor)]
+        }
+
+        if (typeof valor === 'string') {
+            const texto = valor.trim()
+
+            if (!texto) return []
+
+            // Si viene como JSON: ["1","2","3"]
+            if (texto.startsWith('[') && texto.endsWith(']')) {
+                try {
+                    const parsed = JSON.parse(texto)
+
+                    if (Array.isArray(parsed)) {
+                        return parsed.map(String).filter(Boolean)
+                    }
+                } catch (error) {
+                    console.error("Error interpretando IDs:", error)
+                }
+            }
+
+            // Si viene separado por comas: 1,2,3
+            if (texto.includes(',')) {
+                return texto
+                    .split(',')
+                    .map(id => id.trim())
+                    .filter(Boolean)
+            }
+
+            return [texto]
+        }
+
+        return [String(valor)]
+    }
+
+    const getResponsablesNames = (valor) => {
+        const ids = parseIds(valor)
+
+        if (!ids.length) return []
+
+        return ids.map(id => {
+            const responsable = responsables.find(
+                r => String(r.Id_Responsable) === String(id)
+            )
+
+            if (!responsable) {
+                return `Responsable #${id}`
+            }
+
+            return `${responsable.Nombres || ''} ${responsable.Apellidos || ''}`.trim()
+        })
+    }
+
+    const getMedicamentosNames = (valor) => {
+        const ids = parseIds(valor)
+
+        if (!ids.length) return []
+
+        return ids.map(id => {
+            const medicamento = medicamentos.find(
+                m => String(m.Id_Medicamento) === String(id)
+            )
+
+            if (!medicamento) {
+                return `Medicamento #${id}`
+            }
+
+            return medicamento.Nombre || `Medicamento #${id}`
+        })
     }
 
     const newListActividades = actividades.filter(act => {
@@ -252,37 +443,36 @@ const CrudActividadesCamada = () => {
         <>
             <div className="container mt-5">
 
-                <div className="row d-flex mb-3 justify-content-between align-items-center">
-                    <div className="col-4 d-flex gap-2">
+                <div className="row g-2 mb-3 align-items-center justify-content-between">
+                    <div className="col-12 col-lg-3 d-flex gap-2">
                         {partoIdParams && (
                             <button className="btn btn-secondary" onClick={() => navigate('/partos')} title="Volver a Partos">
                                 <i className="fa-solid fa-arrow-left"></i>
                             </button>
                         )}
                         <div className="input-group">
-                            <span className="input-group-text">🔍</span>
                             <input
-                            className="form-control"
-                            value={filterText}
-                            onChange={(e) => setFilterText(e.target.value)}
-                            placeholder="Buscar por lechón, medicamento, observaciones..."
-                        />
+                                className="form-control"
+                                value={filterText}
+                                onChange={(e) => setFilterText(e.target.value)}
+                                placeholder="🔍 Buscar..."
+                            />
                         </div>
                     </div>
 
-                    <div className="col-5">
-                        <div className="d-flex align-items-center gap-2 flex-wrap">
-                            <span className="fw-bold">Filtrar Día:</span>
+                    <div className="col-12 col-lg-auto">
+                        <div className="d-flex align-items-center gap-1 flex-nowrap overflow-auto py-1">
+                            <span className="fw-bold text-nowrap me-1">Filtrar Día:</span>
                             <button
-                                className={`btn btn-sm ${diaFiltro === null ? 'btn-primary' : 'btn-outline-primary'}`}
+                                className={`btn btn-sm px-2 py-1 text-nowrap ${diaFiltro === null ? 'btn-primary' : 'btn-outline-primary'}`}
                                 onClick={() => setDiaFiltro(null)}
                             >
-                                Todos
+                                TODOS
                             </button>
                             {diasSeguimiento.map(dia => (
                                 <button
                                     key={dia}
-                                    className={`btn btn-sm ${diaFiltro === dia ? 'btn-primary' : 'btn-outline-primary'}`}
+                                    className={`btn btn-sm px-2 py-1 ${diaFiltro === dia ? 'btn-primary' : 'btn-outline-primary'}`}
                                     onClick={() => setDiaFiltro(dia)}
                                 >
                                     {dia}
@@ -291,10 +481,10 @@ const CrudActividadesCamada = () => {
                         </div>
                     </div>
 
-                    <div className="col-3 text-end">
+                    <div className="col-12 col-lg-auto text-end">
                         <button
                             type="button"
-                            className="btn btn-success"
+                            className="btn btn-success text-nowrap"
                             data-bs-toggle="modal"
                             data-bs-target="#modalActividadesCamada"
                             onClick={() => setActividadEdit(null)}
@@ -343,7 +533,7 @@ const CrudActividadesCamada = () => {
                                     {actividadEdit
                                         ? "Editar Seguimiento"
                                         : "Registrar Seguimiento"}
-                               </h1>
+                                </h1>
 
                                 <button
                                     type="button"
@@ -385,7 +575,7 @@ const CrudActividadesCamada = () => {
                                 <form onSubmit={handleGuardarNovedad}>
                                     <div className="mb-3">
                                         <label className="form-label">Tipo de Novedad</label>
-                                        <select className="form-control" required value={novedadForm.Tipo_Novedad} onChange={e => setNovedadForm({...novedadForm, Tipo_Novedad: e.target.value})}>
+                                        <select className="form-control" required value={novedadForm.Tipo_Novedad} onChange={e => setNovedadForm({ ...novedadForm, Tipo_Novedad: e.target.value })}>
                                             <option value="">Selecciona...</option>
                                             <option value="Muerte">Muerte</option>
                                             <option value="Descarte">Descarte</option>
@@ -396,15 +586,15 @@ const CrudActividadesCamada = () => {
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Fecha</label>
-                                        <input type="date" className="form-control" required value={novedadForm.Fecha_Novedad} onChange={e => setNovedadForm({...novedadForm, Fecha_Novedad: e.target.value})} />
+                                        <input type="date" className="form-control" required value={novedadForm.Fecha_Novedad} onChange={e => setNovedadForm({ ...novedadForm, Fecha_Novedad: e.target.value })} />
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Causa / Motivo</label>
-                                        <input type="text" className="form-control" value={novedadForm.Causa_Motivo} onChange={e => setNovedadForm({...novedadForm, Causa_Motivo: e.target.value})} />
+                                        <input type="text" className="form-control" value={novedadForm.Causa_Motivo} onChange={e => setNovedadForm({ ...novedadForm, Causa_Motivo: e.target.value })} />
                                     </div>
                                     <div className="mb-3">
                                         <label className="form-label">Observaciones</label>
-                                        <textarea className="form-control" rows="2" value={novedadForm.Observaciones} onChange={e => setNovedadForm({...novedadForm, Observaciones: e.target.value})} />
+                                        <textarea className="form-control" rows="2" value={novedadForm.Observaciones} onChange={e => setNovedadForm({ ...novedadForm, Observaciones: e.target.value })} />
                                     </div>
                                     <button type="submit" className="btn btn-danger">Guardar Novedad</button>
                                 </form>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
+import { useNavigate } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
@@ -16,6 +17,7 @@ const EVENTOS = [
 const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInactive, cicloData }) => {
 
     const MySwal = withReactContent(Swal)
+    const navigate = useNavigate()
 
     const [calendario, setCalendario] = useState(calendarioEdit || null)
     const [loading, setLoading] = useState(false)
@@ -220,6 +222,21 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
 
         const isDisabledByNext = isSiguienteRegistrado(evento.key)
 
+        // Para el evento de parto: siempre mostrar botón que abre el formulario de parto
+        if (evento.key === 'parto') {
+            const yaRegistrado = !!data.fechaReal
+            return (
+                <button
+                    className={yaRegistrado ? 'cal-btn-editar' : 'cal-btn-registrar'}
+                    style={{ whiteSpace: 'nowrap' }}
+                    onClick={() => abrirFormularioParto(data)}
+                    title={yaRegistrado ? 'Ver / Editar parto registrado' : 'Registrar parto'}
+                >
+                    {yaRegistrado ? '🐖 Ver Parto' : '🐖 Registrar Parto'}
+                </button>
+            )
+        }
+
         if (estado === 'pendiente') {
             return (
                 <button
@@ -245,6 +262,37 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                 </button>
             </div>
         )
+    }
+
+    // Abrir formulario de parto (navega a /partos con datos precargados)
+    const abrirFormularioParto = (data) => {
+        const idPorcino = cData.Id_Porcino || preloaded?.Id_Porcino || preloaded?.porcino?.Id_Porcino || ''
+        const idCicloNav = resolvedIdCiclo
+        const fechaProyectada = data.fechaProyectada || ''
+        const fechaReal = data.fechaReal || fechaProyectada
+
+        if (hideModal) {
+            hideModal()
+        }
+
+        // Limpiar inmediatamente cualquier backdrop huérfano de Bootstrap y clases del body
+        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+        document.body.classList.remove('modal-open')
+        document.body.style.removeProperty('overflow')
+        document.body.style.removeProperty('padding-right')
+
+        setTimeout(() => {
+            navigate('/partos', {
+                state: {
+                    Id_Ciclo: idCicloNav,
+                    Id_Porcino: idPorcino,
+                    Fec_inicio: fechaReal,
+                    Fec_fin: fechaReal,
+                    Hor_inicial: '08:00',
+                    Observaciones: `Parto del ciclo #${idCicloNav} - ${nombreCerda}`
+                }
+            })
+        }, 100)
     }
 
     // Open revision panel

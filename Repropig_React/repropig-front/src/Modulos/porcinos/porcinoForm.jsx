@@ -225,7 +225,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
     return (
 
         <form onSubmit={gestionarForm} encType="multipart/form-data" className="col-12 col-md-12">
-            
+
             <div className="text-center mb-4">
                 <h5 className="fw-bold">🐷 {porcinoEdit ? 'Editar Porcino' : 'Registrar Porcino'}</h5>
                 <small className="text-muted">Gestión de animales</small>
@@ -281,9 +281,9 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload }) => {
 
                 {razas.filter((raza) => raza.Estado !== 'Inactivo').length === 0 ? (
                     <div className="alert alert-danger" role="alert">
-                    <p>
-                        No hay razas disponibles. Registra una raza primero.
-                    </p>
+                        <p>
+                            No hay razas disponibles. Registra una raza primero.
+                        </p>
                     </div>
                 ) : (
                     <select id="Id_Raza" className="form-control" value={Id_Raza} onChange={(e) => setRaza(e.target.value)} required>

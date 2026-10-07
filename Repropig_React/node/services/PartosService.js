@@ -3,6 +3,10 @@ import PorcinoModel from "../models/porcinoModel.js";
 import ciclosModel from "../models/ciclosModel.js";
 import RazaModel from "../models/razaModel.js";
 import NovedadesModel from "../models/novedadesModel.js";
+import CalendarioModel from "../models/CalendarioModel.js";
+import MontaModel from "../models/montaModel.js";
+import InseminacionModel from "../models/inseminacionModel.js";
+import CalendarioService from "./CalendarioService.js";
 class PartosService {
 
     async getALL() {
@@ -46,6 +50,52 @@ class PartosService {
                 { Estado: 'Inactivo' },
                 { where: { Id_Ciclo: data.Id_Ciclo } }
             )
+
+            // Sincronizar fecha de revisión en el Calendario
+            const fechaRevisionParto = data.Fec_fin || data.Fec_inicio;
+            if (fechaRevisionParto) {
+                try {
+                    let cal = await CalendarioModel.findOne({ where: { Id_Ciclo: data.Id_Ciclo } });
+                    if (cal) {
+                        await CalendarioModel.update(
+                            {
+                                real_parto: fechaRevisionParto,
+                                observaciones_parto: data.Observaciones || cal.observaciones_parto
+                            },
+                            { where: { Id_Calendario: cal.Id_Calendario } }
+                        );
+                    } else {
+                        // Si no existe calendario pero el ciclo tiene montas o inseminaciones, crearlo
+                        const ciclo = await ciclosModel.findByPk(data.Id_Ciclo, {
+                            include: [
+                                { model: MontaModel, as: 'montas' },
+                                { model: InseminacionModel, as: 'inseminaciones' }
+                            ]
+                        });
+                        let fServicio = null;
+                        if (ciclo?.montas?.length > 0) {
+                            fServicio = ciclo.montas[0].Fec_Monta;
+                        } else if (ciclo?.inseminaciones?.length > 0) {
+                            fServicio = ciclo.inseminaciones[0].Fec_Inseminacion;
+                        }
+                        if (fServicio) {
+                            const calNuevo = await CalendarioService.create({
+                                Id_Ciclo: data.Id_Ciclo,
+                                Fecha_Servicio: fServicio
+                            });
+                            await CalendarioModel.update(
+                                {
+                                    real_parto: fechaRevisionParto,
+                                    observaciones_parto: data.Observaciones || null
+                                },
+                                { where: { Id_Calendario: calNuevo.Id_Calendario } }
+                            );
+                        }
+                    }
+                } catch (calError) {
+                    console.error("Error sincronizando parto con Calendario:", calError);
+                }
+            }
         }
 
         // ── Auto-crear lechones (porcinos) basándose en el total de nacidos ──
@@ -60,7 +110,7 @@ class PartosService {
 
         const porcinosData = [];
         const novedadesData = [];
-        
+
         let numLechon = 1;
 
         // Crías vivas
@@ -104,10 +154,10 @@ class PartosService {
 
         if (porcinosData.length > 0) {
             const creados = await PorcinoModel.bulkCreate(porcinosData);
-            
+
             // Crear novedades para los muertos y momias
             let indexCreado = nacVivos; // Saltamos los vivos
-            
+
             // Novedades para muertos
             for (let i = 0; i < nacMuertos; i++) {
                 if (creados[indexCreado]) {
@@ -120,7 +170,7 @@ class PartosService {
                 }
                 indexCreado++;
             }
-            
+
             // Novedades para momias
             for (let i = 0; i < nacMomias; i++) {
                 if (creados[indexCreado]) {
@@ -133,7 +183,7 @@ class PartosService {
                 }
                 indexCreado++;
             }
-            
+
             if (novedadesData.length > 0) {
                 await NovedadesModel.bulkCreate(novedadesData);
             }
@@ -143,17 +193,53 @@ class PartosService {
     }
 
     async update(id, data) {
+        const partoAnterior = await PartosModel.findByPk(id)
         const result = await PartosModel.update(data, { where: { Id_parto: id } })
         const update = result[0]
 
         if (update === 0) throw new Error("Parto no encontrado o sin cambios")
+
+        // Sincronizar fecha de revisión en el Calendario
+        const idCiclo = data.Id_Ciclo || partoAnterior?.Id_Ciclo
+        const fechaRevisionParto = data.Fec_fin || data.Fec_inicio || partoAnterior?.Fec_fin || partoAnterior?.Fec_inicio
+
+        if (idCiclo && fechaRevisionParto) {
+            try {
+                const cal = await CalendarioModel.findOne({ where: { Id_Ciclo: idCiclo } })
+                if (cal) {
+                    await CalendarioModel.update(
+                        {
+                            real_parto: fechaRevisionParto,
+                            observaciones_parto: data.Observaciones !== undefined ? data.Observaciones : cal.observaciones_parto
+                        },
+                        { where: { Id_Calendario: cal.Id_Calendario } }
+                    )
+                }
+            } catch (calErr) {
+                console.error("Error actualizando fecha_parto en Calendario:", calErr)
+            }
+        }
+
         return true
     }
 
     async delete(id) {
+        const parto = await PartosModel.findByPk(id)
         const deleted = await PartosModel.destroy({ where: { Id_parto: id } })
 
         if (!deleted) throw new Error("Parto no encontrado")
+
+        if (parto && parto.Id_Ciclo) {
+            try {
+                await CalendarioModel.update(
+                    { real_parto: null, observaciones_parto: null },
+                    { where: { Id_Ciclo: parto.Id_Ciclo } }
+                )
+            } catch (err) {
+                console.error("Error limpiando real_parto en Calendario:", err)
+            }
+        }
+
         return true
     }
 }

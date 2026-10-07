@@ -100,7 +100,32 @@ const CrudMonta = () => {
         { name: 'Cerda', selector: row => row.porcino?.Nom_Porcino || row.Id_Porcino },
         { name: 'Cerdo', selector: row => row.cerdo?.Nom_Porcino || row.Id_Cerdo || '—' },
         { name: 'Responsables', selector: row => getNombresResponsables(row.Id_Responsable), wrap: true },
-        { name: 'Observaciones', selector: row => row.Observaciones },
+        {
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
+        },
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
             name: 'Estado',

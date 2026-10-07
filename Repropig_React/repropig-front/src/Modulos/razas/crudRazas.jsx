@@ -138,15 +138,12 @@ const CrudRazas = () => {
 
                     <div className="flex gap-2 items-center justify-end w-full">
                         <div className="input-group">
-                            <span className="input-group-text">
-                                🔍
-                            </span>
                             <input
                                 className="form-control"
                                 style={{ width: '290px' }}
                                 value={filterText}
                                 onChange={(e) => setFilterText(e.target.value)}
-                                placeholder="Buscar raza..."
+                                placeholder="🔍 Buscar raza..."
                             />
                         </div>
                     </div>
