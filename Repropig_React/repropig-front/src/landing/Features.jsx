@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom"
 import { 
   TbVaccine, TbFlask, TbHeart, TbPill, TbRefresh, TbUsers, TbPig, 
-  TbDna, TbBabyCarriage, TbHistory, TbBell, TbReportMedical, 
+  TbDna, TbHistory, TbBell, TbReportMedical, 
   TbChecklist, TbListCheck 
 } from 'react-icons/tb'
+import { GiPig } from 'react-icons/gi'
 
 const isLoggedIn = true
 
@@ -18,7 +19,7 @@ function Features() {
     { nombre: "Responsables", ruta: "/responsables", icon: <TbUsers color="#A0B0E8" size={32} />, color: "#F0F4FF", accent: "#A0B0E8", desc: "Gestión de responsables y roles del sistema porcícola.", activo: true },
     { nombre: "Porcinos", ruta: "/porcinos", icon: <TbPig color="#C0A0E8" size={32} />, color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro y seguimiento completo de los porcinos de la granja.", activo: true },
     { nombre: "Razas", ruta: "/razas", icon: <TbDna color="#C0A0E8" size={32} />, color: "#F4F0FF", accent: "#C0A0E8", desc: "Registro de las razas de porcinos.", activo: true },
-    { nombre: "Partos", ruta: "/partos", icon: <TbBabyCarriage color="#E8A0B8" size={32} />, color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.", activo: true },
+    { nombre: "Partos", ruta: "/partos", icon: <GiPig color="#E8A0B8" size={32} />, color: "#FFF0F4", accent: "#E8A0B8", desc: "Control detallado de partos, camadas y registro de nacimientos.", activo: true },
     { nombre: "Historial", ruta: null, icon: <TbHistory color="#B0B8A0" size={32} />, color: "#F4F4F0", accent: "#B0B8A0", desc: "Historial completo de eventos y registros del sistema.", activo: true },
     { nombre: "Novedades", ruta: "/novedades", icon: <TbBell color="#E8B0A0" size={32} />, color: "#FFE8E0", accent: "#E8B0A0", desc: "Registro de novedades y alertas de los porcinos.", activo: true },
     { nombre: "Seguimiento Cerda", ruta: "/seguimiento_cerda", icon: <TbReportMedical color="#A0B8E8" size={32} />, color: "#E4F0FF", accent: "#A0B8E8", desc: "Control y seguimiento detallado por cerda individual.", activo: true },

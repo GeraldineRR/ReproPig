@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './TeamRoulette.css';
 
-import team1 from '../assets/team/team1.jpeg';
+import team1 from '../assets/team/andry_new.png';
 import team2 from '../assets/team/team2.jpeg';
 import team3 from '../assets/team/team3.jpeg';
 import team4 from '../assets/team/team4.jpeg';
