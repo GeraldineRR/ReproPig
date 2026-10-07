@@ -15,10 +15,14 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const [Dia_Programado, setDiaProgramado] = useState(0);
     const [Fecha_Real, setFechaReal] = useState('');
     const [Peso_Cria, setPesoCria] = useState('');
-    const [Id_Medicamento, setIdMedicamento] = useState('');
+    const [Id_Medicamento, setIdMedicamento] = useState([]);
     const [medicamentos, setMedicamentos] = useState([]);
+    const [Id_Responsable, setIdResponsable] = useState([]);
+    const [responsables, setResponsables] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
     const [Fecha_Programada, setFechaProgramada] = useState('');
+    const [showResponsables, setShowResponsables] = useState(false);
+    const [showMedicamentos, setShowMedicamentos] = useState(false);
     const [textFormButton, setTextFormButton] = useState('Enviar');
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
@@ -55,8 +59,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     }
 
     useEffect(() => { getPartos() }, []);
-    useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
-    useEffect(() => { getMedicamentos() }, []);
+    useEffect(() => { if (Id_parto) getCriasPorParto(Id_parto) }, [Id_parto]);
+    useEffect(() => { getMedicamentos(); getResponsables(); }, []);
 
     useEffect(() => {
         if (!segcamadaEdit || modoCorreccion) {
@@ -91,6 +95,22 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         } catch (error) { console.error("Error cargando medicamentos:", error); }
     }
 
+    const getResponsables = async () => {
+        try {
+            const response = await apiAxios.get('/responsables/');
+            setResponsables(response.data);
+        } catch (error) { console.error("Error cargando responsables:", error); }
+    }
+
+    const parsearMultiples = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(String);
+        if (typeof val === 'string' && val.startsWith('[')) {
+            try { return JSON.parse(val).map(String); } catch { return []; }
+        }
+        return [String(val)];
+    };
+
     useEffect(() => {
         if (segcamadaEdit) {
             console.log("EDIT DATA:", segcamadaEdit);
@@ -114,7 +134,8 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
             setFechaReal(segcamadaEdit.Fecha_Real?.split('T')[0] ?? '');
             setPesoCria(segcamadaEdit.Peso_Cria ?? '');
-            setIdMedicamento(segcamadaEdit.Id_Medicamento ?? '');
+            setIdMedicamento(parsearMultiples(segcamadaEdit.Id_Medicamento));
+            setIdResponsable(parsearMultiples(segcamadaEdit.Id_Responsable));
             setObservaciones(segcamadaEdit.Observaciones ?? '');
             setTextFormButton("Actualizar");
         } else {
@@ -127,19 +148,42 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
-        setIdMedicamento('');
+        setIdMedicamento([]);
+        setIdResponsable([]);
         setObservaciones('');
         setTextFormButton("Enviar");
     }
 
+    const toggleResponsable = (id) => {
+        const strId = String(id);
+        setIdResponsable(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(r => r !== strId) : [...arr, strId];
+        });
+    };
+
+    const toggleMedicamento = (id) => {
+        const strId = String(id);
+        setIdMedicamento(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(m => m !== strId) : [...arr, strId];
+        });
+    };
+
     const huboCambios = () => {
         if (!segcamadaEdit) return true;
+        const currentMeds = Id_Medicamento.map(String).sort().join(',');
+        const origMeds = parsearMultiples(segcamadaEdit.Id_Medicamento).map(String).sort().join(',');
+        const currentResps = Id_Responsable.map(String).sort().join(',');
+        const origResps = parsearMultiples(segcamadaEdit.Id_Responsable).map(String).sort().join(',');
+
         return !(
             Number(Id_Porcino) === Number(segcamadaEdit.Id_Porcino) &&
             Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
             Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
             parseFloat(Peso_Cria).toFixed(2) === parseFloat(segcamadaEdit.Peso_Cria).toFixed(2) &&
-            Number(Id_Medicamento || 0) === Number(segcamadaEdit.Id_Medicamento || 0) &&
+            currentMeds === origMeds &&
+            currentResps === origResps &&
             Observaciones === (segcamadaEdit.Observaciones || '')
         );
     }
@@ -147,12 +191,21 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const gestionarForm = async (e) => {
         e.preventDefault();
 
+        const formatMultiField = (val) => {
+            if (!val || (Array.isArray(val) && val.length === 0)) return null;
+            if (Array.isArray(val)) {
+                return val.length === 1 ? Number(val[0]) : JSON.stringify(val.map(Number));
+            }
+            return Number(val);
+        };
+
         const data = {
             Id_Porcino,
             Dia_Programado,
             Fecha_Real,
             Peso_Cria,
-            Id_Medicamento: Id_Medicamento || null,
+            Id_Medicamento: formatMultiField(Id_Medicamento),
+            Id_Responsable: formatMultiField(Id_Responsable),
             Observaciones
         }
 
@@ -255,9 +308,15 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     return (
         <form onSubmit={gestionarForm} className="col-12">
 
+            {/* HEADER */}
+            <div className="text-center mb-4">
+                <h5 className="fw-bold">📊 {segcamadaEdit ? 'Editar Seguimiento' : 'Registrar Seguimiento de Camada'}</h5>
+                <small className="text-muted">Control y crecimiento de lechones</small>
+            </div>
+
             {/* PARTO */}
             <div className="mb-3">
-                <label className="form-label">Parto</label>
+                <label className="form-label fw-semibold">🐖 Parto</label>
 
                 {segcamadaEdit && !modoCorreccion ? (
                     <input
@@ -288,7 +347,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             {(Id_parto || segcamadaEdit) && (
                 <>
                     <div className="mb-3">
-                        <label className="form-label">Lechón</label>
+                        <label className="form-label fw-semibold">🐷 Lechón</label>
 
                         {segcamadaEdit && !modoCorreccion ? (
                             <input
@@ -325,7 +384,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     )}
 
                     <div className="mb-3">
-                        <label className="form-label">Día Programado</label>
+                        <label className="form-label fw-semibold">🗓️ Día Programado</label>
                         <input
                             type="number"
                             className="form-control"
@@ -335,7 +394,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Fecha Programada</label>
+                        <label className="form-label fw-semibold">📅 Fecha Programada</label>
                         <input
                             type="date"
                             className="form-control"
@@ -345,7 +404,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Fecha Real</label>
+                        <label className="form-label fw-semibold">✅ Fecha Real</label>
                         <input
                             type="date"
                             className="form-control"
@@ -356,7 +415,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     </div>
 
                     <div className="mb-3">
-                        <label className="form-label">Peso Lechón (kg)</label>
+                        <label className="form-label fw-semibold">⚖️ Peso Lechón (kg)</label>
                         <input
                             type="number"
                             step="0.01"
@@ -367,20 +426,115 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         />
                     </div>
 
-                    <div className="mb-3">
-                        <label className="form-label">Medicamento</label>
-                        <select
-                            className="form-control"
-                            value={Id_Medicamento}
-                            onChange={(e) => setIdMedicamento(e.target.value)}
+                    <div className="mb-3 position-relative">
+                        <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
+
+                        <div
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                            onClick={() => setShowResponsables(!showResponsables)}
+                            style={{ cursor: "pointer", userSelect: "none" }}
                         >
-                            <option value="">Selecciona...</option>
-                            {medicamentos.map((med) => (
-                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>
-                                    {med.Nombre}
-                                </option>
-                            ))}
-                        </select>
+                            <span>{Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}</span>
+                        </div>
+
+                        {showResponsables && (
+                            <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3 w-100" style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1000 }}>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {responsables.map((r) => {
+                                        const activo = Id_Responsable.includes(String(r.Id_Responsable))
+                                        return (
+                                            <span
+                                                key={r.Id_Responsable}
+                                                onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                    }`}
+                                                style={{ cursor: "pointer", fontSize: "13px" }}
+                                            >
+                                                {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="mb-3 position-relative">
+                        <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
+
+                        <div
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                            onClick={() => setShowMedicamentos(!showMedicamentos)}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                        >
+                            <span>{Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}</span>
+                        </div>
+
+                        {showMedicamentos && (
+                            <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3 w-100" style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1000 }}>
+                                <div className="d-flex flex-wrap gap-2">
+                                    {medicamentos.map((m) => {
+                                        const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
+                                        return (
+                                            <span
+                                                key={m.Id_Medicamento}
+                                                onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                    }`}
+                                                style={{ cursor: "pointer", fontSize: "13px" }}
+                                            >
+                                                {activo ? "✓ " : "+ "}{m.Nombre}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Medicamentos */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold d-block">
+                            💊 Medicamentos ({Id_Medicamento.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {medicamentos.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay medicamentos registrados
+                                </span>
+                            ) : (
+                                medicamentos.map((med) => {
+                                    const activo = Id_Medicamento
+                                        .map(String)
+                                        .includes(String(med.Id_Medicamento));
+
+                                    return (
+                                        <span
+                                            key={med.Id_Medicamento}
+                                            onClick={() =>
+                                                toggleMedicamento(med.Id_Medicamento)
+                                            }
+                                            className={`px-3 py-1 rounded-pill user-select-none ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                            style={{
+                                                cursor: "pointer",
+                                                fontSize: "13px"
+                                            }}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {med.Nombre}
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
                     <div className="mb-3">
@@ -396,7 +550,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                     <div className="mb-3">
                         <input
                             type="submit"
-                            className="btn btn-primary"
+                            className="btn btn-primary w-100 fw-bold py-2 shadow-sm"
                             value={textFormButton}
                         />
                     </div>

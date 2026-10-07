@@ -1,0 +1,121 @@
+/* ModernForms.css - Diseño global para todos los formularios */
+
+/* Contenedores de formulario (si usan modal-content o cards) */
+.modal-content, .card {
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #fdf2f8, #fce7f3) !important;
+    border-bottom: 1px solid #fbcfe8 !important;
+    padding: 1.5rem !important;
+}
+
+.modal-title {
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    font-size: 1.25rem !important;
+    letter-spacing: -0.5px;
+}
+
+.modal-body {
+    padding: 2rem !important;
+    background-color: #ffffff;
+}
+
+/* Etiquetas */
+.form-label {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem !important;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Inputs y Selects */
+.form-control, .form-select {
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.95rem !important;
+    color: #334155 !important;
+    transition: all 0.2s ease-in-out !important;
+    background-color: #f8fafc !important;
+    box-shadow: none !important;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #f472b6 !important; /* pink-400 */
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.15) !important;
+}
+
+.form-control::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Textareas */
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Botones principales de envío */
+form button[type="submit"], .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important; /* blue-500 to blue-600 */
+    border: none !important;
+    border-radius: 12px !important;
+    padding: 0.85rem 1.5rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+    transition: all 0.2s ease !important;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+form button[type="submit"]:hover, .btn-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4) !important;
+}
+
+form button[type="submit"]:active, .btn-primary:active {
+    transform: translateY(0) !important;
+}
+
+/* Badges y Contadores */
+.badge.bg-dark {
+    background: linear-gradient(135deg, #831843, #be185d) !important; /* pink-900 to pink-700 */
+    padding: 0.6rem 1rem !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* Filas y Espaciados */
+.row {
+    margin-bottom: 0.5rem;
+}
+.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Animación de entrada suave para el modal */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    transform: scale(0.95) translateY(-20px);
+    opacity: 0;
+}
+.modal.show .modal-dialog {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}

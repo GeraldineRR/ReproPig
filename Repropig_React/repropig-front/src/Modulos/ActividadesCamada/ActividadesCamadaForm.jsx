@@ -16,8 +16,10 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const [Dia_Programado, setDiaProgramado] = useState(0);
     const [Fecha_Real, setFechaReal] = useState('');
     const [Peso_Cria, setPesoCria] = useState('');
-    const [Id_Medicamento, setIdMedicamento] = useState('');
+    const [Id_Medicamento, setIdMedicamento] = useState([]);
     const [medicamentos, setMedicamentos] = useState([]);
+    const [Id_Responsable, setIdResponsable] = useState([]);
+    const [responsables, setResponsables] = useState([]);
     const [Observaciones, setObservaciones] = useState('');
     const [Fecha_Programada, setFechaProgramada] = useState('');
     const [textFormButton, setTextFormButton] = useState('Enviar');
@@ -26,41 +28,118 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
     function calcularFechaProgramada(fechaParto, dia) {
-        const [year, month, day] = fechaParto.split('-');
-        const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
-        return fecha.toISOString().split('T')[0];
+        if (!fechaParto || !dia) return '';
+
+        const fecha = new Date(fechaParto);
+
+        if (isNaN(fecha.getTime())) {
+            console.error("Fecha de parto inválida:", fechaParto);
+            return '';
+        }
+
+        fecha.setDate(fecha.getDate() + (Number(dia) - 1));
+
+        const year = fecha.getFullYear();
+        const month = String(fecha.getMonth() + 1).padStart(2, '0');
+        const day = String(fecha.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
     }
 
     const actualizarDiaYFecha = async (idPorcino) => {
         if (!Id_parto || !idPorcino) return;
+
         try {
-            const response = await apiAxios.get(`/segcamada/cria/${idPorcino}`);
-            const registros = response.data;
-            const ultimoDia = registros.length ? registros[registros.length - 1].Dia_Programado : 0;
-            const nextDay = diasSeguimiento.find(d => d > ultimoDia) || diasSeguimiento[diasSeguimiento.length - 1];
-            setDiaProgramado(nextDay);
-            const fechaParto = partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin;
-            if (fechaParto) {
-                const fechaProg = calcularFechaProgramada(fechaParto, nextDay);
+            // Buscar seguimientos anteriores de este lechón
+            const response = await apiAxios.get(`/segcamada/porcino/${idPorcino}`);
+
+            const registros = Array.isArray(response.data)
+                ? response.data
+                : [];
+
+            // Obtener el día más alto registrado
+            const ultimoDia = registros.length
+                ? Math.max(
+                    ...registros.map(r => Number(r.Dia_Programado) || 0)
+                )
+                : 0;
+
+            // Buscar el siguiente día disponible
+            const nextDay = diasSeguimiento.find(
+                dia => dia > ultimoDia
+            );
+
+            // Si ya llegó al día 28
+            if (!nextDay) {
+                setDiaProgramado(28);
+            } else {
+                setDiaProgramado(nextDay);
+            }
+
+            const diaCalculado = nextDay || 28;
+
+            // Buscar el parto sin importar si el ID viene como string o número
+            const partoSeleccionado = partos.find(
+                p => String(p.Id_parto) === String(Id_parto)
+            );
+
+            if (!partoSeleccionado) {
+                console.warn(
+                    "No se encontró el parto seleccionado:",
+                    Id_parto
+                );
+                return;
+            }
+
+            const fechaParto = partoSeleccionado.Fec_fin;
+
+            if (!fechaParto) {
+                console.warn(
+                    "El parto no tiene Fec_fin:",
+                    partoSeleccionado
+                );
+                return;
+            }
+
+            // Calcular fecha programada
+            const fechaProg = calcularFechaProgramada(
+                fechaParto,
+                diaCalculado
+            );
+
+            if (fechaProg) {
                 setFechaProgramada(fechaProg);
+
+                // La fecha real comienza con la fecha programada
                 setFechaReal(fechaProg);
             }
+
         } catch (error) {
-            console.error("Error obteniendo registros previos:", error);
+            console.error(
+                "Error obteniendo registros previos:",
+                error
+            );
         }
-    }
+    };
 
     useEffect(() => { getPartos() }, []);
     useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
-    useEffect(() => { getMedicamentos() }, []);
+    useEffect(() => { getMedicamentos(); getResponsables(); }, []);
 
     useEffect(() => {
-        if (!actividadEdit || modoCorreccion) {
-            if (Id_Porcino && Id_parto) {
-                actualizarDiaYFecha(Id_Porcino);
-            }
+        if (
+            Id_Porcino &&
+            Id_parto &&
+            (!actividadEdit || modoCorreccion)
+        ) {
+            actualizarDiaYFecha(Id_Porcino);
         }
-    }, [Id_Porcino, Id_parto, partos, modoCorreccion])
+    }, [
+        Id_Porcino,
+        Id_parto,
+        partos,
+        modoCorreccion
+    ]);
 
     const getPartos = async () => {
         try {
@@ -71,9 +150,24 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     const getLechonesPorParto = async (idParto) => {
         try {
-            const response = await apiAxios.get(`/porcino/lechones/parto/${idParto}`);
-            setLechones(response.data);
-        } catch (error) { console.error("Error cargando lechones:", error); }
+            const response = await apiAxios.get(
+                `/porcino/lechones/parto/${idParto}`
+            );
+
+            setLechones(
+                Array.isArray(response.data)
+                    ? response.data
+                    : []
+            );
+
+        } catch (error) {
+            console.error(
+                "Error cargando lechones:",
+                error
+            );
+
+            setLechones([]);
+        }
     }
 
     const getMedicamentos = async () => {
@@ -82,6 +176,22 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
             setMedicamentos(response.data);
         } catch (error) { console.error("Error cargando medicamentos:", error); }
     }
+
+    const getResponsables = async () => {
+        try {
+            const response = await apiAxios.get('/responsables/');
+            setResponsables(response.data);
+        } catch (error) { console.error("Error cargando responsables:", error); }
+    }
+
+    const parsearMultiples = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(String);
+        if (typeof val === 'string' && val.startsWith('[')) {
+            try { return JSON.parse(val).map(String); } catch { return []; }
+        }
+        return [String(val)];
+    };
 
     useEffect(() => {
         if (actividadEdit) {
@@ -98,7 +208,8 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
             setFechaReal(actividadEdit.Fecha_Real?.split('T')[0] ?? '');
             setPesoCria(actividadEdit.Peso_Cria ?? '');
-            setIdMedicamento(actividadEdit.Id_Medicamento ?? '');
+            setIdMedicamento(parsearMultiples(actividadEdit.Id_Medicamento));
+            setIdResponsable(parsearMultiples(actividadEdit.Id_Responsable));
             setObservaciones(actividadEdit.Observaciones ?? '');
             setTextFormButton("Actualizar");
         } else {
@@ -115,7 +226,8 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
-        setIdMedicamento('');
+        setIdMedicamento([]);
+        setIdResponsable([]);
         setObservaciones('');
         setTextFormButton("Enviar");
     }
@@ -174,12 +286,21 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         const resultadoPeso = await verificarPesoCero();
         if (resultadoPeso === 'error') return;
 
+        const formatMultiField = (val) => {
+            if (!val || (Array.isArray(val) && val.length === 0)) return null;
+            if (Array.isArray(val)) {
+                return val.length === 1 ? Number(val[0]) : JSON.stringify(val.map(Number));
+            }
+            return Number(val);
+        };
+
         const data = {
             Id_Porcino,
             Dia_Programado,
             Fecha_Real,
             Peso_Cria,
-            Id_Medicamento: Id_Medicamento || null,
+            Id_Medicamento: formatMultiField(Id_Medicamento),
+            Id_Responsable: formatMultiField(Id_Responsable),
             Observaciones
         }
 
@@ -449,14 +570,114 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                         <label className="form-label">Peso Lechón (kg)</label>
                         <input type="number" step="0.01" className="form-control" value={Peso_Cria} onChange={(e) => setPesoCria(e.target.value)} required />
                     </div>
+                    {/* RESPONSABLES */}
                     <div className="mb-3">
-                        <label className="form-label">Medicamento</label>
-                        <select className="form-control" value={Id_Medicamento} onChange={(e) => setIdMedicamento(e.target.value)}>
-                            <option value="">Sin medicamento</option>
-                            {medicamentos.map((med) => (
-                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>{med.Nombre}</option>
-                            ))}
-                        </select>
+                        <label className="form-label fw-semibold d-block">
+                            👨‍🌾 Responsables ({Id_Responsable.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {responsables.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay responsables registrados
+                                </span>
+                            ) : (
+                                responsables.map((resp) => {
+                                    const activo = Id_Responsable
+                                        .map(String)
+                                        .includes(
+                                            String(resp.Id_Responsable)
+                                        );
+
+                                    return (
+                                        <button
+                                            key={resp.Id_Responsable}
+                                            type="button"
+                                            onClick={() =>
+                                                setIdResponsable((prev) => {
+                                                    const actual = Array.isArray(prev)
+                                                        ? prev.map(String)
+                                                        : [];
+
+                                                    const id = String(
+                                                        resp.Id_Responsable
+                                                    );
+
+                                                    return actual.includes(id)
+                                                        ? actual.filter(
+                                                            (r) => r !== id
+                                                        )
+                                                        : [...actual, id];
+                                                })
+                                            }
+                                            className={`btn btn-sm rounded-pill ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {resp.Nombres}{" "}
+                                            {resp.Apellidos || ""}
+                                        </button>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+
+
+                    {/* MEDICAMENTOS */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold d-block">
+                            💊 Medicamentos ({Id_Medicamento.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {medicamentos.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay medicamentos registrados
+                                </span>
+                            ) : (
+                                medicamentos.map((med) => {
+                                    const activo = Id_Medicamento
+                                        .map(String)
+                                        .includes(
+                                            String(med.Id_Medicamento)
+                                        );
+
+                                    return (
+                                        <button
+                                            key={med.Id_Medicamento}
+                                            type="button"
+                                            onClick={() =>
+                                                setIdMedicamento((prev) => {
+                                                    const actual = Array.isArray(prev)
+                                                        ? prev.map(String)
+                                                        : [];
+
+                                                    const id = String(
+                                                        med.Id_Medicamento
+                                                    );
+
+                                                    return actual.includes(id)
+                                                        ? actual.filter(
+                                                            (m) => m !== id
+                                                        )
+                                                        : [...actual, id];
+                                                })
+                                            }
+                                            className={`btn btn-sm rounded-pill ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {med.Nombre}
+                                        </button>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                     <div className="mb-3">
                         <label className="form-label">Observaciones</label>

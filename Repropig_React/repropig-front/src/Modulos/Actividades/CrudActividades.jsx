@@ -104,7 +104,7 @@ const CrudActividades = () => {
         const fecha = act.Fecha_Actividad?.toLowerCase() || ''
         const meds = getNombresMedicamentos(act.Id_Medicamento).toLowerCase()
         const resps = getNombresResponsables(act.Id_Responsable).toLowerCase()
-        
+
         return tipo.includes(text) || obs.includes(text) || lechon.includes(text) || idLechon.includes(text) || fecha.includes(text) || meds.includes(text) || resps.includes(text)
     })
 
@@ -140,8 +140,30 @@ const CrudActividades = () => {
             wrap: true
         },
         {
-            name: 'Observaciones',
-            selector: row => row.Observaciones || 'N/A'
+            name: "Observaciones",
+            selector: row => row.Observaciones || "—",
+            cell: row => (
+                <div
+                    style={{
+                        whiteSpace: "normal",
+                        wordBreak: "break-word",
+                        overflowWrap: "anywhere",
+                        lineHeight: "1.4",
+                        width: "100%",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                    }}
+                    className="small"
+                    title={row.Observaciones || ""}
+                >
+                    {row.Observaciones || "—"}
+                </div>
+            ),
+            wrap: true,
+            minWidth: "220px",
+            grow: 2
         },
         {
             name: 'Acciones',
@@ -163,11 +185,10 @@ const CrudActividades = () => {
             <div className="row mb-3">
                 <div className="col-md-6">
                     <div className="input-group">
-                        <span className="input-group-text">🔍</span>
                         <input
                             type="text"
                             className="form-control"
-                            placeholder="Buscar por lechón, tipo, medicamentos, responsables, observaciones..."
+                            placeholder="🔍 Buscar por lechón, tipo, medicamentos, responsables, observaciones..."
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
                         />

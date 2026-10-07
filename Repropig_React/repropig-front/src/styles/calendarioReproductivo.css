@@ -11,7 +11,9 @@
 
 /* ── Modal Container ──────────────────────────────────────── */
 .calendario-modal .modal-dialog {
-    max-width: 1100px;
+    max-width: 75vw !important;
+    width: 75vw !important;
+    margin: 1.75rem auto;
 }
 
 .calendario-modal .modal-content {
@@ -258,11 +260,25 @@
     flex-shrink: 0;
 }
 
-.evento-icon-rc1 { background: #fef3c7; }
-.evento-icon-rc2 { background: #fed7aa; }
-.evento-icon-cambio { background: #d1fae5; }
-.evento-icon-107 { background: #dbeafe; }
-.evento-icon-parto { background: #fce7f3; }
+.evento-icon-rc1 {
+    background: #fef3c7;
+}
+
+.evento-icon-rc2 {
+    background: #fed7aa;
+}
+
+.evento-icon-cambio {
+    background: #d1fae5;
+}
+
+.evento-icon-107 {
+    background: #dbeafe;
+}
+
+.evento-icon-parto {
+    background: #fce7f3;
+}
 
 .cal-table .dias-badge {
     display: inline-block;
@@ -412,10 +428,21 @@
     flex-shrink: 0;
 }
 
-.cal-legend-dot-no-recelo { background: #22c55e; }
-.cal-legend-dot-recelo { background: #ef4444; }
-.cal-legend-dot-no-aplica { background: #cbd5e1; }
-.cal-legend-dot-realizado { background: #3b82f6; }
+.cal-legend-dot-no-recelo {
+    background: #22c55e;
+}
+
+.cal-legend-dot-recelo {
+    background: #ef4444;
+}
+
+.cal-legend-dot-no-aplica {
+    background: #cbd5e1;
+}
+
+.cal-legend-dot-realizado {
+    background: #3b82f6;
+}
 
 .cal-legend-label {
     font-weight: 600;
@@ -486,8 +513,13 @@
 }
 
 @keyframes cal-fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .cal-revision-panel {
@@ -502,8 +534,13 @@
 }
 
 @keyframes cal-slideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 .cal-revision-header {
@@ -862,11 +899,14 @@
 }
 
 @keyframes cal-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* ÔöÇÔöÇ Print Styles ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ */
 @media print {
+
     .cal-revision-overlay,
     .cal-btn-registrar,
     .cal-btn-editar,

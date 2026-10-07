@@ -54,5 +54,29 @@ export async function runMigrations(db) {
         console.log("Aviso alter inseminacion estado:", e.message)
     }
 
+    try {
+        await db.query("ALTER TABLE seguimiento_cerda MODIFY COLUMN Id_Responsable TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter seguimiento_cerda Id_Responsable:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE seguimiento_cerda MODIFY COLUMN Id_Medicamento TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter seguimiento_cerda Id_Medicamento:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE segcamada MODIFY COLUMN Id_Medicamento TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter segcamada Id_Medicamento:", e.message)
+    }
+
+    try {
+        await db.query("ALTER TABLE segcamada ADD COLUMN Id_Responsable TEXT NULL;")
+    } catch (e) {
+        console.log("Aviso alter segcamada Id_Responsable:", e.message)
+    }
+
     console.log('✅ Migraciones manuales finalizadas.');
 }
