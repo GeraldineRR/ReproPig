@@ -8,7 +8,8 @@ const SegcamadaModel = db.define('segcamada', {
     Dia_Programado: { type: DataTypes.INTEGER, allowNull: false },
     Fecha_Real: { type: DataTypes.DATE, allowNull: false },
     Peso_Cria: { type: DataTypes.DECIMAL(5, 2), allowNull: false },
-    Id_Medicamento: { type: DataTypes.INTEGER, allowNull: true },
+    Id_Medicamento: { type: DataTypes.TEXT, allowNull: true },
+    Id_Responsable: { type: DataTypes.TEXT, allowNull: true },
     Observaciones: { type: DataTypes.CHAR(255), allowNull: true },
     Estado: { type: DataTypes.STRING, defaultValue: 'Activo' }
 }, {

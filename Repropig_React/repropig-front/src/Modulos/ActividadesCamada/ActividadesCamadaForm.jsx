@@ -28,41 +28,118 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
     function calcularFechaProgramada(fechaParto, dia) {
-        const [year, month, day] = fechaParto.split('-');
-        const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
-        return fecha.toISOString().split('T')[0];
+        if (!fechaParto || !dia) return '';
+
+        const fecha = new Date(fechaParto);
+
+        if (isNaN(fecha.getTime())) {
+            console.error("Fecha de parto inválida:", fechaParto);
+            return '';
+        }
+
+        fecha.setDate(fecha.getDate() + (Number(dia) - 1));
+
+        const year = fecha.getFullYear();
+        const month = String(fecha.getMonth() + 1).padStart(2, '0');
+        const day = String(fecha.getDate()).padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
     }
 
     const actualizarDiaYFecha = async (idPorcino) => {
         if (!Id_parto || !idPorcino) return;
+
         try {
-            const response = await apiAxios.get(`/segcamada/cria/${idPorcino}`);
-            const registros = response.data;
-            const ultimoDia = registros.length ? registros[registros.length - 1].Dia_Programado : 0;
-            const nextDay = diasSeguimiento.find(d => d > ultimoDia) || diasSeguimiento[diasSeguimiento.length - 1];
-            setDiaProgramado(nextDay);
-            const fechaParto = partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin;
-            if (fechaParto) {
-                const fechaProg = calcularFechaProgramada(fechaParto, nextDay);
+            // Buscar seguimientos anteriores de este lechón
+            const response = await apiAxios.get(`/segcamada/porcino/${idPorcino}`);
+
+            const registros = Array.isArray(response.data)
+                ? response.data
+                : [];
+
+            // Obtener el día más alto registrado
+            const ultimoDia = registros.length
+                ? Math.max(
+                    ...registros.map(r => Number(r.Dia_Programado) || 0)
+                )
+                : 0;
+
+            // Buscar el siguiente día disponible
+            const nextDay = diasSeguimiento.find(
+                dia => dia > ultimoDia
+            );
+
+            // Si ya llegó al día 28
+            if (!nextDay) {
+                setDiaProgramado(28);
+            } else {
+                setDiaProgramado(nextDay);
+            }
+
+            const diaCalculado = nextDay || 28;
+
+            // Buscar el parto sin importar si el ID viene como string o número
+            const partoSeleccionado = partos.find(
+                p => String(p.Id_parto) === String(Id_parto)
+            );
+
+            if (!partoSeleccionado) {
+                console.warn(
+                    "No se encontró el parto seleccionado:",
+                    Id_parto
+                );
+                return;
+            }
+
+            const fechaParto = partoSeleccionado.Fec_fin;
+
+            if (!fechaParto) {
+                console.warn(
+                    "El parto no tiene Fec_fin:",
+                    partoSeleccionado
+                );
+                return;
+            }
+
+            // Calcular fecha programada
+            const fechaProg = calcularFechaProgramada(
+                fechaParto,
+                diaCalculado
+            );
+
+            if (fechaProg) {
                 setFechaProgramada(fechaProg);
+
+                // La fecha real comienza con la fecha programada
                 setFechaReal(fechaProg);
             }
+
         } catch (error) {
-            console.error("Error obteniendo registros previos:", error);
+            console.error(
+                "Error obteniendo registros previos:",
+                error
+            );
         }
-    }
+    };
 
     useEffect(() => { getPartos() }, []);
     useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
     useEffect(() => { getMedicamentos(); getResponsables(); }, []);
 
     useEffect(() => {
-        if (!actividadEdit || modoCorreccion) {
-            if (Id_Porcino && Id_parto) {
-                actualizarDiaYFecha(Id_Porcino);
-            }
+        if (
+            Id_Porcino &&
+            Id_parto &&
+            (!actividadEdit || modoCorreccion)
+        ) {
+            actualizarDiaYFecha(Id_Porcino);
         }
-    }, [Id_Porcino, Id_parto, partos, modoCorreccion])
+    }, [
+        Id_Porcino,
+        Id_parto,
+        partos,
+        modoCorreccion
+    ]);
 
     const getPartos = async () => {
         try {
@@ -73,9 +150,24 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     const getLechonesPorParto = async (idParto) => {
         try {
-            const response = await apiAxios.get(`/porcino/lechones/parto/${idParto}`);
-            setLechones(response.data);
-        } catch (error) { console.error("Error cargando lechones:", error); }
+            const response = await apiAxios.get(
+                `/porcino/lechones/parto/${idParto}`
+            );
+
+            setLechones(
+                Array.isArray(response.data)
+                    ? response.data
+                    : []
+            );
+
+        } catch (error) {
+            console.error(
+                "Error cargando lechones:",
+                error
+            );
+
+            setLechones([]);
+        }
     }
 
     const getMedicamentos = async () => {
@@ -478,41 +570,114 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                         <label className="form-label">Peso Lechón (kg)</label>
                         <input type="number" step="0.01" className="form-control" value={Peso_Cria} onChange={(e) => setPesoCria(e.target.value)} required />
                     </div>
+                    {/* RESPONSABLES */}
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">👨‍🌾 Responsables (puedes elegir varios)</label>
-                        <select
-                            multiple
-                            className="form-select shadow-sm"
-                            style={{ height: '110px' }}
-                            value={Array.isArray(Id_Responsable) ? Id_Responsable.map(String) : (Id_Responsable ? [String(Id_Responsable)] : [])}
-                            onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setIdResponsable(selected);
-                            }}
-                        >
-                            {responsables.map((resp) => (
-                                <option key={resp.Id_Responsable} value={resp.Id_Responsable}>{resp.Nombres} {resp.Apellidos}</option>
-                            ))}
-                        </select>
-                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
+                        <label className="form-label fw-semibold d-block">
+                            👨‍🌾 Responsables ({Id_Responsable.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {responsables.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay responsables registrados
+                                </span>
+                            ) : (
+                                responsables.map((resp) => {
+                                    const activo = Id_Responsable
+                                        .map(String)
+                                        .includes(
+                                            String(resp.Id_Responsable)
+                                        );
+
+                                    return (
+                                        <button
+                                            key={resp.Id_Responsable}
+                                            type="button"
+                                            onClick={() =>
+                                                setIdResponsable((prev) => {
+                                                    const actual = Array.isArray(prev)
+                                                        ? prev.map(String)
+                                                        : [];
+
+                                                    const id = String(
+                                                        resp.Id_Responsable
+                                                    );
+
+                                                    return actual.includes(id)
+                                                        ? actual.filter(
+                                                            (r) => r !== id
+                                                        )
+                                                        : [...actual, id];
+                                                })
+                                            }
+                                            className={`btn btn-sm rounded-pill ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {resp.Nombres}{" "}
+                                            {resp.Apellidos || ""}
+                                        </button>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
+
+
+                    {/* MEDICAMENTOS */}
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">💊 Medicamentos (puedes elegir varios)</label>
-                        <select
-                            multiple
-                            className="form-select shadow-sm"
-                            style={{ height: '110px' }}
-                            value={Array.isArray(Id_Medicamento) ? Id_Medicamento.map(String) : (Id_Medicamento ? [String(Id_Medicamento)] : [])}
-                            onChange={(e) => {
-                                const selected = Array.from(e.target.selectedOptions, option => option.value);
-                                setIdMedicamento(selected);
-                            }}
-                        >
-                            {medicamentos.map((med) => (
-                                <option key={med.Id_Medicamento} value={med.Id_Medicamento}>{med.Nombre}</option>
-                            ))}
-                        </select>
-                        <small className="text-muted">Mantén presionada la tecla Ctrl (o Cmd) para seleccionar varias opciones.</small>
+                        <label className="form-label fw-semibold d-block">
+                            💊 Medicamentos ({Id_Medicamento.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {medicamentos.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay medicamentos registrados
+                                </span>
+                            ) : (
+                                medicamentos.map((med) => {
+                                    const activo = Id_Medicamento
+                                        .map(String)
+                                        .includes(
+                                            String(med.Id_Medicamento)
+                                        );
+
+                                    return (
+                                        <button
+                                            key={med.Id_Medicamento}
+                                            type="button"
+                                            onClick={() =>
+                                                setIdMedicamento((prev) => {
+                                                    const actual = Array.isArray(prev)
+                                                        ? prev.map(String)
+                                                        : [];
+
+                                                    const id = String(
+                                                        med.Id_Medicamento
+                                                    );
+
+                                                    return actual.includes(id)
+                                                        ? actual.filter(
+                                                            (m) => m !== id
+                                                        )
+                                                        : [...actual, id];
+                                                })
+                                            }
+                                            className={`btn btn-sm rounded-pill ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {med.Nombre}
+                                        </button>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
                     <div className="mb-3">
                         <label className="form-label">Observaciones</label>

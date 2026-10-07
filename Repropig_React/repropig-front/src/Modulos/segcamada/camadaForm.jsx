@@ -154,28 +154,38 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         setTextFormButton("Enviar");
     }
 
+    const toggleResponsable = (id) => {
+        const strId = String(id);
+        setIdResponsable(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(r => r !== strId) : [...arr, strId];
+        });
+    };
+
+    const toggleMedicamento = (id) => {
+        const strId = String(id);
+        setIdMedicamento(prev => {
+            const arr = Array.isArray(prev) ? prev.map(String) : (prev ? [String(prev)] : []);
+            return arr.includes(strId) ? arr.filter(m => m !== strId) : [...arr, strId];
+        });
+    };
+
     const huboCambios = () => {
         if (!segcamadaEdit) return true;
+        const currentMeds = Id_Medicamento.map(String).sort().join(',');
+        const origMeds = parsearMultiples(segcamadaEdit.Id_Medicamento).map(String).sort().join(',');
+        const currentResps = Id_Responsable.map(String).sort().join(',');
+        const origResps = parsearMultiples(segcamadaEdit.Id_Responsable).map(String).sort().join(',');
+
         return !(
             Number(Id_Porcino) === Number(segcamadaEdit.Id_Porcino) &&
             Number(Dia_Programado) === Number(segcamadaEdit.Dia_Programado) &&
             Fecha_Real === segcamadaEdit.Fecha_Real?.split('T')[0] &&
             parseFloat(Peso_Cria).toFixed(2) === parseFloat(segcamadaEdit.Peso_Cria).toFixed(2) &&
-            Number(Id_Medicamento || 0) === Number(segcamadaEdit.Id_Medicamento || 0) &&
+            currentMeds === origMeds &&
+            currentResps === origResps &&
             Observaciones === (segcamadaEdit.Observaciones || '')
         );
-    }
-
-    const toggleResponsable = (id) => {
-        setIdResponsable(prev =>
-            prev.includes(String(id)) ? prev.filter(r => r !== String(id)) : [...prev, String(id)]
-        )
-    }
-
-    const toggleMedicamento = (id) => {
-        setIdMedicamento(prev =>
-            prev.includes(String(id)) ? prev.filter(m => m !== String(id)) : [...prev, String(id)]
-        )
     }
 
     const gestionarForm = async (e) => {
@@ -418,9 +428,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
                     <div className="mb-3 position-relative">
                         <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
-                        
-                        <div 
-                            className="form-control shadow-sm d-flex justify-content-between align-items-center" 
+
+                        <div
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
                             onClick={() => setShowResponsables(!showResponsables)}
                             style={{ cursor: "pointer", userSelect: "none" }}
                         >
@@ -436,11 +446,10 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                                             <span
                                                 key={r.Id_Responsable}
                                                 onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
-                                                className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                                    activo
-                                                        ? "bg-primary text-white shadow-sm fw-bold"
-                                                        : "bg-white border text-secondary"
-                                                }`}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                    }`}
                                                 style={{ cursor: "pointer", fontSize: "13px" }}
                                             >
                                                 {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
@@ -454,9 +463,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
                     <div className="mb-3 position-relative">
                         <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
-                        
-                        <div 
-                            className="form-control shadow-sm d-flex justify-content-between align-items-center" 
+
+                        <div
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
                             onClick={() => setShowMedicamentos(!showMedicamentos)}
                             style={{ cursor: "pointer", userSelect: "none" }}
                         >
@@ -472,11 +481,10 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                                             <span
                                                 key={m.Id_Medicamento}
                                                 onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}
-                                                className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                                    activo
-                                                        ? "bg-primary text-white shadow-sm fw-bold"
-                                                        : "bg-white border text-secondary"
-                                                }`}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                    }`}
                                                 style={{ cursor: "pointer", fontSize: "13px" }}
                                             >
                                                 {activo ? "✓ " : "+ "}{m.Nombre}
@@ -488,8 +496,49 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         )}
                     </div>
 
+                    {/* Medicamentos */}
                     <div className="mb-3">
-                        <label className="form-label fw-semibold">📝 Observaciones</label>
+                        <label className="form-label fw-semibold d-block">
+                            💊 Medicamentos ({Id_Medicamento.length})
+                        </label>
+
+                        <div className="d-flex flex-wrap gap-2">
+                            {medicamentos.length === 0 ? (
+                                <span className="text-muted small">
+                                    No hay medicamentos registrados
+                                </span>
+                            ) : (
+                                medicamentos.map((med) => {
+                                    const activo = Id_Medicamento
+                                        .map(String)
+                                        .includes(String(med.Id_Medicamento));
+
+                                    return (
+                                        <span
+                                            key={med.Id_Medicamento}
+                                            onClick={() =>
+                                                toggleMedicamento(med.Id_Medicamento)
+                                            }
+                                            className={`px-3 py-1 rounded-pill user-select-none ${activo
+                                                ? "bg-success text-white shadow-sm fw-bold"
+                                                : "bg-white border text-secondary"
+                                                }`}
+                                            style={{
+                                                cursor: "pointer",
+                                                fontSize: "13px"
+                                            }}
+                                        >
+                                            {activo ? "✓ " : "+ "}
+                                            {med.Nombre}
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="mb-3">
+                        <label className="form-label">Observaciones</label>
                         <textarea
                             className="form-control"
                             value={Observaciones}
