@@ -434,13 +434,15 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             onClick={() => setShowResponsables(!showResponsables)}
                             style={{ cursor: "pointer", userSelect: "none" }}
                         >
-                            <span>{Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}</span>
+                            {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
                         </div>
 
                         {showResponsables && (
-                            <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3 w-100" style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1000 }}>
-                                <div className="d-flex flex-wrap gap-2">
-                                    {responsables.map((r) => {
+                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                                {responsables.length === 0 ? (
+                                    <li className="dropdown-item text-muted small">No hay responsables registrados</li>
+                                ) : (
+                                    responsables.map(r => {
                                         const activo = Id_Responsable.includes(String(r.Id_Responsable))
                                         return (
                                             <span
@@ -455,9 +457,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                                                 {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
                                             </span>
                                         )
-                                    })}
-                                </div>
-                            </div>
+                                    })
+                                )}
+                            </ul>
                         )}
                     </div>
 
@@ -469,13 +471,15 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                             onClick={() => setShowMedicamentos(!showMedicamentos)}
                             style={{ cursor: "pointer", userSelect: "none" }}
                         >
-                            <span>{Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}</span>
+                            {Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}
                         </div>
 
                         {showMedicamentos && (
-                            <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3 w-100" style={{ maxHeight: "200px", overflowY: "auto", zIndex: 1000 }}>
-                                <div className="d-flex flex-wrap gap-2">
-                                    {medicamentos.map((m) => {
+                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                                {medicamentos.length === 0 ? (
+                                    <li className="dropdown-item text-muted small">No hay medicamentos registrados</li>
+                                ) : (
+                                    medicamentos.map(m => {
                                         const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
                                         return (
                                             <span
@@ -490,9 +494,9 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                                                 {activo ? "✓ " : "+ "}{m.Nombre}
                                             </span>
                                         )
-                                    })}
-                                </div>
-                            </div>
+                                    })
+                                )}
+                            </ul>
                         )}
                     </div>
 

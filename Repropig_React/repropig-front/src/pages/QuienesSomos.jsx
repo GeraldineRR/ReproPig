@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import Navbar from "../components/Navbar"
 import Footer from "../layout/Footer"
+import TeamRoulette from "../components/TeamRoulette"
 import logo from "../assets/logo.png"
 
 function QuienesSomos() {
@@ -238,34 +239,15 @@ function QuienesSomos() {
           </div>
 
           {/* Título Principal */}
-          <h1 className="qs-title">¿Quiénes somos?</h1>
-          <p className="qs-subtitle">
-            Conoce al equipo detrás de <strong>ReproPig</strong>, dedicados a la innovación tecnológica y al desarrollo de soluciones software de alto valor.
+          <h1 className="qs-title">Nuestro equipo</h1>
+          <p className="qs-subtitle" style={{textAlign: "center", fontSize: "1.1rem", maxWidth: "850px", margin: "0 auto 30px"}}>
+            Somos aprendices del Tecnólogo en Análisis y Desarrollo de Software del SENA, Centro Agropecuario “La Granja”. Nos apasiona la tecnología y trabajamos en equipo para crear soluciones útiles e innovadoras, fortaleciendo nuestras habilidades mediante el aprendizaje colaborativo y la mejora continua.
           </p>
 
-          {/* Card Principal con el Texto del Usuario */}
-          <div className="qs-main-card">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-600 text-2xl shadow-inner">
-                🎓
-              </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-[#8a4f58] font-['Nunito']">
-                  Nuestro Equipo
-                </h2>
-                <p className="text-sm font-semibold text-pink-500">
-                  Aprendices SENA ADSO
-                </p>
-              </div>
-            </div>
-
-            <p className="qs-card-text">
-              Somos aprendices del Tecnólogo en Análisis y Desarrollo de Software del SENA, Centro Agropecuario “La Granja”. Nos motiva la tecnología y el trabajo en equipo, desarrollando soluciones innovadoras y funcionales que aporten valor. A través de la colaboración, la práctica y el aprendizaje constante, buscamos fortalecer nuestras competencias y mejorar continuamente nuestras capacidades en el área del desarrollo de software.
-            </p>
-          </div>
+          <TeamRoulette />
 
           {/* Tarjetas de Pilares */}
-          <div className="qs-grid">
+          <div className="qs-grid" style={{marginTop: "50px"}}>
             <div className="qs-pillar-card">
               <div className="qs-pillar-icon">🚀</div>
               <h3 className="qs-pillar-title">Innovación Digital</h3>
