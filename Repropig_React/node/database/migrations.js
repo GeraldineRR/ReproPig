@@ -23,7 +23,20 @@ export async function runMigrations(db) {
         }
     }
 
-    // Otras migraciones manuales
+    // Migraciones de columnas Estado
+    const tablesWithEstado = ['colecta', 'inseminacion', 'monta', 'seguimiento_cerda', 'segcamada', 'medicamentos', 'partos'];
+    for (const table of tablesWithEstado) {
+        try {
+            await db.query(`ALTER TABLE \`${table}\` ADD COLUMN \`Estado\` VARCHAR(20) DEFAULT 'Activo';`);
+            console.log(`✅ Columna 'Estado' agregada a ${table}`);
+        } catch (err) {
+            // Ignorar error si la columna ya existe
+            if (err.parent?.code !== 'ER_DUP_COLUMNNAME') {
+                console.log(`Aviso alter ${table} Estado:`, err.message);
+            }
+        }
+    }
+
     try {
         await db.query("ALTER TABLE actividades_camada MODIFY COLUMN Id_Medicamento TEXT NULL;")
     } catch (e) {
@@ -40,18 +53,6 @@ export async function runMigrations(db) {
         await db.query("ALTER TABLE partos ADD COLUMN Id_Responsable TEXT NULL;")
     } catch (e) {
         console.log("Aviso alter partos Id_Responsable:", e.message)
-    }
-
-    try {
-        await db.query("ALTER TABLE monta ADD COLUMN estado VARCHAR(10) DEFAULT 'Activo';")
-    } catch (e) {
-        console.log("Aviso alter monta estado:", e.message)
-    }
-
-    try {
-        await db.query("ALTER TABLE inseminacion ADD COLUMN estado VARCHAR(10) DEFAULT 'Activo';")
-    } catch (e) {
-        console.log("Aviso alter inseminacion estado:", e.message)
     }
 
     try {
