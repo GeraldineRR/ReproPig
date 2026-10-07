@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
@@ -14,14 +13,15 @@ export default function Sidebar({ isOpen }) {
   // Estilos modernos para los enlaces
   const linkClass = "flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-all font-medium text-sm whitespace-nowrap mx-2 my-1"
   const activeClass = "bg-pink-500 text-white shadow-md shadow-pink-200 hover:bg-pink-600 hover:text-white"
-
+  
   // Estilos para los botones desplegables
   const buttonClass = "flex justify-between items-center px-4 py-3 mt-2 rounded-xl cursor-pointer text-gray-700 hover:bg-gray-50 w-[calc(100%-1rem)] mx-2 text-left whitespace-nowrap font-bold text-sm transition-colors"
 
   return (
     <aside
-      className={`bg-white border-r border-gray-100 h-full transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-40 shrink-0 ${isOpen ? "w-72 overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:top-0 md:w-72" : "w-0 opacity-0 overflow-hidden pointer-events-none md:relative md:top-0 md:w-0 md:opacity-0 md:pointer-events-none"
-        }`}
+      className={`bg-white border-r border-gray-100 h-full transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-40 shrink-0 ${
+        isOpen ? "w-72 overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:top-0 md:w-72" : "w-0 opacity-0 overflow-hidden pointer-events-none md:relative md:top-0 md:w-0 md:opacity-0 md:pointer-events-none"
+      }`}
     >
       <nav className="flex flex-col gap-1 py-4 pb-32">
 
