@@ -28,7 +28,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     useEffect(() => {
         if (rowToEdit?.Id_Monta) {
             // Es edición — cargar todos los datos del registro
-            setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
+            setFec_hora(rowToEdit.Fec_hora?.slice(0, 16) || '')
             setId_Porcino(String(rowToEdit.Id_Porcino))
             setId_Cerdo(String(rowToEdit.Id_Cerdo || ''))
             setObservaciones(rowToEdit.Observaciones || '')
@@ -220,13 +220,13 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             <div className="row g-3">
 
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">📅 Fecha</label>
+                    <label className="form-label fw-semibold">📅 Fecha y Hora</label>
                     <input
-                        type="date"
+                        type="datetime-local"
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
+                        max={new Date().toISOString().slice(0, 16)}
                         required
                     />
                 </div>

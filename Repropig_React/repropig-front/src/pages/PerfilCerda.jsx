@@ -425,15 +425,22 @@ export default function PerfilCerda() {
                                 </span>
                             </div>
 
-                            {
-                                partos.length === 0 ? (
-                                    <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                                        <p className="text-gray-500 font-medium">No hay partos registrados para esta cerda.</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {partos.map(parto => (
-                                            <div key={parto.Id_parto} className="flex flex-col sm:flex-row items-center bg-white border border-gray-100 shadow-sm rounded-2xl p-4 hover:border-green-200 transition-colors">
+                            {partos.length === 0 ? (
+                                <div className="text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                    <p className="text-gray-500 font-medium">No hay partos registrados para esta cerda.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {partos.map(parto => (
+                                        <div key={parto.Id_parto} className="flex flex-col sm:flex-row items-center bg-white border border-gray-100 shadow-sm rounded-2xl p-4 hover:border-green-200 transition-colors">
+                                            
+                                            {/* Fecha y Referencia */}
+                                            <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6 text-center sm:text-left min-w-[120px]">
+                                                <div className="text-sm font-bold text-gray-800">{fmtFecha(parto.Fec_inicio)}</div>
+                                                <div className="text-xs text-gray-400 mt-1">
+                                                    Ciclo Ref: <span className="font-semibold text-gray-600">#{parto.Id_Ciclo || '—'}</span>
+                                                </div>
+                                            </div>
 
                                                 {/* Fecha y Referencia */}
                                                 <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6 text-center sm:text-left min-w-[120px]">

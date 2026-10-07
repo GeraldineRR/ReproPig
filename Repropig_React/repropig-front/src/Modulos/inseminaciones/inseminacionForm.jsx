@@ -103,7 +103,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     // ✅ FIX — ahora llama getCiclosActivas al editar para que el select se llene
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
-            setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
+            setFec_hora(rowToEdit.Fec_hora?.slice(0, 16) || '')
             setId_Porcino(String(rowToEdit.Id_Porcino))
             setCantidad(rowToEdit.cantidad)
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
@@ -234,13 +234,13 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
                 {/* FECHA */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">📅 Fecha</label>
+                    <label className="form-label fw-semibold">📅 Fecha y Hora</label>
                     <input
-                        type="date"
+                        type="datetime-local"
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
+                        max={new Date().toISOString().slice(0, 16)}
                         required
                     />
                 </div>

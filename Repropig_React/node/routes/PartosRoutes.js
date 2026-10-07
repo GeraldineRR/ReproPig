@@ -5,7 +5,6 @@ import {
     createPartos, 
     updatePartos, 
     deletePartos,
-    toggleEstadoParto,
     checkSeguimiento
 } from '../controllers/PartosController.js'
 
@@ -31,9 +30,6 @@ router.get('/', getALLPartos)
 router.get('/:id/tiene-seguimiento', checkSeguimiento)
 router.get('/:id', getPartos)
 router.post('/', createPartos)
-
-// RUTA PARA ACTIVAR/DESACTIVAR (debe ir ANTES de /:id)
-router.put('/:id/toggle-estado', toggleEstadoParto);
 
 router.put('/:id', updatePartos)
 router.delete('/:id', deletePartos)
