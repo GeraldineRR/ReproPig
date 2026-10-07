@@ -276,76 +276,78 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                 </div>
 
                 {/* RESPONSABLE */}
-                <div className="col-md-6">
+                <div className="col-md-6 position-relative">
                     <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
                     
                     <div 
-                        className="form-select shadow-sm d-flex justify-content-between align-items-center" 
+                        className="form-select text-start shadow-sm" 
                         onClick={() => setShowResponsables(!showResponsables)}
                         style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                        <span>{Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}</span>
+                        {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
                     </div>
 
                     {showResponsables && (
-                        <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3" style={{ maxHeight: "200px", overflowY: "auto", width: "95%" }}>
-                            <div className="d-flex flex-wrap gap-2">
-                                {responsables.map((r) => {
+                        <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                            {responsables.length === 0 ? (
+                                <li className="dropdown-item text-muted small">No hay responsables registrados</li>
+                            ) : (
+                                responsables.map(r => {
                                     const activo = Id_Responsable.includes(String(r.Id_Responsable))
                                     return (
-                                        <span
-                                            key={r.Id_Responsable}
-                                            onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
-                                            className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                                activo
-                                                    ? "bg-primary text-white shadow-sm fw-bold"
-                                                    : "bg-white border text-secondary"
-                                            }`}
-                                            style={{ cursor: "pointer", fontSize: "13px" }}
-                                        >
-                                            {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
-                                        </span>
+                                        <li key={r.Id_Responsable} onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}>
+                                            <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="form-check-input m-0" 
+                                                    checked={activo}
+                                                    readOnly
+                                                />
+                                                {r.Nombres} {r.Apellidos || ''}
+                                            </a>
+                                        </li>
                                     )
-                                })}
-                            </div>
-                        </div>
+                                })
+                            )}
+                        </ul>
                     )}
                 </div>
 
                 {/* MEDICAMENTO */}
-                <div className="col-md-6">
+                <div className="col-md-6 position-relative">
                     <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
                     
                     <div 
-                        className="form-select shadow-sm d-flex justify-content-between align-items-center" 
+                        className="form-select text-start shadow-sm" 
                         onClick={() => setShowMedicamentos(!showMedicamentos)}
                         style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                        <span>{Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}</span>
+                        {Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}
                     </div>
 
                     {showMedicamentos && (
-                        <div className="border rounded mt-1 p-2 bg-white shadow-sm position-absolute z-3" style={{ maxHeight: "200px", overflowY: "auto", width: "95%" }}>
-                            <div className="d-flex flex-wrap gap-2">
-                                {medicamentos.map((m) => {
+                        <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                            {medicamentos.length === 0 ? (
+                                <li className="dropdown-item text-muted small">No hay medicamentos registrados</li>
+                            ) : (
+                                medicamentos.map(m => {
                                     const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
                                     return (
-                                        <span
-                                            key={m.Id_Medicamento}
-                                            onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}
-                                            className={`px-3 py-1.5 rounded-pill user-select-none ${
-                                                activo
-                                                    ? "bg-primary text-white shadow-sm fw-bold"
-                                                    : "bg-white border text-secondary"
-                                            }`}
-                                            style={{ cursor: "pointer", fontSize: "13px" }}
-                                        >
-                                            {activo ? "✓ " : "+ "}{m.Nombre}
-                                        </span>
+                                        <li key={m.Id_Medicamento} onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}>
+                                            <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="form-check-input m-0" 
+                                                    checked={activo}
+                                                    readOnly
+                                                />
+                                                {m.Nombre}
+                                            </a>
+                                        </li>
                                     )
-                                })}
-                            </div>
-                        </div>
+                                })
+                            )}
+                        </ul>
                     )}
                 </div>
 
