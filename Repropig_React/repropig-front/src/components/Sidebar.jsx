@@ -2,7 +2,7 @@
 import { NavLink } from "react-router-dom"
 import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
-import { TbHome, TbPig, TbChevronDown, TbActivity, TbStethoscope, TbUsers } from 'react-icons/tb'
+import { TbHome, TbPig, TbChevronDown, TbActivityHeartbeat, TbStethoscope, TbUsers } from 'react-icons/tb'
 
 export default function Sidebar({ isOpen }) {
   const [animalesOpen, setAnimalesOpen] = useState(true)
@@ -50,13 +50,13 @@ export default function Sidebar({ isOpen }) {
         <div>
           <button className={buttonClass} onClick={() => setReproOpen(!reproOpen)}>
             <div className="flex items-center gap-2">
-              <TbActivity className="w-5 h-5 text-purple-500" /> Ciclos
+              <TbActivityHeartbeat className="w-5 h-5 text-purple-500" /> Ciclos
             </div>
             <TbChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${reproOpen ? 'rotate-180' : ''}`} />
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${reproOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/ciclos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos</NavLink>
+              <NavLink to="/ciclos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos Reproductivos</NavLink>
               <NavLink to="/montas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas</NavLink>
               <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas</NavLink>
               <NavLink to="/inseminaciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
