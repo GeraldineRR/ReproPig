@@ -80,14 +80,16 @@ const CrudPorcinos = () => {
     const [filterTipo, setFilterTipo] = useState('Todos')
 
     const columnsTable = [
-        { name: 'Nombre', selector: row => row.Nom_Porcino, },
+        { name: 'Nombre', selector: row => row.Nom_Porcino || '—', sortable: true },
         { 
             name: 'Chapeta', 
-            selector: row => {
+            selector: row => row.Num_Chapeta ?? '', 
+            sortable: true,
+            cell: row => {
                 const is21DaysPast = row.Tipo_Cerdo === 'Lechon' && row.Fec_21_Dias && new Date() >= new Date(row.Fec_21_Dias) && !row.Pes_21_Dias;
                 return (
                     <span className="d-flex align-items-center gap-2">
-                        {row.Num_Chapeta}
+                        {row.Num_Chapeta || '—'}
                         {is21DaysPast && (
                             <span className="text-danger" title="¡Han pasado 21 días! Por favor registra el peso a los 21 días.">
                                 <i className="fa-solid fa-triangle-exclamation"></i>
@@ -97,10 +99,13 @@ const CrudPorcinos = () => {
                 )
             }, 
         },
-        { name: 'Placa Sena', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Plac_Sena_Porcino, },
-        { name: 'Raza', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.raza?.Nom_Raza || '—'), sortable: false, },
+        { name: 'Placa Sena', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.Plac_Sena_Porcino || '—'), sortable: true },
+        { name: 'Raza', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.raza?.Nom_Raza || '—'), sortable: false },
         {
-            name: 'Sexo', selector: row => {
+            name: 'Sexo', 
+            selector: row => row.Gen_Porcino || '',
+            sortable: true,
+            cell: row => {
                 const sexo = row.Gen_Porcino?.trim().toLowerCase()
                 if (sexo === 'm') {
                     return (<span className="fw-normal"> <i className="fa-solid fa-mars text-primary me-1"></i> Macho </span>)
@@ -112,14 +117,29 @@ const CrudPorcinos = () => {
                 return 'N/A'
             }
         },
-        { name: 'Tipo', selector: row => row.Tipo_Cerdo, },
+        { name: 'Tipo', selector: row => row.Tipo_Cerdo || 'Adulto', sortable: true },
 
-        { name: 'Procedencia', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-blue-600/20'}`} > {row.Proc_Porcino} </span>), },
-        { name: 'Lugar Proc.', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Lug_Proc_Porcino, },
-        { name: 'Fecha Nac.', selector: row => row.Fec_Nac_Porcino, },
-        { name: 'Fecha Lleg', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Fec_Llegada, },
+        { 
+            name: 'Procedencia', 
+            selector: row => row.Proc_Porcino || '',
+            sortable: true,
+            cell: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-blue-600/20'}`} > {row.Proc_Porcino || '—'} </span>), 
+        },
+        { name: 'Lugar Proc.', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.Lug_Proc_Porcino || '—') },
+        { 
+            name: 'Fecha Nac.', 
+            selector: row => row.Fec_Nac_Porcino || '',
+            cell: row => row.Fec_Nac_Porcino ? new Date(row.Fec_Nac_Porcino).toLocaleDateString() : '—'
+        },
+        { 
+            name: 'Fecha Lleg', 
+            selector: row => row.Fec_Llegada || '',
+            cell: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.Fec_Llegada ? new Date(row.Fec_Llegada).toLocaleDateString() : '—') 
+        },
         {
-            name: 'Peso Lleg (kg)', selector: row => {
+            name: 'Peso Lleg (kg)', 
+            selector: row => Number(row.Peso_Llegada) || 0,
+            cell: row => {
                 if (row.Tipo_Cerdo === 'Lechon') return '—'
                 const peso = row.Peso_Llegada
                 if (!peso) return 'No aplica'
@@ -148,14 +168,16 @@ const CrudPorcinos = () => {
             }
         },
         {
-            name: 'Edad Actual', selector: row => {
+            name: 'Edad Actual', 
+            selector: row => {
                 const edad = calcularEdadActual(row.Fec_Nac_Porcino)
                 return `${edad} meses`
             },
         },
         {
             name: 'Estado',
-            selector: row => (
+            selector: row => row.Estado || '',
+            cell: row => (
                 <button
                     className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset transition-colors ${row.Estado === 'Activo' ? 'bg-green-50 text-green-700 ring-green-600/20 hover:bg-green-100' : 'bg-red-50 text-red-700 ring-red-600/20 hover:bg-red-100'}`}
                     onClick={() => toggleEstado(row.Id_Porcino)}
@@ -208,11 +230,18 @@ const CrudPorcinos = () => {
     }, [location.state])
 
     const getAllPorcinos = async () => {
-        const response = await apiAxios.get('/porcino/')
-        setPorcinos(response.data)
+        try {
+            const response = await apiAxios.get('/porcino/')
+            setPorcinos(Array.isArray(response.data) ? response.data : [])
+        } catch (error) {
+            console.error("Error al obtener porcinos:", error)
+            setPorcinos([])
+        }
     }
 
-    const newListPorcinos = porcinos.filter(porcino => {
+    const listaPorcinos = Array.isArray(porcinos) ? porcinos : []
+    const newListPorcinos = listaPorcinos.filter(porcino => {
+        if (!porcino) return false
 
         const textToSearch = filterText.toLowerCase()
 
@@ -234,11 +263,12 @@ const CrudPorcinos = () => {
             sexo.includes(textToSearch)
         )
 
+        const tipoPorcino = (porcino.Tipo_Cerdo || 'Adulto').trim().toLowerCase()
         const pasaTipo =
             filterTipo === 'Todos' ||
-            porcino.Tipo_Cerdo?.trim().toLowerCase() === filterTipo.toLowerCase()
+            tipoPorcino === filterTipo.toLowerCase()
 
-        const pasaParto = filterPartoId ? porcino.Id_parto === filterPartoId : true
+        const pasaParto = filterPartoId ? Number(porcino.Id_parto) === Number(filterPartoId) : true
 
         return pasaTexto && pasaTipo && pasaParto
     })
@@ -266,8 +296,9 @@ const CrudPorcinos = () => {
 
             <div className="container mt-5">
 
-                <div className="row d-flex mb-3 justify-content-between align-items-center">
-                    <div className="col-5">
+                <div className="row d-flex mb-3 justify-content-between align-items-center g-2">
+                    {/* Row 1: Search + Type filters + Register button */}
+                    <div className="col-md-5 col-12">
                         <div className="input-group">
                             <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar un nombre, chapeta, placa o procedencia..." />
                         </div>
@@ -291,21 +322,7 @@ const CrudPorcinos = () => {
                         </div>
                     </div>
 
-                    {filterPartoId && (
-                        <div className="col-12 mt-2">
-                            <div className="alert alert-info py-2 px-3 m-0 d-flex justify-content-between align-items-center w-100">
-                                <span>🔍 Filtrando por lechones del <b>Parto #{filterPartoId}</b></span>
-                                <button 
-                                    className="btn btn-sm btn-outline-danger" 
-                                    onClick={() => setFilterPartoId(null)}
-                                >
-                                    Quitar Filtro
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="col-auto">
+                    <div className="col-auto ms-auto">
                         {filterTipo === 'Adulto' && (
                             <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Adulto'); }}>
                                 🐗 + Registrar Adulto
@@ -322,7 +339,23 @@ const CrudPorcinos = () => {
                             </button>
                         )}
                     </div>
+
+                    {/* Row 2: Parto filter banner (only when active) */}
+                    {filterPartoId && (
+                        <div className="col-12 mt-1">
+                            <div className="alert alert-info py-2 px-3 m-0 d-flex justify-content-between align-items-center w-100">
+                                <span>🔍 Filtrando por lechones del <b>Parto #{filterPartoId}</b></span>
+                                <button 
+                                    className="btn btn-sm btn-outline-danger" 
+                                    onClick={() => setFilterPartoId(null)}
+                                >
+                                    Quitar Filtro
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
+
 
                 <DataTable
                     title={<h4 className="fw-bold text-gray-800 m-0 py-2">Porcinos</h4>}

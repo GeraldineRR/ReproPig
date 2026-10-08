@@ -78,16 +78,18 @@ export default function Navbar({ sidebarOpen, onToggleSidebar }) {
             </button>
           </div>
         )}
-        <button
-          onClick={() => navigate("/contactanos")}
-          className={`font-bold transition-colors px-2.5 py-1.5 rounded-lg text-sm sm:text-base flex items-center gap-1.5 ${location.pathname === "/contactanos"
-            ? "text-pink-600 bg-white/70 shadow-sm"
-            : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
-            }`}
-        >
-          <i className="fa-solid fa-envelope text-xs"></i>
-          Contáctanos
-        </button>
+        {!usuario && (
+          <button
+            onClick={() => navigate("/contactanos")}
+            className={`font-bold transition-colors px-2.5 py-1.5 rounded-lg text-sm sm:text-base flex items-center gap-1.5 ${location.pathname === "/contactanos"
+              ? "text-pink-600 bg-white/70 shadow-sm"
+              : "text-[#8a4f58] hover:text-pink-600 hover:bg-white/40"
+              }`}
+          >
+            <i className="fa-solid fa-envelope text-xs"></i>
+            Contáctanos
+          </button>
+        )}
 
         {usuario ? (
           <>
