@@ -7,7 +7,7 @@ const PorcinoModel = db.define('porcinos', {
     Nom_Porcino: { type: DataTypes.STRING, allowNull: true },
     Num_Chapeta: { type: DataTypes.INTEGER, allowNull: true },
     Plac_Sena_Porcino: { type: DataTypes.INTEGER, allowNull: true },
-    Id_Raza: { type: DataTypes.INTEGER, allowNull: false },
+    Id_Raza: { type: DataTypes.INTEGER, allowNull: true },
     Gen_Porcino: { type: DataTypes.CHAR(1), allowNull: false },
     Tipo_Cerdo: { type: DataTypes.ENUM('Adulto', 'Lechon'), allowNull: true },
     Proc_Porcino: { type: DataTypes.ENUM('Externo','Interno'), allowNull: true },
@@ -16,7 +16,13 @@ const PorcinoModel = db.define('porcinos', {
     Fec_Llegada: { type: DataTypes.DATE, allowNull: true },
     Peso_Llegada: { type: DataTypes.DECIMAL(10,2), allowNull: true },
     Estado: { type: DataTypes.CHAR(10), defaultValue: "Activo", allowNull: false},
-    Id_parto: { type: DataTypes.INTEGER, allowNull: true }
+    Id_parto: { type: DataTypes.INTEGER, allowNull: true },
+    Pes_Nacer: { type: DataTypes.DECIMAL(10,2), allowNull: true },
+    Pes_21_Dias: { type: DataTypes.DECIMAL(10,2), allowNull: true },
+    Fec_21_Dias: { type: DataTypes.DATE, allowNull: true },
+    Pes_Destete: { type: DataTypes.DECIMAL(10,2), allowNull: true },
+    Fec_Destete: { type: DataTypes.DATE, allowNull: true },
+    Observaciones: { type: DataTypes.TEXT, allowNull: true }
 }, {
     freezeTableName: true,
     timestamps: false

@@ -301,7 +301,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                 </div>
 
                 {/* MEDICAMENTO */}
-                <div className="col-12">
+                <div className="col-12 mt-3">
                     <label className="form-label fw-semibold d-block">
                         💊 Medicamentos ({Id_Medicamento.length})
                     </label>
