@@ -8,10 +8,7 @@ import e from 'express'
 class AuthService {
 
     async login(email, password) {
-        console.log('🔐 Intentando login con:', email)
-        
         const responsable = await ResponsablesModel.findOne({ where: { Email: email } })
-        console.log('👤 Usuario encontrado:', responsable?.Email || 'NO ENCONTRADO')
         
         if (!responsable)
             throw new Error('Email o contraseña incorrectos')
@@ -19,11 +16,7 @@ class AuthService {
         if (responsable.Estado === 'Inactivo')
             throw new Error('Tu cuenta está inactiva. Contacta al instructor.')
 
-        console.log('🔑 Hash en BD:', responsable.Password)
-        console.log('🔑 Password recibida:', password)
-        
         const passwordValida = await bcrypt.compare(password, responsable.Password)
-        console.log('✅ Password válida:', passwordValida)
         
         if (!passwordValida)
             throw new Error('Email o contraseña incorrectos')
@@ -40,7 +33,6 @@ class AuthService {
             { expiresIn: '8h' }
         )
 
-        console.log(responsable)
 
         return {
             token,
