@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import DataTable from 'react-data-table-component';
 import PartosForm from "./PartoForm.jsx";
 import { customTableStyles } from "../../styles/tableStyles.js";
+import PorcinoForm from "../porcinos/porcinoForm.jsx";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
 import * as bootstrap from "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -16,6 +17,7 @@ const CrudPartos = () => {
     const [partoEdit, setPartoEdit] = useState(null);
     const [preloadedData, setPreloadedData] = useState(null);
     const [loadingId, setLoadingId] = useState(null);
+    const [lechonLoop, setLechonLoop] = useState({ active: false, Id_parto: null, total: 0, current: 0, Fec_Nac: null });
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -44,9 +46,30 @@ const CrudPartos = () => {
         getResponsables();
     }, []);
 
-    // Abrir modal automaticamente si viene con datos desde ciclos/calendario
+    // Abrir modal automaticamente si viene con datos desde ciclos/calendario o notificaciones
     useEffect(() => {
-        if (location.state && (location.state.Id_Ciclo || location.state.Id_Porcino)) {
+        if (location.state?.resumePartoId) {
+            const incomingState = { ...location.state };
+            navigate('/partos', { replace: true, state: null });
+            
+            setLechonLoop({
+                active: true,
+                Id_parto: incomingState.resumePartoId,
+                total: incomingState.nacVivos,
+                current: incomingState.registrados + 1,
+                Fec_Nac: incomingState.fecNac,
+                nombreMadre: incomingState.nombreMadre
+            });
+            
+            setTimeout(() => {
+                const lechonModalEl = document.getElementById("modalLechonFromParto");
+                if (lechonModalEl) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(lechonModalEl, { backdrop: 'static', keyboard: false });
+                    modal.show();
+                }
+            }, 300);
+            
+        } else if (location.state && (location.state.Id_Ciclo || location.state.Id_Porcino)) {
             const incomingState = { ...location.state };
             navigate('/partos', { replace: true, state: null });
 
@@ -181,6 +204,101 @@ const CrudPartos = () => {
         }, 150);
     };
 
+    const handlePartoCreated = (idParto, nacVivos, fecNac) => {
+        setLechonLoop({
+            active: true,
+            Id_parto: idParto,
+            total: nacVivos,
+            current: 1,
+            Fec_Nac: fecNac
+        });
+        
+        setTimeout(() => {
+            const lechonModalEl = document.getElementById("modalLechonFromParto");
+            if (lechonModalEl) {
+                const modal = bootstrap.Modal.getOrCreateInstance(lechonModalEl, { backdrop: 'static', keyboard: false });
+                modal.show();
+            }
+        }, 500);
+    };
+
+    const handleLechonSuccess = () => {
+        setLechonLoop(prev => {
+            const next = prev.current + 1;
+            
+            if (next > prev.total) {
+                // Done!
+                const lechonModalEl = document.getElementById("modalLechonFromParto");
+                if (lechonModalEl) {
+                    const modal = bootstrap.Modal.getInstance(lechonModalEl);
+                    if (modal) modal.hide();
+                }
+                
+                MySwal.fire({
+                    icon: 'success',
+                    title: '¡Excelente!',
+                    text: 'Todos los lechones han sido registrados exitosamente.',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                setTimeout(() => {
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    window.dispatchEvent(new Event('refreshNotificaciones'));
+                }, 300);
+                
+                return { active: false, Id_parto: null, total: 0, current: 0, Fec_Nac: null, nombreMadre: null };
+            } else {
+                MySwal.fire({
+                    title: `Lechón ${prev.current} registrado`,
+                    icon: "success",
+                    timer: 1000,
+                    showConfirmButton: false
+                });
+                window.dispatchEvent(new Event('refreshNotificaciones'));
+                return { ...prev, current: next };
+            }
+        });
+    };
+
+    const handleLechonCancel = () => {
+        const faltantes = lechonLoop.total - lechonLoop.current + 1;
+        
+        MySwal.fire({
+            title: '¿Estás seguro?',
+            text: `Te faltaron ${faltantes} lechones por registrar para seguir la cadena del parto. ¿Quieres salir de todas formas?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, salir',
+            cancelButtonText: 'Continuar registrando'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const lechonModalEl = document.getElementById("modalLechonFromParto");
+                if (lechonModalEl) {
+                    const modal = bootstrap.Modal.getInstance(lechonModalEl);
+                    if (modal) modal.hide();
+                }
+                setLechonLoop({ active: false, Id_parto: null, total: 0, current: 0, Fec_Nac: null, nombreMadre: null });
+                
+                // Show notification of missing piglets
+                MySwal.fire({
+                    icon: 'info',
+                    title: 'Registro incompleto',
+                    text: `Recuerda que faltaron ${faltantes} lechones por registrar de este parto.`
+                });
+                
+                setTimeout(() => {
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    window.dispatchEvent(new Event('refreshNotificaciones'));
+                }, 300);
+            }
+        });
+    };
+
     const columnsTable = [
         {
             name: "Porcino",
@@ -269,6 +387,13 @@ const CrudPartos = () => {
             name: "Acciones",
             cell: row => (
                 <div className="d-flex gap-2 flex-nowrap">
+                    <button
+                        className="btn btn-sm text-white bg-primary"
+                        title="Ver Lechones"
+                        onClick={() => navigate('/porcinos', { state: { filterPartoId: row.Id_parto } })}
+                    >
+                        🐽
+                    </button>
                     <button
                         className="btn btn-sm text-white"
                         style={{ backgroundColor: "#975737" }}
@@ -371,11 +496,44 @@ const CrudPartos = () => {
                                     rowToEdit={partoEdit}
                                     preloaded={preloadedData}
                                     reload={getAllPartos}
+                                    onPartoCreated={handlePartoCreated}
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* Modal for Lechon Loop */}
+                {lechonLoop.active && (
+                    <div className="modal fade" id="modalLechonFromParto" tabIndex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                        <div className="modal-dialog">
+                            <div className="modal-content">
+                                <div className="modal-header bg-warning">
+                                    <h5 className="modal-title fw-bold">
+                                        Cadena de Parto - Lechón {lechonLoop.current} de {lechonLoop.total}
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={handleLechonCancel}
+                                    ></button>
+                                </div>
+                                <div className="modal-body">
+                                    <PorcinoForm 
+                                        key={`lechon_${lechonLoop.Id_parto}_${lechonLoop.current}`} 
+                                        hideModal={handleLechonCancel} 
+                                        reload={null} 
+                                        initialTipo='Lechon' 
+                                        onSuccess={handleLechonSuccess}
+                                        forcedPartoId={lechonLoop.Id_parto}
+                                        forcedFecNac={lechonLoop.Fec_Nac}
+                                        loopInfo={{ current: lechonLoop.current, total: lechonLoop.total, nombreMadre: lechonLoop.nombreMadre }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </>
