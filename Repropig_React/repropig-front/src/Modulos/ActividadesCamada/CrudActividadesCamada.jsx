@@ -307,13 +307,13 @@ const CrudActividadesCamada = () => {
             setPartosList(response.data)
         } catch (e) {
             console.error("Error al obtener partos:", e)
+        }
     }
 
     useEffect(() => {
         getResponsables()
         getMedicamentos()
     }, [])
-    }
 
     const getResponsables = async () => {
         try {
