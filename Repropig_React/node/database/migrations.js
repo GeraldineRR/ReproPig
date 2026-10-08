@@ -78,5 +78,27 @@ export async function runMigrations(db) {
         console.log("Aviso alter segcamada Id_Responsable:", e.message)
     }
 
+    // Migraciones para porcinos (campos de lechones)
+    const porcinoColumns = [
+        { name: 'Pes_Nacer', type: 'DECIMAL(10,2) NULL' },
+        { name: 'Pes_21_Dias', type: 'DECIMAL(10,2) NULL' },
+        { name: 'Fec_21_Dias', type: 'DATE NULL' },
+        { name: 'Pes_Destete', type: 'DECIMAL(10,2) NULL' },
+        { name: 'Fec_Destete', type: 'DATE NULL' },
+        { name: 'Observaciones', type: 'TEXT NULL' }
+    ];
+
+    for (const col of porcinoColumns) {
+        try {
+            await db.query(`ALTER TABLE \`porcinos\` ADD COLUMN \`${col.name}\` ${col.type};`);
+            console.log(`✅ Columna ${col.name} agregada a porcinos`);
+        } catch (err) {
+            if (err.parent?.code !== 'ER_DUP_COLUMNNAME') {
+                console.log(`Aviso alter porcinos ${col.name}:`, err.message);
+            }
+        }
+    }
+
     console.log('✅ Migraciones manuales finalizadas.');
 }
+
