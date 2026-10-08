@@ -141,6 +141,30 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                     order: [['Id_Porcino', 'ASC']]
                 });
 
+                // VERIFICAR LECHONES FALTANTES (REGISTRO INCOMPLETO)
+                const nacVivos = parto.Nac_vivos || 0;
+                const nacMuertos = parto.Nac_muertos || 0;
+                const nacMomias = parto.Nac_momias || 0;
+                const registradosVivos = lechones.length - (nacMuertos + nacMomias);
+                
+                if (nacVivos > registradosVivos) {
+                    const faltantes = nacVivos - registradosVivos;
+                    notificaciones.push({
+                        id: `parto-incompleto-${parto.Id_parto}`,
+                        categoria: 'camada',
+                        tipo: 'atrasado',
+                        titulo: `Registro de lechones incompleto`,
+                        mensaje: `⚠️ Faltan ${faltantes} lechones por registrar del parto de ${nombreCerda} (${nacVivos} nacidos vivos, solo ${registradosVivos} registrados).`,
+                        ruta: `/partos`,
+                        idParto: parto.Id_parto,
+                        faltantes: faltantes,
+                        nacVivos: nacVivos,
+                        registrados: registradosVivos,
+                        fecNac: parto.Fec_inicio,
+                        nombreMadre: nombreCerda
+                    });
+                }
+
                 if (lechones.length === 0) continue;
 
                 const criasPorDia = {};

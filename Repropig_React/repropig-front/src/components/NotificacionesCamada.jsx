@@ -27,7 +27,15 @@ export default function NotificacionesCamada() {
         fetchNotificaciones();
         // Refrescar automáticamente cada 3 minutos
         const interval = setInterval(fetchNotificaciones, 3 * 60 * 1000);
-        return () => clearInterval(interval);
+        
+        // Listener para refresco manual desde otros componentes
+        const handleRefresh = () => fetchNotificaciones();
+        window.addEventListener('refreshNotificaciones', handleRefresh);
+        
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('refreshNotificaciones', handleRefresh);
+        };
     }, []);
 
     // Cerrar al hacer clic fuera
@@ -57,6 +65,18 @@ export default function NotificacionesCamada() {
     const handleClickNotif = (notif) => {
         setAbierto(false);
         try {
+            if (notif.id && String(notif.id).startsWith('parto-incompleto-')) {
+                navigate('/partos', { state: { 
+                    resumePartoId: notif.idParto,
+                    faltantes: notif.faltantes,
+                    nacVivos: notif.nacVivos,
+                    registrados: notif.registrados,
+                    fecNac: notif.fecNac,
+                    nombreMadre: notif.nombreMadre
+                } });
+                return;
+            }
+
             if (notif.categoria === 'camada') {
                 // Notificación de seguimiento de camada → ir al parto específico
                 const ruta = notif.ruta || (notif.idParto ? `/actividades_camada/parto/${notif.idParto}` : '/dashboard');

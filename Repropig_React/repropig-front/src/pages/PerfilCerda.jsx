@@ -31,6 +31,7 @@ export default function PerfilCerda() {
     const [tabModal, setTabModal] = useState('todas') // 'todas', 'montas', 'inseminaciones'
     const [seguimientos, setSeguimientos] = useState([])
     const [exportando, setExportando] = useState(false)
+    const pdfRef = useRef(null)
 
     useEffect(() => {
         cargarDatos()
@@ -62,7 +63,7 @@ export default function PerfilCerda() {
             // Traer seguimientos (si existe la ruta, o un array vacío si falla)
             try {
                 const resSeguimientos = await apiAxios.get('/seguimiento_cerda/')
-                const seguimientosDeCerda = resSeguimientos.data.filter(s => s.Id_Cerda == id)
+                const seguimientosDeCerda = resSeguimientos.data.filter(s => s.Id_Porcino == id)
                 setSeguimientos(seguimientosDeCerda)
             } catch (e) {
                 console.log("No se pudieron cargar seguimientos", e)
@@ -71,7 +72,6 @@ export default function PerfilCerda() {
             setCiclos((resRepro.data || []).filter((r) => Number(r.Id_Cerda) === Number(id)))
             setPartos((resPartos.data || []).filter((p) => Number(p.Id_Porcino) === Number(id)))
             setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
-            setSeguimientos((resSeg.data || []).filter((s) => Number(s.Id_Porcino) === Number(id)))
 
             // Traer responsables
             try {

@@ -9,6 +9,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     const navigate = useNavigate()
 
     const [Fec_hora, setFec_hora] = useState('');
+    const [showResponsables, setShowResponsables] = useState(false);
     const [Id_Porcino, setId_Porcino] = useState('');
     const [cantidad, setCantidad] = useState('');
     const [Id_Responsable, setId_Responsable] = useState([]);
@@ -103,7 +104,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     // ✅ FIX — ahora llama getCiclosActivas al editar para que el select se llene
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
-            setFec_hora(rowToEdit.Fec_hora?.split('T')[0] || '')
+            setFec_hora(rowToEdit.Fec_hora?.slice(0, 16) || '')
             setId_Porcino(String(rowToEdit.Id_Porcino))
             setCantidad(rowToEdit.cantidad)
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
@@ -236,11 +237,10 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                 <div className="col-md-6">
                     <label className="form-label fw-semibold">📅 Fecha</label>
                     <input
-                        type="date"
+                        type="datetime-local"
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
                         required
                     />
                 </div>
@@ -411,31 +411,41 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
             </div>
 
-            {/* RESPONSABLES */}
-            <div className="mt-4">
+            <div className="mt-4 position-relative">
                 <label className="form-label fw-semibold">
                     👨‍🌾 Responsables ({Id_Responsable.length})
                 </label>
-                <div className="d-flex flex-wrap gap-2">
-                    {responsables
-                        .filter(r => r.Estado === 'Activo' || Id_Responsable.includes(r.Id_Responsable))
-                        .map(r => {
-                        const activo = Id_Responsable.includes(r.Id_Responsable)
-                        return (
-                            <span
-                                key={r.Id_Responsable}
-                                onClick={() => toggleResponsable(r.Id_Responsable)}
-                                className={`px-3 py-2 rounded-pill ${activo
-                                    ? "bg-primary text-white shadow"
-                                    : "bg-light border"
-                                    }`}
-                                style={{ cursor: "pointer", fontSize: "13px", transition: "0.2s" }}
-                            >
-                                {r.Nombres} {r.Apellidos}
-                            </span>
-                        )
-                    })}
+                <div 
+                    className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                    onClick={() => setShowResponsables(!showResponsables)}
+                    style={{ cursor: "pointer", userSelect: "none", backgroundColor: "#fff" }}
+                >
+                    {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
                 </div>
+                {showResponsables && (
+                    <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                        {responsables.length === 0 ? (
+                            <li className="dropdown-item text-muted small">No hay responsables registrados</li>
+                        ) : (
+                            responsables.filter(r => r.Estado === 'Activo' || Id_Responsable.includes(r.Id_Responsable)).map(r => {
+                                const activo = Id_Responsable.includes(r.Id_Responsable)
+                                return (
+                                    <li key={r.Id_Responsable} onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}>
+                                        <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
+                                            <input 
+                                                type="checkbox" 
+                                                className="form-check-input m-0" 
+                                                checked={activo}
+                                                readOnly
+                                            />
+                                            {r.Nombres} {r.Apellidos || ''}
+                                        </a>
+                                    </li>
+                                )
+                            })
+                        )}
+                    </ul>
+                )}
             </div>
 
             {/* OBSERVACIONES */}
