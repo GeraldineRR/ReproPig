@@ -113,18 +113,8 @@ class PartosService {
 
         let numLechon = 1;
 
-        // Crías vivas
-        for (let i = 0; i < nacVivos; i++) {
-            porcinosData.push({
-                Id_Raza: razaId,
-                Gen_Porcino: '-', // Sexo por definir
-                Tipo_Cerdo: 'Lechon',
-                Proc_Porcino: 'Interno',
-                Fec_Nac_Porcino: fechaParto,
-                Estado: 'Activo',
-                Id_parto: parto.Id_parto
-            });
-        }
+        // Las crías vivas ya no se auto-crean aquí porque el usuario las registra en cadena
+        // a través de la interfaz (PorcinoForm).
 
         // Crías nacidas muertas
         for (let i = 0; i < nacMuertos; i++) {
@@ -156,7 +146,7 @@ class PartosService {
             const creados = await PorcinoModel.bulkCreate(porcinosData);
 
             // Crear novedades para los muertos y momias
-            let indexCreado = nacVivos; // Saltamos los vivos
+            let indexCreado = 0; // Comenzamos desde el 0 porque ya no hay crías vivas en este array
 
             // Novedades para muertos
             for (let i = 0; i < nacMuertos; i++) {

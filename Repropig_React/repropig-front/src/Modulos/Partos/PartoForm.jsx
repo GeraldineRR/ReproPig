@@ -5,7 +5,7 @@ import withReactContent from "sweetalert2-react-content"
 
 const MySwal = withReactContent(Swal)
 
-const PartosForm = ({ hideModal, rowToEdit = {}, reload, preloaded = null }) => {
+const PartosForm = ({ hideModal, rowToEdit = {}, reload, preloaded = null, onPartoCreated }) => {
 
     const [Id_Porcino, setPorcino] = useState('')
     const [Id_Ciclo, setId_Ciclo] = useState('')
@@ -234,8 +234,23 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload, preloaded = null }) => 
                 await apiAxios.put(`/partos/${rowToEdit.Id_parto}`, data)
                 MySwal.fire("Actualizado", "Parto actualizado correctamente", "success")
             } else {
-                await apiAxios.post("/partos/", data)
-                MySwal.fire("Registrado", "Parto creado correctamente", "success")
+                const response = await apiAxios.post("/partos/", data)
+                const created = response.data.Partos
+                
+                MySwal.fire({
+                    title: "Registrado", 
+                    text: "Parto creado correctamente", 
+                    icon: "success",
+                    timer: 1500,
+                    showConfirmButton: false
+                })
+
+                // Notify parent if there are live piglets to register
+                if (onPartoCreated && data.Nac_vivos > 0 && created?.Id_parto) {
+                    const p = porcinos.find(x => String(x.Id_Porcino) === String(Id_Porcino));
+                    const nombreMadre = p ? (p.Nom_Porcino || p.Num_Chapeta || `Cerda #${p.Id_Porcino}`) : `Cerda #${Id_Porcino}`;
+                    onPartoCreated(created.Id_parto, data.Nac_vivos, data.Fec_inicio, nombreMadre)
+                }
             }
 
             // Sincronizar fecha de revisión en el Calendario si hay ciclo asociado

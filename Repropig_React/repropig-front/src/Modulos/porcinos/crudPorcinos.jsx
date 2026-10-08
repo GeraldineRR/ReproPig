@@ -4,13 +4,16 @@ import DataTable from 'react-data-table-component'
 import PorcinoForm from "./porcinoForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import { QRCodeSVG } from 'qrcode.react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudPorcinos = () => {
 
     const [porcinos, setPorcinos] = useState([])
     const [loadingId, setLoadingId] = useState(null);
+    const [filterPartoId, setFilterPartoId] = useState(null);
+    const location = useLocation();
+    const navigate = useNavigate();
 
     const calcularEdadLlegada = (fechaNacimiento, fechaLlegada) => {
         if (!fechaNacimiento || !fechaLlegada) return null
@@ -71,15 +74,31 @@ const CrudPorcinos = () => {
     };
 
     const [porcinoEdit, setPorcinoEdit] = useState(null)
+    const [createTipo, setCreateTipo] = useState('Adulto')
     const [porcinoQR, setPorcinoQR] = useState(null)
     const [filterText, setFilterText] = useState('')
     const [filterTipo, setFilterTipo] = useState('Todos')
 
     const columnsTable = [
         { name: 'Nombre', selector: row => row.Nom_Porcino, },
-        { name: 'Chapeta', selector: row => row.Num_Chapeta, },
-        { name: 'Placa Sena', selector: row => row.Plac_Sena_Porcino, },
-        { name: 'Raza', selector: row => row.raza?.Nom_Raza || '—', sortable: false, },
+        { 
+            name: 'Chapeta', 
+            selector: row => {
+                const is21DaysPast = row.Tipo_Cerdo === 'Lechon' && row.Fec_21_Dias && new Date() >= new Date(row.Fec_21_Dias) && !row.Pes_21_Dias;
+                return (
+                    <span className="d-flex align-items-center gap-2">
+                        {row.Num_Chapeta}
+                        {is21DaysPast && (
+                            <span className="text-danger" title="¡Han pasado 21 días! Por favor registra el peso a los 21 días.">
+                                <i className="fa-solid fa-triangle-exclamation"></i>
+                            </span>
+                        )}
+                    </span>
+                )
+            }, 
+        },
+        { name: 'Placa Sena', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Plac_Sena_Porcino, },
+        { name: 'Raza', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.raza?.Nom_Raza || '—'), sortable: false, },
         {
             name: 'Sexo', selector: row => {
                 const sexo = row.Gen_Porcino?.trim().toLowerCase()
@@ -95,12 +114,13 @@ const CrudPorcinos = () => {
         },
         { name: 'Tipo', selector: row => row.Tipo_Cerdo, },
 
-        { name: 'Procedencia', selector: row => (<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-blue-600/20'}`} > {row.Proc_Porcino} </span>), },
-        { name: 'Lugar Proc.', selector: row => row.Lug_Proc_Porcino, },
+        { name: 'Procedencia', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-blue-600/20'}`} > {row.Proc_Porcino} </span>), },
+        { name: 'Lugar Proc.', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Lug_Proc_Porcino, },
         { name: 'Fecha Nac.', selector: row => row.Fec_Nac_Porcino, },
-        { name: 'Fecha Lleg', selector: row => row.Fec_Llegada, },
+        { name: 'Fecha Lleg', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Fec_Llegada, },
         {
             name: 'Peso Lleg (kg)', selector: row => {
+                if (row.Tipo_Cerdo === 'Lechon') return '—'
                 const peso = row.Peso_Llegada
                 if (!peso) return 'No aplica'
                 let tailwind = ''
@@ -176,10 +196,16 @@ const CrudPorcinos = () => {
 
 
     useEffect(() => {
-
         getAllPorcinos()
-
     }, [])
+
+    useEffect(() => {
+        if (location.state?.filterPartoId) {
+            setFilterPartoId(location.state.filterPartoId)
+            setFilterTipo('Lechon')
+            navigate(location.pathname, { replace: true, state: null })
+        }
+    }, [location.state])
 
     const getAllPorcinos = async () => {
         const response = await apiAxios.get('/porcino/')
@@ -212,7 +238,9 @@ const CrudPorcinos = () => {
             filterTipo === 'Todos' ||
             porcino.Tipo_Cerdo?.trim().toLowerCase() === filterTipo.toLowerCase()
 
-        return pasaTexto && pasaTipo
+        const pasaParto = filterPartoId ? porcino.Id_parto === filterPartoId : true
+
+        return pasaTexto && pasaTipo && pasaParto
     })
 
     const hideModal = () => {
@@ -255,7 +283,7 @@ const CrudPorcinos = () => {
                                         ? 'btn-dark'
                                         : 'btn-outline-dark'
                                         }`}
-                                    onClick={() => setFilterTipo(tipo)}
+                                    onClick={() => { setFilterTipo(tipo); setFilterPartoId(null); }}
                                 >
                                     {tipo === 'Todos' ? '🐷 Todos' : tipo === 'Adulto' ? '🐗 Adultos' : '🐽 Lechones'}
                                 </button>
@@ -263,10 +291,36 @@ const CrudPorcinos = () => {
                         </div>
                     </div>
 
+                    {filterPartoId && (
+                        <div className="col-12 mt-2">
+                            <div className="alert alert-info py-2 px-3 m-0 d-flex justify-content-between align-items-center w-100">
+                                <span>🔍 Filtrando por lechones del <b>Parto #{filterPartoId}</b></span>
+                                <button 
+                                    className="btn btn-sm btn-outline-danger" 
+                                    onClick={() => setFilterPartoId(null)}
+                                >
+                                    Quitar Filtro
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="col-auto">
-                        <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => setPorcinoEdit(null)}>
-                            + Registrar porcino
-                        </button>
+                        {filterTipo === 'Adulto' && (
+                            <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Adulto'); }}>
+                                🐗 + Registrar Adulto
+                            </button>
+                        )}
+                        {filterTipo === 'Lechon' && (
+                            <button type="button" className="btn btn-dark" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Lechon'); }}>
+                                🐽 + Registrar Lechón
+                            </button>
+                        )}
+                        {filterTipo === 'Todos' && (
+                            <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Todos'); }}>
+                                🐷 + Registrar Porcino
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -291,7 +345,7 @@ const CrudPorcinos = () => {
                                 <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
                             </div>
                             <div className="modal-body">
-                                <PorcinoForm key={porcinoEdit ? porcinoEdit.Id_Porcino : 'new'} hideModal={hideModal} porcinoEdit={porcinoEdit} reload={getAllPorcinos} />
+                                <PorcinoForm key={porcinoEdit ? porcinoEdit.Id_Porcino : `new_${createTipo}`} hideModal={hideModal} porcinoEdit={porcinoEdit} reload={getAllPorcinos} initialTipo={createTipo} />
                             </div>
                         </div>
                     </div>

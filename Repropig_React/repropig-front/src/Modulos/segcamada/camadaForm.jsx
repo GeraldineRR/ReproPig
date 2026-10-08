@@ -500,47 +500,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         )}
                     </div>
 
-                    {/* Medicamentos */}
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold d-block">
-                            💊 Medicamentos ({Id_Medicamento.length})
-                        </label>
-
-                        <div className="d-flex flex-wrap gap-2">
-                            {medicamentos.length === 0 ? (
-                                <span className="text-muted small">
-                                    No hay medicamentos registrados
-                                </span>
-                            ) : (
-                                medicamentos.map((med) => {
-                                    const activo = Id_Medicamento
-                                        .map(String)
-                                        .includes(String(med.Id_Medicamento));
-
-                                    return (
-                                        <span
-                                            key={med.Id_Medicamento}
-                                            onClick={() =>
-                                                toggleMedicamento(med.Id_Medicamento)
-                                            }
-                                            className={`px-3 py-1 rounded-pill user-select-none ${activo
-                                                ? "bg-success text-white shadow-sm fw-bold"
-                                                : "bg-white border text-secondary"
-                                                }`}
-                                            style={{
-                                                cursor: "pointer",
-                                                fontSize: "13px"
-                                            }}
-                                        >
-                                            {activo ? "✓ " : "+ "}
-                                            {med.Nombre}
-                                        </span>
-                                    );
-                                })
-                            )}
-                        </div>
-                    </div>
-
                     <div className="mb-3">
                         <label className="form-label">Observaciones</label>
                         <textarea
