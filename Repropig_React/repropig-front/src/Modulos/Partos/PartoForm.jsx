@@ -96,6 +96,7 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload, preloaded = null }) => 
             setFec_fin(rowToEdit.Fec_fin?.split('T')[0] || '')
             setHor_final(rowToEdit.Hor_final || '')
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
+            setTextFormButton("Actualizar")
         } else if (preloaded) {
             // Modo precargado desde ciclo/calendario
             setPorcino(preloaded.Id_Porcino || '')
