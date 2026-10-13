@@ -4,10 +4,11 @@ import DataTable from 'react-data-table-component'
 import CalendarioForm from "../Calendario/CalendarioForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import { customTableStyles } from "../../styles/tableStyles.js"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, useNavigate } from "react-router-dom"
 
 const CrudCalendario = () => {
 
+    const navigate = useNavigate()
     const [calendario, setCalendario] = useState([])
     const [calendarioEdit, setCalendarioEdit] = useState(null)
     const [cicloData, setCicloData] = useState(null)
@@ -94,7 +95,26 @@ const CrudCalendario = () => {
                 <div>
                     <div>{formatD(row.real_parto || row.parto)}</div>
                     {row.real_parto && (
-                        <span className="badge bg-success" style={{ fontSize: '10px' }}>Parió</span>
+                        <div className="d-flex align-items-center gap-1 mt-1">
+                            <span className="badge bg-success" style={{ fontSize: '10px' }}>Parió</span>
+                            <button
+                                className="badge bg-primary text-white border-0"
+                                style={{ fontSize: '10px', cursor: 'pointer' }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate('/partos', {
+                                        state: {
+                                            filterPorcinoId: row.ciclo?.Id_Cerda,
+                                            nombreCerda: row.ciclo?.porcino?.Nom_Porcino,
+                                            openModal: false
+                                        }
+                                    });
+                                }}
+                                title="Ver partos de esta cerda"
+                            >
+                                Ver partos
+                            </button>
+                        </div>
                     )}
                 </div>
             ),

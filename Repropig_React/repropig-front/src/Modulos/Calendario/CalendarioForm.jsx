@@ -226,14 +226,37 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
         if (evento.key === 'parto') {
             const yaRegistrado = !!data.fechaReal
             return (
-                <button
-                    className={yaRegistrado ? 'cal-btn-editar' : 'cal-btn-registrar'}
-                    style={{ whiteSpace: 'nowrap' }}
-                    onClick={() => abrirFormularioParto(data)}
-                    title={yaRegistrado ? 'Ver / Editar parto registrado' : 'Registrar parto'}
-                >
-                    {yaRegistrado ? '🐖 Ver Parto' : '🐖 Registrar Parto'}
-                </button>
+                <div className="flex gap-1.5 items-center">
+                    {yaRegistrado ? (
+                        <>
+                            <button
+                                className="cal-btn-editar"
+                                style={{ whiteSpace: 'nowrap' }}
+                                onClick={() => abrirFormularioParto(data, false)}
+                                title="Ver partos de esta cerda"
+                            >
+                                🐖 Ver partos
+                            </button>
+                            <button
+                                className="cal-btn-editar"
+                                style={{ padding: '6px 8px' }}
+                                onClick={() => abrirFormularioParto(data, true)}
+                                title="Editar parto"
+                            >
+                                ✏️
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            className="cal-btn-registrar"
+                            style={{ whiteSpace: 'nowrap' }}
+                            onClick={() => abrirFormularioParto(data, true)}
+                            title="Registrar parto"
+                        >
+                            🐖 Registrar Parto
+                        </button>
+                    )}
+                </div>
             )
         }
 
@@ -265,7 +288,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     }
 
     // Abrir formulario de parto (navega a /partos con datos precargados)
-    const abrirFormularioParto = (data) => {
+    const abrirFormularioParto = (data, openModal = true) => {
         const idPorcino = cData.Id_Porcino || preloaded?.Id_Porcino || preloaded?.porcino?.Id_Porcino || ''
         const idCicloNav = resolvedIdCiclo
         const fechaProyectada = data.fechaProyectada || ''
@@ -286,6 +309,9 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                 state: {
                     Id_Ciclo: idCicloNav,
                     Id_Porcino: idPorcino,
+                    filterPorcinoId: idPorcino,
+                    nombreCerda: nombreCerda,
+                    openModal: openModal,
                     Fec_inicio: fechaReal,
                     Fec_fin: fechaReal,
                     Hor_inicial: '08:00',
