@@ -1,5 +1,9 @@
 import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
 import PartosModel from "../models/PartosModel.js";
+import PorcinoModel from "../models/porcinoModel.js";
+import responsablesModel from "../models/responsablesModel.js";
+import MedicamentosModel from "../models/MedicamentosModel.js";
+import ciclosModel from "../models/ciclosModel.js";
 
 class Seguimiento_CerdaService {
 
@@ -7,14 +11,15 @@ class Seguimiento_CerdaService {
     // OBTENER TODOS LOS SEGUIMIENTOS
     // ==========================================
     async getAll() {
-
-        const registros = await Seguimiento_CerdaModel.findAll({
-            order: [
-                ["Id_Seguimiento_Cerda", "DESC"]
-            ]
+        return await Seguimiento_CerdaModel.findAll({
+            include: [
+                { model: PorcinoModel, as: 'porcino' },
+                { model: responsablesModel, as: 'Responsables' },
+                { model: MedicamentosModel, as: 'medicamentos' },
+                { model: ciclosModel, as: 'ciclo' },
+            ],
+            order: [["Id_Seguimiento_Cerda", "DESC"]]
         });
-
-        return registros;
     }
 
 
@@ -22,17 +27,16 @@ class Seguimiento_CerdaService {
     // OBTENER UN SEGUIMIENTO POR ID
     // ==========================================
     async getById(id) {
-
-        const seguimiento =
-            await Seguimiento_CerdaModel.findByPk(id);
-
-        if (!seguimiento) {
-            throw new Error(
-                "Seguimiento de cerda no encontrado"
-            );
-        }
-
-        return seguimiento;
+        const Seguimiento_Cerda = await Seguimiento_CerdaModel.findByPk(id, {
+            include: [
+                { model: PorcinoModel, as: 'porcino' },
+                { model: responsablesModel, as: 'Responsables' },
+                { model: MedicamentosModel, as: 'medicamentos' },
+                { model: ciclosModel, as: 'ciclo' },
+            ]
+        })
+        if (!Seguimiento_Cerda) throw new Error('Seguimiento_Cerda no encontrado')
+        return Seguimiento_Cerda
     }
 
 

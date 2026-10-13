@@ -105,7 +105,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
     useEffect(() => {
         if (rowToEdit.Id_Inseminacion) {
             setFec_hora(rowToEdit.Fec_hora?.slice(0, 16) || '')
-            setId_Porcino(String(rowToEdit.Id_Porcino))
+            setId_Porcino(String(rowToEdit.Id_Porcino || ''))
             setCantidad(rowToEdit.cantidad)
             setId_Responsable(parsearResponsables(rowToEdit.Id_Responsable))
             setId_colecta(rowToEdit.Id_colecta)

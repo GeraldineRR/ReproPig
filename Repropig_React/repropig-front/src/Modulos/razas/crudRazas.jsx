@@ -3,6 +3,7 @@ import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import RazaForm from "./razaForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { customTableStyles } from "../../styles/tableStyles.js"
 import Swal from 'sweetalert2'
 import WithReactContent from 'sweetalert2-react-content'
 
@@ -132,15 +133,15 @@ const CrudRazas = () => {
 
     return (
         <>
-            <div className="container mt-5" style={{ maxWidth: "10000px" }}>
+            <div className="container mt-5">
 
                 <div className="d-flex justify-content-between align-items-center mb-3">
 
-                    <div className="flex gap-2 items-center justify-end w-full">
+                    <div className="flex gap-2 items-center justify-start w-full">
                         <div className="input-group">
                             <input
                                 className="form-control"
-                                style={{ width: '290px' }}
+                                style={{ maxWidth: '350px' }}
                                 value={filterText}
                                 onChange={(e) => setFilterText(e.target.value)}
                                 placeholder="🔍 Buscar raza..."
@@ -161,20 +162,16 @@ const CrudRazas = () => {
                     </div>
                 </div>
 
-
-                <div className="card-body px-9">
-                    <DataTable
-                        title="Razas"
-                        columns={columnsTable}
-                        data={newListRazas}
-                        keyField="Id_Raza"
-                        pagination
-                        highlightOnHover
-                        pointerOnHover
-                        striped
-                    />
-
-                </div>
+                <DataTable
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Razas</h4>}
+                    columns={columnsTable}
+                    data={newListRazas}
+                    keyField="Id_Raza"
+                    pagination
+                    highlightOnHover
+                    pointerOnHover
+                    customStyles={customTableStyles}
+                />
 
                 <div
                     className="modal fade"

@@ -8,6 +8,7 @@ class ciclosService {
 
     async getAll() {
         return await ciclosModel.findAll({
+            order: [['Id_Ciclo', 'DESC']],
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] },
                 {

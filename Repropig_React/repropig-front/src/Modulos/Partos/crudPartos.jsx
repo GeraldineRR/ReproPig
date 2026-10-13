@@ -1,8 +1,9 @@
 import apiAxios from "../../api/axiosConfig.js";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import DataTable from "react-data-table-component";
+import DataTable from 'react-data-table-component';
 import PartosForm from "./PartoForm.jsx";
+import { customTableStyles } from "../../styles/tableStyles.js";
 import PorcinoForm from "../porcinos/porcinoForm.jsx";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
@@ -16,6 +17,8 @@ const CrudPartos = () => {
     const [partoEdit, setPartoEdit] = useState(null);
     const [preloadedData, setPreloadedData] = useState(null);
     const [loadingId, setLoadingId] = useState(null);
+    const [filterPorcinoId, setFilterPorcinoId] = useState(null);
+    const [nombreCerdaFiltro, setNombreCerdaFiltro] = useState("");
     const [lechonLoop, setLechonLoop] = useState({ active: false, Id_parto: null, total: 0, current: 0, Fec_Nac: null });
     const navigate = useNavigate();
     const location = useLocation();
@@ -68,37 +71,49 @@ const CrudPartos = () => {
                 }
             }, 300);
             
-        } else if (location.state && (location.state.Id_Ciclo || location.state.Id_Porcino)) {
+        } else if (location.state && (location.state.Id_Ciclo || location.state.Id_Porcino || location.state.filterPorcinoId)) {
             const incomingState = { ...location.state };
             navigate('/partos', { replace: true, state: null });
 
-            const idCicloParam = incomingState.Id_Ciclo;
-            const partoExistente = idCicloParam && partos.length > 0
-                ? partos.find(p => String(p.Id_Ciclo) === String(idCicloParam))
-                : null;
-
-            if (partoExistente) {
-                setPartoEdit(partoExistente);
-                setPreloadedData(null);
-            } else {
-                setPartoEdit(null);
-                setPreloadedData({
-                    Id_Porcino: incomingState.Id_Porcino || "",
-                    Id_Ciclo: incomingState.Id_Ciclo || "",
-                    Fec_inicio: incomingState.Fec_inicio || "",
-                    Fec_fin: incomingState.Fec_fin || incomingState.Fec_inicio || "",
-                    Hor_inicial: incomingState.Hor_inicial || "08:00",
-                    Observaciones: incomingState.Observaciones || ""
-                });
+            const targetPorcinoId = incomingState.filterPorcinoId || incomingState.Id_Porcino;
+            if (targetPorcinoId) {
+                setFilterPorcinoId(targetPorcinoId);
+                if (incomingState.nombreCerda) {
+                    setNombreCerdaFiltro(incomingState.nombreCerda);
+                }
             }
 
-            setTimeout(() => {
-                const modalEl = document.getElementById("modalParto");
-                if (modalEl) {
-                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    modal.show();
+            const shouldOpenModal = incomingState.openModal !== false;
+
+            if (shouldOpenModal) {
+                const idCicloParam = incomingState.Id_Ciclo;
+                const partoExistente = idCicloParam && partos.length > 0
+                    ? partos.find(p => String(p.Id_Ciclo) === String(idCicloParam))
+                    : null;
+
+                if (partoExistente) {
+                    setPartoEdit(partoExistente);
+                    setPreloadedData(null);
+                } else {
+                    setPartoEdit(null);
+                    setPreloadedData({
+                        Id_Porcino: incomingState.Id_Porcino || targetPorcinoId || "",
+                        Id_Ciclo: incomingState.Id_Ciclo || "",
+                        Fec_inicio: incomingState.Fec_inicio || "",
+                        Fec_fin: incomingState.Fec_fin || incomingState.Fec_inicio || "",
+                        Hor_inicial: incomingState.Hor_inicial || "08:00",
+                        Observaciones: incomingState.Observaciones || ""
+                    });
                 }
-            }, 200);
+
+                setTimeout(() => {
+                    const modalEl = document.getElementById("modalParto");
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        modal.show();
+                    }
+                }, 200);
+            }
         }
     }, [location.state, partos]);
 
@@ -402,6 +417,14 @@ const CrudPartos = () => {
                         📝
                     </button>
                     <button
+                        className="btn btn-sm text-white"
+                        style={{ backgroundColor: "#0284c7" }}
+                        title="Ver Seguimiento de Cerda"
+                        onClick={() => navigate(`/seguimiento_cerda/parto/${row.Id_parto}`)}
+                    >
+                        🩺
+                    </button>
+                    <button
                         className="btn btn-sm bg-info"
                         title="Editar Parto"
                         onClick={() => handleEdit(row)}
@@ -410,11 +433,18 @@ const CrudPartos = () => {
                     </button>
                 </div>
             ),
-            minWidth: "120px"
+            minWidth: "165px"
         }
     ];
 
     const filtered = partos.filter(row => {
+        if (filterPorcinoId) {
+            const rowPorcinoId = row.Id_Porcino || row.porcino?.Id_Porcino;
+            if (Number(rowPorcinoId) !== Number(filterPorcinoId)) {
+                return false;
+            }
+        }
+
         const text = filterText.toLowerCase().trim();
         const porcino = row.porcino?.Nom_Porcino?.toLowerCase() || "";
         const obs = row.Observaciones?.toLowerCase() || "";
@@ -428,6 +458,8 @@ const CrudPartos = () => {
             ciclo.includes(text)
         );
     });
+
+    const cerdaNombreMostrado = nombreCerdaFiltro || partos.find(p => Number(p.Id_Porcino) === Number(filterPorcinoId))?.porcino?.Nom_Porcino || `Cerda #${filterPorcinoId}`;
 
     return (
         <>
@@ -458,14 +490,34 @@ const CrudPartos = () => {
                     </div>
                 </div>
 
+                {/* Banner de filtro por cerda (cuando viene de calendario) */}
+                {filterPorcinoId && (
+                    <div className="row mb-3">
+                        <div className="col-12">
+                            <div className="alert alert-info py-2 px-3 m-0 d-flex justify-content-between align-items-center w-100 shadow-sm rounded-3">
+                                <span>
+                                    🔍 Mostrando únicamente los partos de la cerda <b>{cerdaNombreMostrado}</b>
+                                </span>
+                                <button
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={() => { setFilterPorcinoId(null); setNombreCerdaFiltro(""); }}
+                                >
+                                    Ver todos los partos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <DataTable
-                    title="Registro de Partos"
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">Registro de Partos</h4>}
                     columns={columnsTable}
                     data={filtered}
                     keyField="Id_parto"
                     pagination
                     highlightOnHover
                     striped
+                    customStyles={customTableStyles}
                     responsive
                 />
 
