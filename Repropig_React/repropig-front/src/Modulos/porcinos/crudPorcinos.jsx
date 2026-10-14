@@ -9,11 +9,10 @@ import { customTableStyles } from "../../styles/tableStyles.js"
 
 const CrudPorcinos = () => {
 
+    const location = useLocation()
+    const navigate = useNavigate()
     const [porcinos, setPorcinos] = useState([])
     const [loadingId, setLoadingId] = useState(null);
-    const [filterPartoId, setFilterPartoId] = useState(null);
-    const location = useLocation();
-    const navigate = useNavigate();
 
     const calcularEdadLlegada = (fechaNacimiento, fechaLlegada) => {
         if (!fechaNacimiento || !fechaLlegada) return null
@@ -74,11 +73,13 @@ const CrudPorcinos = () => {
     };
 
     const [porcinoEdit, setPorcinoEdit] = useState(null)
-    const [createTipo, setCreateTipo] = useState('Adulto')
+    const [createTipo, setCreateTipo] = useState('Todos')
     const [formKey, setFormKey] = useState(Date.now())
     const [porcinoQR, setPorcinoQR] = useState(null)
     const [filterText, setFilterText] = useState('')
     const [filterTipo, setFilterTipo] = useState('Todos')
+    const [filterPartoId, setFilterPartoId] = useState(null)
+    const [partosMap, setPartosMap] = useState({})
 
     const formatFechaCorta = (dateStr) => {
         if (!dateStr) return '—'
@@ -95,24 +96,9 @@ const CrudPorcinos = () => {
 
     const columnsTable = [
         { name: 'Nombre', selector: row => row.Nom_Porcino, },
-        { 
-            name: 'Chapeta', 
-            selector: row => {
-                const is21DaysPast = row.Tipo_Cerdo === 'Lechon' && row.Fec_21_Dias && new Date() >= new Date(row.Fec_21_Dias) && !row.Pes_21_Dias;
-                return (
-                    <span className="d-flex align-items-center gap-2">
-                        {row.Num_Chapeta}
-                        {is21DaysPast && (
-                            <span className="text-danger" title="¡Han pasado 21 días! Por favor registra el peso a los 21 días.">
-                                <i className="fa-solid fa-triangle-exclamation"></i>
-                            </span>
-                        )}
-                    </span>
-                )
-            }, 
-        },
-        { name: 'Placa Sena', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Plac_Sena_Porcino, },
-        { name: 'Raza', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (row.raza?.Nom_Raza || '—'), sortable: false, },
+        { name: 'Chapeta', selector: row => row.Num_Chapeta, },
+        { name: 'Placa Sena', selector: row => row.Plac_Sena_Porcino, },
+        { name: 'Raza', selector: row => row.raza?.Nom_Raza || '—', sortable: false, },
         {
             name: 'Sexo', selector: row => {
                 const sexo = row.Gen_Porcino?.trim().toLowerCase()
@@ -134,7 +120,6 @@ const CrudPorcinos = () => {
         { name: 'Fecha Lleg', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : formatFechaCorta(row.Fec_Llegada), },
         {
             name: 'Peso Lleg (kg)', selector: row => {
-                if (row.Tipo_Cerdo === 'Lechon') return '—'
                 const peso = row.Peso_Llegada
                 if (!peso) return 'No aplica'
                 let tailwind = ''
@@ -166,6 +151,32 @@ const CrudPorcinos = () => {
                 const edad = calcularEdadActual(row.Fec_Nac_Porcino)
                 return `${edad} meses`
             },
+        },
+        {
+            name: 'Rendimiento',
+            selector: row => {
+                const isHembra = row.Gen_Porcino?.trim().toLowerCase() === 'h'
+                if (!isHembra) return <span className="text-gray-400 text-xs">—</span>
+                
+                const infoPartos = partosMap[row.Id_Porcino]
+                if (!infoPartos || infoPartos.totalPartos === 0) {
+                    return <span className="text-gray-400 text-xs">Sin partos</span>
+                }
+
+                const promedio = Number((infoPartos.totalNacidos / infoPartos.totalPartos).toFixed(1))
+                if (promedio < 14) {
+                    return (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20" title={`Promedio de ${promedio} lechones por parto (< 14)`}>
+                            ⚠️ Mala ({promedio})
+                        </span>
+                    )
+                }
+                return (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20" title={`Promedio de ${promedio} lechones por parto (≥ 14)`}>
+                        ⭐ Excelente ({promedio})
+                    </span>
+                )
+            }
         },
         {
             name: 'Estado',
@@ -222,8 +233,25 @@ const CrudPorcinos = () => {
     }, [location.state])
 
     const getAllPorcinos = async () => {
-        const response = await apiAxios.get('/porcino/')
-        setPorcinos(response.data)
+        try {
+            const [resPorcinos, resPartos] = await Promise.all([
+                apiAxios.get('/porcino/'),
+                apiAxios.get('/partos/').catch(() => ({ data: [] }))
+            ])
+            setPorcinos(resPorcinos.data)
+
+            const map = {}
+            resPartos.data.forEach(p => {
+                const idCerda = p.Id_Porcino
+                if (!map[idCerda]) map[idCerda] = { totalPartos: 0, totalNacidos: 0 }
+                map[idCerda].totalPartos += 1
+                const nacidosParto = (p.Nac_vivos || 0) + (p.Nac_muertos || 0) + (p.Nac_momias || 0)
+                map[idCerda].totalNacidos += nacidosParto
+            })
+            setPartosMap(map)
+        } catch (err) {
+            console.error("Error al cargar porcinos o partos:", err)
+        }
     }
 
     const newListPorcinos = porcinos.filter(porcino => {
@@ -248,11 +276,12 @@ const CrudPorcinos = () => {
             sexo.includes(textToSearch)
         )
 
+        const tipoPorcino = (porcino.Tipo_Cerdo || 'Adulto').trim().toLowerCase()
         const pasaTipo =
             filterTipo === 'Todos' ||
-            porcino.Tipo_Cerdo?.trim().toLowerCase() === filterTipo.toLowerCase()
+            tipoPorcino === filterTipo.toLowerCase()
 
-        const pasaParto = filterPartoId ? porcino.Id_parto === filterPartoId : true
+        const pasaParto = filterPartoId ? Number(porcino.Id_parto) === Number(filterPartoId) : true
 
         return pasaTexto && pasaTipo && pasaParto
     })
@@ -276,13 +305,106 @@ const CrudPorcinos = () => {
         modal.show()
     }
 
+    const downloadQR = (conFicha = true) => {
+        if (!porcinoQR) return
+        const svgElement = document.getElementById('porcinoQrSvg')
+        if (!svgElement) return
+
+        const svgXml = new XMLSerializer().serializeToString(svgElement)
+        const svgBlob = new Blob([svgXml], { type: 'image/svg+xml;charset=utf-8' })
+        const URL = window.URL || window.webkitURL || window
+        const blobURL = URL.createObjectURL(svgBlob)
+
+        const img = new Image()
+        img.onload = () => {
+            const canvas = document.createElement('canvas')
+            const ctx = canvas.getContext('2d')
+            const cleanName = (porcinoQR.Nom_Porcino || 'porcino').replace(/\s+/g, '_')
+            const chapeta = porcinoQR.Num_Chapeta || ''
+
+            if (conFicha) {
+                // Tarjeta imprimible de alta resolución (600x750)
+                const width = 600
+                const height = 750
+                canvas.width = width
+                canvas.height = height
+
+                // Fondo blanco
+                ctx.fillStyle = '#ffffff'
+                ctx.fillRect(0, 0, width, height)
+
+                // Marco decorativo
+                ctx.strokeStyle = '#f1f5f9'
+                ctx.lineWidth = 12
+                ctx.strokeRect(20, 20, width - 40, height - 40)
+
+                // Cabecera institucional
+                ctx.fillStyle = '#e11d48'
+                ctx.font = 'bold 24px sans-serif'
+                ctx.textAlign = 'center'
+                ctx.fillText('REPROPIG · IDENTIFICACIÓN', width / 2, 75)
+
+                // Nombre del porcino
+                ctx.fillStyle = '#0f172a'
+                ctx.font = 'bold 34px sans-serif'
+                ctx.fillText(porcinoQR.Nom_Porcino || 'Porcino', width / 2, 130)
+
+                // Chapeta
+                ctx.fillStyle = '#475569'
+                ctx.font = '600 22px sans-serif'
+                ctx.fillText(`Chapeta: ${chapeta || '—'}`, width / 2, 170)
+
+                // Código QR (390x390)
+                const qrSize = 390
+                ctx.drawImage(img, (width - qrSize) / 2, 205, qrSize, qrSize)
+
+                // Pie de página
+                ctx.fillStyle = '#64748b'
+                ctx.font = '16px sans-serif'
+                ctx.fillText('Escanea para ver historial reproductivo completo', width / 2, 645)
+
+                ctx.fillStyle = '#94a3b8'
+                ctx.font = '14px monospace'
+                ctx.fillText(window.location.origin, width / 2, 680)
+
+                const pngUrl = canvas.toDataURL('image/png')
+                const downloadLink = document.createElement('a')
+                downloadLink.href = pngUrl
+                downloadLink.download = `Ficha_QR_${cleanName}_${chapeta}.png`
+                document.body.appendChild(downloadLink)
+                downloadLink.click()
+                document.body.removeChild(downloadLink)
+            } else {
+                // Solo el código QR nítido (500x500)
+                const qrSize = 500
+                canvas.width = qrSize
+                canvas.height = qrSize
+                ctx.fillStyle = '#ffffff'
+                ctx.fillRect(0, 0, qrSize, qrSize)
+                ctx.drawImage(img, 20, 20, qrSize - 40, qrSize - 40)
+
+                const pngUrl = canvas.toDataURL('image/png')
+                const downloadLink = document.createElement('a')
+                downloadLink.href = pngUrl
+                downloadLink.download = `QR_${cleanName}_${chapeta}.png`
+                document.body.appendChild(downloadLink)
+                downloadLink.click()
+                document.body.removeChild(downloadLink)
+            }
+
+            URL.revokeObjectURL(blobURL)
+        }
+        img.src = blobURL
+    }
+
     return (
         <>
 
             <div className="container mt-5">
 
-                <div className="row d-flex mb-3 justify-content-between align-items-center">
-                    <div className="col-5">
+                <div className="row d-flex mb-3 justify-content-between align-items-center g-2">
+                    {/* Row 1: Search + Type filters + Register button */}
+                    <div className="col-md-5 col-12">
                         <div className="input-group">
                             <input className="form-control" value={filterText} onChange={(e) => setFilterText(e.target.value)} placeholder="🔍 Buscar un nombre, chapeta, placa o procedencia..." />
                         </div>
@@ -306,21 +428,7 @@ const CrudPorcinos = () => {
                         </div>
                     </div>
 
-                    {filterPartoId && (
-                        <div className="col-12 mt-2">
-                            <div className="alert alert-info py-2 px-3 m-0 d-flex justify-content-between align-items-center w-100">
-                                <span>🔍 Filtrando por lechones del <b>Parto #{filterPartoId}</b></span>
-                                <button 
-                                    className="btn btn-sm btn-outline-danger" 
-                                    onClick={() => setFilterPartoId(null)}
-                                >
-                                    Quitar Filtro
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="col-auto">
+                    <div className="col-auto ms-auto">
                         {filterTipo === 'Adulto' && (
                             <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Adulto'); setFormKey(Date.now()); }}>
                                 🐗 + Registrar Adulto
@@ -337,6 +445,21 @@ const CrudPorcinos = () => {
                             </button>
                         )}
                     </div>
+
+                    {/* Row 2: Parto filter banner (only when active) */}
+                    {filterPartoId && (
+                        <div className="col-12 mt-1">
+                            <div className="alert alert-info py-2 px-3 m-0 d-flex justify-content-between align-items-center w-100 shadow-sm rounded-3">
+                                <span>🔍 Filtrando por lechones del <b>Parto #{filterPartoId}</b></span>
+                                <button 
+                                    className="btn btn-sm btn-outline-danger" 
+                                    onClick={() => { setFilterPartoId(null); setFilterTipo('Todos'); }}
+                                >
+                                    Quitar Filtro
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <DataTable
@@ -368,25 +491,48 @@ const CrudPorcinos = () => {
 
                 {/* Modal para Código QR */}
                 <div className="modal fade" id="qrModal" tabIndex="-1" aria-hidden="true">
-                    <div className="modal-dialog modal-sm modal-dialog-centered">
-                        <div className="modal-content border-0 shadow">
-                            <div className="modal-header border-0 pb-0">
+                    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '370px' }}>
+                        <div className="modal-content border-0 shadow rounded-4 overflow-hidden">
+                            <div className="modal-header border-0 pb-0 pt-3 px-4">
+                                <h6 className="modal-title fw-bold text-secondary mb-0">Código QR del Animal</h6>
                                 <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div className="modal-body text-center pt-0 pb-4">
+                            <div className="modal-body text-center pt-2 pb-4 px-4">
                                 {porcinoQR && (
                                     <>
-                                        <h5 className="mb-1 text-danger fw-bold">{porcinoQR.Nom_Porcino}</h5>
-                                        <p className="text-muted small mb-3">Chapeta: {porcinoQR.Num_Chapeta}</p>
-                                        <div className="p-3 bg-white d-inline-block rounded shadow-sm border">
+                                        <h4 className="mb-0 text-danger fw-bold">{porcinoQR.Nom_Porcino}</h4>
+                                        <p className="text-muted small mb-3">Chapeta: <span className="fw-semibold text-dark">{porcinoQR.Num_Chapeta || '—'}</span></p>
+                                        
+                                        <div className="p-3 bg-white d-inline-block rounded-3 shadow-sm border mb-3">
                                             <QRCodeSVG
+                                                id="porcinoQrSvg"
                                                 value={`${window.location.origin}/perfil-cerda/${porcinoQR.Id_Porcino}`}
-                                                size={200}
+                                                size={220}
+                                                level="H"
+                                                includeMargin={true}
                                             />
                                         </div>
-                                        <p className="text-muted mt-3 small px-3">
-                                            Escanea este código con tu celular para ver el historial reproductivo completo.
+
+                                        <p className="text-muted small px-2 mb-3">
+                                            Escanea con tu celular o descarga el código QR para imprimir e identificar la paridera o corral.
                                         </p>
+
+                                        <div className="d-grid gap-2">
+                                            <button
+                                                type="button"
+                                                className="btn btn-primary d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
+                                                onClick={() => downloadQR(true)}
+                                            >
+                                                <i className="fa-solid fa-download"></i> Descargar Ficha QR (PNG)
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-secondary btn-sm d-flex align-items-center justify-content-center gap-2"
+                                                onClick={() => downloadQR(false)}
+                                            >
+                                                <i className="fa-regular fa-image"></i> Descargar solo código QR
+                                            </button>
+                                        </div>
                                     </>
                                 )}
                             </div>

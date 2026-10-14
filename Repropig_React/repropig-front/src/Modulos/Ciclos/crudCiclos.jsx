@@ -46,7 +46,9 @@ const CrudCiclos = () => {
     const getAllCiclos = async () => {
         try {
             const response = await apiAxios.get('/ciclos/')
-            setCiclos(response.data)
+            const lista = Array.isArray(response.data) ? response.data : []
+            lista.sort((a, b) => Number(b.Id_Ciclo) - Number(a.Id_Ciclo))
+            setCiclos(lista)
         } catch (error) {
             console.error('Error al obtener ciclos:', error)
         }
@@ -345,28 +347,68 @@ const CrudCiclos = () => {
         {
             name: 'Montas',
             width: '100px',
-            cell: row => (
-                <div
-                    onClick={() => navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-pink-100 transition-colors"
-                    title="Ver montas"
-                >
-                    <span className="text-sm">🐷</span> {row.montas?.length || 0}
-                </div>
-            )
+            cell: row => {
+                const count = row.montas?.length || 0;
+                const tieneMontas = count > 0;
+                return (
+                    <div
+                        onClick={() => {
+                            if (!tieneMontas) {
+                                MySwal.fire({
+                                    icon: 'info',
+                                    title: 'Sin montas registradas',
+                                    text: `El ciclo #${row.Id_Ciclo} (${row.porcino?.Nom_Porcino || 'Cerda'}) no tiene montas registradas.`,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                return;
+                            }
+                            navigate('/montas', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } });
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold text-xs transition-all ${
+                            tieneMontas
+                                ? "bg-pink-50 text-pink-700 ring-1 ring-inset ring-pink-600/20 cursor-pointer hover:bg-pink-100"
+                                : "bg-gray-100 text-gray-400 ring-1 ring-inset ring-gray-300/40 cursor-not-allowed opacity-60 hover:bg-gray-100"
+                        }`}
+                        title={tieneMontas ? "Ver montas" : "Sin montas registradas"}
+                    >
+                        <span className="text-sm">🐷</span> {count}
+                    </div>
+                );
+            }
         },
         {
             name: 'Inseminaciones',
             width: '140px',
-            cell: row => (
-                <div
-                    onClick={() => navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } })}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 rounded-md font-semibold text-xs cursor-pointer hover:bg-blue-100 transition-colors"
-                    title="Ver inseminaciones"
-                >
-                    <span className="text-sm">💉</span> {row.inseminaciones?.length || 0}
-                </div>
-            )
+            cell: row => {
+                const count = row.inseminaciones?.length || 0;
+                const tieneInseminaciones = count > 0;
+                return (
+                    <div
+                        onClick={() => {
+                            if (!tieneInseminaciones) {
+                                MySwal.fire({
+                                    icon: 'info',
+                                    title: 'Sin inseminaciones registradas',
+                                    text: `El ciclo #${row.Id_Ciclo} (${row.porcino?.Nom_Porcino || 'Cerda'}) no tiene inseminaciones registradas.`,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                                return;
+                            }
+                            navigate('/inseminaciones', { state: { Id_Ciclo: row.Id_Ciclo, Id_Porcino: row.Id_Cerda, Nom_Porcino: row.porcino?.Nom_Porcino, Activo: row.Estado || row.Estado } });
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-md font-semibold text-xs transition-all ${
+                            tieneInseminaciones
+                                ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20 cursor-pointer hover:bg-blue-100"
+                                : "bg-gray-100 text-gray-400 ring-1 ring-inset ring-gray-300/40 cursor-not-allowed opacity-60 hover:bg-gray-100"
+                        }`}
+                        title={tieneInseminaciones ? "Ver inseminaciones" : "Sin inseminaciones registradas"}
+                    >
+                        <span className="text-sm">💉</span> {count}
+                    </div>
+                );
+            }
         },
 
         {
@@ -431,14 +473,16 @@ const CrudCiclos = () => {
 
 
 
-    const filteredCiclos = ciclos.filter(rep => {
-        const text = filterText.toLowerCase()
-        return (
-            rep.Id_Ciclo?.toString().includes(text) ||
-            rep.porcino?.Nom_Porcino?.toLowerCase().includes(text) ||
-            rep.TipoCiclo?.toLowerCase().includes(text)
-        )
-    })
+    const filteredCiclos = ciclos
+        .filter(rep => {
+            const text = filterText.toLowerCase()
+            return (
+                rep.Id_Ciclo?.toString().includes(text) ||
+                rep.porcino?.Nom_Porcino?.toLowerCase().includes(text) ||
+                rep.TipoCiclo?.toLowerCase().includes(text)
+            )
+        })
+        .sort((a, b) => Number(b.Id_Ciclo) - Number(a.Id_Ciclo))
 
     return (
         <div className="container mt-5">

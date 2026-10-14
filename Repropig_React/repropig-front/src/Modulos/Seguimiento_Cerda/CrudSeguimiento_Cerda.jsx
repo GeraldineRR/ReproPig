@@ -550,20 +550,17 @@ const CrudSeguimiento_Cerda = () => {
             {/* TABLA */}
             <div className="table-responsive">
                 <DataTable
-                    title={
-                        <h4 className="text-gray-800 m-0 py-2">
-                            Seguimiento Cerda
-                        </h4>
-                    }
+                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">{partoIdParams ? `Seguimiento de Cerda (Parto #${partoIdParams})` : "Seguimiento Diario de Cerdas"}</h4>}
                     columns={columnsTable}
                     data={newListSeguimiento_Cerda}
                     keyField="Id_Seguimiento_Cerda"
                     pagination
                     highlightOnHover
                     pointerOnHover
+                    striped
                     responsive
                     customStyles={customTableStyles}
-                    noDataComponent="No hay seguimientos registrados"
+                    noDataComponent="No hay registros de seguimiento para esta cerda"
                 />
             </div>
 

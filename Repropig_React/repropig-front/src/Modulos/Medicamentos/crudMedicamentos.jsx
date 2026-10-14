@@ -3,9 +3,9 @@ import { useState, useEffect } from "react"
 import DataTable from 'react-data-table-component'
 import MedicamentosForm from "./MedicamentosForm.jsx"
 import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import { customTableStyles } from "../../styles/tableStyles.js"
 import Swal from 'sweetalert2'
 import WithReactContent from 'sweetalert2-react-content'
-
 
 const CrudMedicamentos = () =>{
     const [Medicamentos, setMedicamentos] = useState([])
@@ -48,12 +48,13 @@ const CrudMedicamentos = () =>{
     };
 
     const columnsTable = [
-        { name: 'Id_Medicamento', selector: row => row.Id_Medicamento},
-        { name: 'Nombre', selector: row => row.Nombre},
-        { name: 'Tipo', selector: row => row.Tipo},
-        { name: 'Presentacion', selector: row => row.Presentacion},
-        { name: 'Cantidad', selector: row => row.Cantidad ?? '—'},
-        { name: 'Observaciones', selector: row => row.Observaciones},
+        { name: 'Id', selector: row => row.Id_Medicamento, width: '70px' },
+        { name: 'Nombre', selector: row => row.Nombre, sortable: true },
+        { name: 'Tipo', selector: row => row.Tipo, sortable: true },
+        { name: 'Presentación', selector: row => row.Presentacion },
+        { name: 'Cantidad', selector: row => row.Cantidad ? `${row.Cantidad} ${row.Unidad_Medida || ''}` : '—', sortable: true },
+        { name: 'Precio Unitario', selector: row => row.Precio_Unitario ? `$${Number(row.Precio_Unitario).toLocaleString('es-CO')}` : '—', sortable: true },
+        { name: 'Observaciones', selector: row => row.Observaciones || '—' },
         {
             name: 'Estado',
             cell: row => {
@@ -69,11 +70,12 @@ const CrudMedicamentos = () =>{
                 );
             }
         },
-        { name: 'Acciones', cell: row => (
-        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" onClick={() => handleEdit(row)}><i className="fa-solid fa-pencil text-xs"></i></button>
-        )
-    }
-]
+        { 
+            name: 'Acciones', cell: row => (
+                <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors" onClick={() => handleEdit(row)}><i className="fa-solid fa-pencil text-xs"></i></button>
+            )
+        }
+    ]
 
 
     useEffect(()=>{
@@ -134,13 +136,14 @@ const CrudMedicamentos = () =>{
                 </div>
 
                     <DataTable
-                        title= "Medicamentos"
+                        title={<h4 className="fw-bold text-gray-800 m-0 py-2">Medicamentos & Sanidad</h4>}
                         columns= {columnsTable}
                         data= {newListMedicamentos}
                         keyField= "Id_Medicamento"
                         pagination
                         highlightOnHover
                         striped
+                        customStyles={customTableStyles}
                 />
 
 

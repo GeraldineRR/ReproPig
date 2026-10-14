@@ -82,31 +82,28 @@ export default function PerfilCerda() {
 
             // Traer ciclos
             const resRepro = await apiAxios.get('/ciclos/')
-            const reprosDeCerda = resRepro.data.filter(r => r.Id_Cerda == id)
+            const reprosDeCerda = (resRepro.data || []).filter(r => Number(r.Id_Cerda) === Number(id))
             setCiclos(reprosDeCerda)
 
             // Traer partos
             const resPartos = await apiAxios.get('/partos/')
-            const partosDeCerda = resPartos.data.filter(p => p.Id_Porcino == id)
+            const partosDeCerda = (resPartos.data || []).filter(p => Number(p.Id_Porcino) === Number(id))
             setPartos(partosDeCerda)
 
             // Traer novedades
             const resNovedades = await apiAxios.get('/novedades/')
-            const novedadesDeCerda = resNovedades.data.filter(n => n.Id_Porcino == id)
+            const novedadesDeCerda = (resNovedades.data || []).filter(n => Number(n.Id_Porcino) === Number(id))
             setNovedades(novedadesDeCerda)
 
             // Traer seguimientos (si existe la ruta, o un array vacío si falla)
             try {
-                const resSeguimientos = await apiAxios.get('/seguimiento_cerda/')
-                const seguimientosDeCerda = resSeguimientos.data.filter(s => s.Id_Porcino == id)
+                const resSeguimientos = await apiAxios.get('/Seguimiento_Cerda/')
+                const seguimientosDeCerda = (resSeguimientos.data || []).filter(s => Number(s.Id_Porcino) === Number(id))
                 setSeguimientos(seguimientosDeCerda)
             } catch (e) {
                 console.log("No se pudieron cargar seguimientos", e)
+                setSeguimientos([])
             }
-
-            setCiclos((resRepro.data || []).filter((r) => Number(r.Id_Cerda) === Number(id)))
-            setPartos((resPartos.data || []).filter((p) => Number(p.Id_Porcino) === Number(id)))
-            setNovedades((resNovedades.data || []).filter((n) => Number(n.Id_Porcino) === Number(id)))
 
             // Traer responsables
             try {
@@ -159,6 +156,49 @@ export default function PerfilCerda() {
                 .sort((a, b) => toSortKey(a.Fec_hora).localeCompare(toSortKey(b.Fec_hora))),
         [ciclos]
     )
+
+    const rendimientoCerda = useMemo(() => {
+        if (!partos || partos.length === 0) {
+            return {
+                totalPartos: 0,
+                totalNacidos: 0,
+                totalVivos: 0,
+                promedio: 0,
+                esMala: false,
+                clasificacion: 'Sin Partos',
+                badgeClass: 'bg-gray-100 text-gray-600 border-gray-200',
+                icono: '⚪',
+                mensaje: 'Aún no tiene partos registrados.'
+            }
+        }
+
+        let totalNacidos = 0
+        let totalVivos = 0
+        partos.forEach(p => {
+            const nacidosParto = (p.Nac_vivos || 0) + (p.Nac_muertos || 0) + (p.Nac_momias || 0)
+            totalNacidos += nacidosParto
+            totalVivos += (p.Nac_vivos || 0)
+        })
+
+        const promedio = Number((totalNacidos / partos.length).toFixed(1))
+        const esMala = promedio < 14
+
+        return {
+            totalPartos: partos.length,
+            totalNacidos,
+            totalVivos,
+            promedio,
+            esMala,
+            clasificacion: esMala ? 'Baja Productividad (Mala)' : 'Excelente Productividad (Buena)',
+            badgeClass: esMala 
+                ? 'bg-red-50 text-red-700 border-red-200 ring-red-600/20' 
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200 ring-emerald-600/20',
+            icono: esMala ? '⚠️' : '⭐',
+            mensaje: esMala 
+                ? 'Promedio inferior a 14 lechones por parto.' 
+                : 'Promedio igual o superior a 14 lechones por parto.'
+        }
+    }, [partos])
 
     const historialCronologico = useMemo(() => {
         const events = []
@@ -361,6 +401,37 @@ export default function PerfilCerda() {
                             </div>
                         </div>
 
+                        {/* Tarjeta de Rendimiento / Clasificación */}
+                        <div className={`bg-white rounded-3xl shadow-sm border p-6 ${rendimientoCerda.esMala ? 'border-red-200' : 'border-gray-100'}`}>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center">
+                                    <i className="fa-solid fa-chart-line mr-2 text-pink-500"></i> Clasificación y Rendimiento
+                                </h3>
+                                <span className="text-xl">{rendimientoCerda.icono}</span>
+                            </div>
+
+                            <div className="text-center py-3 bg-gray-50/70 rounded-2xl border border-gray-100 mb-4">
+                                <span className="text-3xl font-black text-gray-800 tracking-tight block">
+                                    {rendimientoCerda.promedio}
+                                </span>
+                                <span className="text-xs text-gray-500 font-semibold uppercase">
+                                    Lechones promedio / parto
+                                </span>
+                            </div>
+
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500 font-medium">Clasificación:</span>
+                                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${rendimientoCerda.badgeClass}`}>
+                                        {rendimientoCerda.clasificacion}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-xl border border-gray-100 text-center font-medium">
+                                    {rendimientoCerda.mensaje}
+                                </p>
+                            </div>
+                        </div>
+
                     </div>
 
                     {/* COLUMNA DERECHA: Historiales */}
@@ -468,7 +539,6 @@ export default function PerfilCerda() {
                                 <div className="space-y-4">
                                     {partos.map(parto => (
                                         <div key={parto.Id_parto} className="flex flex-col sm:flex-row items-center bg-white border border-gray-100 shadow-sm rounded-2xl p-4 hover:border-green-200 transition-colors">
-                                            
                                             {/* Fecha y Referencia */}
                                             <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6 text-center sm:text-left min-w-[120px]">
                                                 <div className="text-sm font-bold text-gray-800">{fmtFecha(parto.Fec_inicio)}</div>
@@ -476,14 +546,6 @@ export default function PerfilCerda() {
                                                     Ciclo Ref: <span className="font-semibold text-gray-600">#{parto.Id_Ciclo || '—'}</span>
                                                 </div>
                                             </div>
-
-                                                {/* Fecha y Referencia */}
-                                                <div className="flex-shrink-0 mb-4 sm:mb-0 sm:mr-6 text-center sm:text-left min-w-[120px]">
-                                                    <div className="text-sm font-bold text-gray-800">{fmtFecha(parto.Fec_inicio)}</div>
-                                                    <div className="text-xs text-gray-400 mt-1">
-                                                        Ciclo Ref: <span className="font-semibold text-gray-600">#{parto.Id_Ciclo || '—'}</span>
-                                                    </div>
-                                                </div>
 
                                                 {/* Estadísticas */}
                                                 <div className="flex-grow w-full">

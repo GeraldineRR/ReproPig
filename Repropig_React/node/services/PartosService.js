@@ -47,7 +47,13 @@ class PartosService {
 
         if (data.Id_Ciclo) {
             await ciclosModel.update(
-                { Estado: 'Inactivo' },
+                { Estado: 'Finalizado' },
+                { where: { Id_Ciclo: data.Id_Ciclo } }
+            )
+
+            const fechaParto = data.Fec_fin || data.Fec_inicio || new Date();
+            await CalendarioModel.update(
+                { real_parto: fechaParto },
                 { where: { Id_Ciclo: data.Id_Ciclo } }
             )
 
