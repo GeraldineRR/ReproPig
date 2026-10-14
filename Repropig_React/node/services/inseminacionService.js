@@ -20,12 +20,31 @@ class inseminacionService {
         return inseminacion;
     }
 
+    verificarColectaValida(colecta) {
+        if (!colecta) throw new Error('Colecta no encontrada')
+        
+        // ✅ Verificar si la colecta ha vencido (3 días para interno, 5 días para externo)
+        if (colecta.Fecha) {
+            const fechaCol = new Date(colecta.Fecha)
+            const diasValidez = colecta.Tipo === 'Externo' ? 5 : 3
+            const expDate = new Date(fechaCol.getTime() + diasValidez * 24 * 60 * 60 * 1000)
+            if (new Date() > expDate) {
+                colectaModel.update({ Estado: 'Inactivo' }, { where: { Id_colecta: colecta.Id_colecta } }).catch(console.error)
+                throw new Error(`La colecta #${colecta.Id_colecta} está vencida y no se puede utilizar para realizar una inseminación.`)
+            }
+        }
+
+        if (colecta.Estado && colecta.Estado !== 'Activo') {
+            throw new Error(`La colecta #${colecta.Id_colecta} se encuentra inactiva y no se puede utilizar para realizar una inseminación.`)
+        }
+    }
+
     async create(data) {
         const { Id_colecta, cantidad } = data
 
         if (Id_colecta && cantidad) {
             const colecta = await colectaModel.findByPk(Id_colecta)
-            if (!colecta) throw new Error('Colecta no encontrada')
+            this.verificarColectaValida(colecta)
 
             const disponibles = Number(colecta.cant_generada) - Number(colecta.cant_utilizada)
             if (cantidad > disponibles) {
@@ -56,7 +75,7 @@ class inseminacionService {
             // Cambió la colecta: devolver a la vieja, descontar de la nueva
             const oldColecta = await colectaModel.findByPk(inseminacion.Id_colecta)
             const newColecta = await colectaModel.findByPk(idColecta)
-            if (!newColecta) throw new Error('Nueva colecta no encontrada')
+            this.verificarColectaValida(newColecta)
 
             const disponiblesNueva = Number(newColecta.cant_generada) - Number(newColecta.cant_utilizada)
             if (cantidadNueva > disponiblesNueva) {
@@ -84,6 +103,7 @@ class inseminacionService {
 
             // Diferencia entre cantidad nueva y anterior (misma colecta)
             const diferencia = cantidadNueva - cantidadAnterior
+            if (diferencia > 0) this.verificarColectaValida(colecta)
             const disponibles = Number(colecta.cant_generada) - Number(colecta.cant_utilizada)
 
             if (diferencia > disponibles) {

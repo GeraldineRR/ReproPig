@@ -5,8 +5,8 @@ const PorcinoModel = db.define('porcinos', {
 
     Id_Porcino: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     Nom_Porcino: { type: DataTypes.STRING, allowNull: true },
-    Num_Chapeta: { type: DataTypes.INTEGER, allowNull: true },
-    Plac_Sena_Porcino: { type: DataTypes.INTEGER, allowNull: true },
+    Num_Chapeta: { type: DataTypes.INTEGER, allowNull: true, unique: true },
+    Plac_Sena_Porcino: { type: DataTypes.INTEGER, allowNull: true, unique: true },
     Id_Raza: { type: DataTypes.INTEGER, allowNull: true },
     Gen_Porcino: { type: DataTypes.CHAR(1), allowNull: false },
     Tipo_Cerdo: { type: DataTypes.ENUM('Adulto', 'Lechon'), allowNull: true },

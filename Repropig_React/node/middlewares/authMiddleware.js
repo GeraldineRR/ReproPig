@@ -22,3 +22,15 @@ export const soloInstructor = (req, res, next) => {
         return res.status(403).json({ message: 'Solo los instructores pueden realizar esta acción' })
     next()
 }
+
+// ✅ Solo administradores pueden eliminar montas e inseminaciones
+export const soloAdmin = (req, res, next) => {
+    const cargo = (req.usuario?.cargo || '').toLowerCase()
+    const email = (req.usuario?.email || '').toLowerCase()
+    const nombres = (req.usuario?.nombres || '').toLowerCase()
+    const esAdmin = cargo === 'instructor' || cargo === 'administrador' || cargo === 'admin' || email.includes('admin') || nombres.includes('admin')
+    if (!esAdmin) {
+        return res.status(403).json({ message: 'Solo los administradores pueden eliminar registros de montas e inseminaciones' })
+    }
+    next()
+}

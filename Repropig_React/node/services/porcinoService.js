@@ -41,10 +41,52 @@ class PorcinoService {
     }
 
     async create(data) {
+        if (data.Num_Chapeta !== undefined && data.Num_Chapeta !== null && data.Num_Chapeta !== '') {
+            const existeChapeta = await PorcinoModel.findOne({
+                where: { Num_Chapeta: data.Num_Chapeta }
+            })
+            if (existeChapeta) {
+                throw new Error(`La chapeta #${data.Num_Chapeta} ya se encuentra registrada en el porcino "${existeChapeta.Nom_Porcino || 'ID ' + existeChapeta.Id_Porcino}".`)
+            }
+        }
+
+        if (data.Plac_Sena_Porcino !== undefined && data.Plac_Sena_Porcino !== null && data.Plac_Sena_Porcino !== '') {
+            const existePlaca = await PorcinoModel.findOne({
+                where: { Plac_Sena_Porcino: data.Plac_Sena_Porcino }
+            })
+            if (existePlaca) {
+                throw new Error(`La placa SENA #${data.Plac_Sena_Porcino} ya se encuentra registrada en el porcino "${existePlaca.Nom_Porcino || 'ID ' + existePlaca.Id_Porcino}".`)
+            }
+        }
+
         return await PorcinoModel.create(data)
     }
 
     async update(id, data) {
+        if (data.Num_Chapeta !== undefined && data.Num_Chapeta !== null && data.Num_Chapeta !== '') {
+            const existeChapeta = await PorcinoModel.findOne({
+                where: {
+                    Num_Chapeta: data.Num_Chapeta,
+                    Id_Porcino: { [Op.ne]: id }
+                }
+            })
+            if (existeChapeta) {
+                throw new Error(`La chapeta #${data.Num_Chapeta} ya se encuentra registrada en el porcino "${existeChapeta.Nom_Porcino || 'ID ' + existeChapeta.Id_Porcino}".`)
+            }
+        }
+
+        if (data.Plac_Sena_Porcino !== undefined && data.Plac_Sena_Porcino !== null && data.Plac_Sena_Porcino !== '') {
+            const existePlaca = await PorcinoModel.findOne({
+                where: {
+                    Plac_Sena_Porcino: data.Plac_Sena_Porcino,
+                    Id_Porcino: { [Op.ne]: id }
+                }
+            })
+            if (existePlaca) {
+                throw new Error(`La placa SENA #${data.Plac_Sena_Porcino} ya se encuentra registrada en el porcino "${existePlaca.Nom_Porcino || 'ID ' + existePlaca.Id_Porcino}".`)
+            }
+        }
+
         const result = await PorcinoModel.update(data, { where: { Id_Porcino: id } })
         const update = result[0]
 

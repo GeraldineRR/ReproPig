@@ -36,79 +36,20 @@ const CrudColecta = () => {
         } catch { return Id_Responsable }
     }
 
-    // ✅ Función eliminar con confirmación
-    const handleDelete = async (row) => {
-        const result = await MySwal.fire({
-            title: '¿Estás seguro?',
-            text: `Se eliminará la colecta #${row.Id_colecta} permanentemente.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        })
-
-        if (result.isConfirmed) {
-            try {
-                await apiAxios.delete('/colectas/' + row.Id_colecta)
-                MySwal.fire({ icon: 'success', title: 'Eliminado', text: 'Colecta eliminada correctamente' })
-                getAllColectas()
-            } catch (error) {
-                MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || error.message })
-            }
-        }
-    }
-
-    // 🔹 Toggle Estado Colecta con confirmación SweetAlert
-    const toggleEstado = async (row) => {
-        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
-        const accion = esActivo ? 'inactivar' : 'activar';
-
-        const result = await MySwal.fire({
-            title: `¿Deseas ${accion} esta colecta?`,
-            text: `La colecta #${row.Id_colecta} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: esActivo ? '#d33' : '#198754',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await apiAxios.put(`/colectas/${row.Id_colecta}/toggle-estado`);
-                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
-                getAllColectas();
-            } catch (error) {
-                try {
-                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
-                    await apiAxios.put(`/colectas/${row.Id_colecta}`, { ...row, Estado: nuevoEstado });
-                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
-                    getAllColectas();
-                } catch (err) {
-                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
-                }
-            }
-        }
-    };
-
     const columnsTable = [
         { name: 'Id', selector: row => row.Id_colecta, width: '70px' },
         { name: 'Fecha', selector: row => row.Fecha?.split('T')[0] || row.Fecha },
         {
             name: 'Vigencia', cell: row => {
-                if (row.Tipo !== 'Interno') return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">N/A</span>;
                 if (!row.Fecha) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10">—</span>;
                 const fechaColecta = new Date(row.Fecha);
-                const expirationDate = new Date(fechaColecta);
-                expirationDate.setDate(expirationDate.getDate() + 3);
+                const dias = row.Tipo === 'Externo' ? 5 : 3;
+                const expirationDate = new Date(fechaColecta.getTime() + dias * 24 * 60 * 60 * 1000);
                 const today = new Date();
 
                 const diffTime = expirationDate.getTime() - today.getTime();
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays <= 0) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Vencida</span>;
+                if (diffDays <= 0) return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20">Vencida ({dias}d)</span>;
                 return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">Vence en {diffDays} día{diffDays !== 1 ? 's' : ''}</span>;
             }
         },
@@ -158,13 +99,9 @@ const CrudColecta = () => {
             cell: row => {
                 const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
                 return (
-                    <button
-                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
-                        onClick={() => toggleEstado(row)}
-                        style={{ cursor: 'pointer' }}
-                    >
+                    <span className={`badge ${esActivo ? 'bg-success' : 'bg-danger'}`}>
                         {esActivo ? 'Activo' : 'Inactivo'}
-                    </button>
+                    </span>
                 );
             }
         },
@@ -174,19 +111,9 @@ const CrudColecta = () => {
                     {/* Editar */}
                     <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                         onClick={() => setRowToEdit(row)}
-                        data-bs-toggle="modal" data-bs-target="#exampleModal">
+                        data-bs-toggle="modal" data-bs-target="#exampleModal"
+                        title="Editar">
                         <i className="fa-solid fa-pencil text-xs"></i>
-                    </button>
-                    {/* ✅ Toggle Estado con confirmación */}
-                    <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
-                        title={row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}
-                        onClick={() => toggleEstado(row)}>
-                        <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
-                    </button>
-                    {/* ✅ Eliminar */}
-                    <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                        onClick={() => handleDelete(row)}>
-                        <i className="fa-solid fa-trash text-xs"></i>
                     </button>
                 </div>
             )

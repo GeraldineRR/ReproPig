@@ -24,6 +24,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
     const [Edad_Actual, setEdadActual] = useState(0)
     const [Id_Raza, setRaza] = useState('')
     const [razas, setRazas] = useState([])
+    const [listaPorcinos, setListaPorcinos] = useState([])
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     const [Pes_Nacer, setPesNacer] = useState('')
@@ -85,7 +86,17 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
 
     useEffect(() => {
         getRazas()
+        getPorcinos()
     }, [])
+
+    const getPorcinos = async () => {
+        try {
+            const response = await apiAxios.get('/porcino/')
+            setListaPorcinos(response.data || [])
+        } catch (error) {
+            console.error("Error cargando porcinos:", error)
+        }
+    }
 
 
     useEffect(() => {
@@ -128,7 +139,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
 
     const resetForm = () => {
         setNumChapeta('')
-        setNombre(defaultName)
+        setNombre(defaultName || '')
         setFecNacimiento(forcedFecNac ? forcedFecNac.split('T')[0] : '')
         setGenero('')
         setTipoCerdo(initialTipo === 'Todos' ? 'Adulto' : initialTipo)
@@ -138,6 +149,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
         setFecLlegada('')
         setPesoLlegada('')
         setEdadLlegada(0)
+        setEdadActual(0)
         setRaza('')
         setTextFormButton("Enviar")
 
@@ -190,8 +202,42 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
         )
     }
 
+    const chapetaDuplicada = Num_Chapeta !== '' && Num_Chapeta !== null && listaPorcinos.find(p => 
+        p.Num_Chapeta !== null && 
+        Number(p.Num_Chapeta) === Number(Num_Chapeta) && 
+        (!porcinoEdit || Number(p.Id_Porcino) !== Number(porcinoEdit.Id_Porcino))
+    )
+
+    const placaDuplicada = Tipo_Cerdo === 'Adulto' && Plac_Sena_Porcino !== '' && Plac_Sena_Porcino !== null && listaPorcinos.find(p => 
+        p.Plac_Sena_Porcino !== null && 
+        Number(p.Plac_Sena_Porcino) === Number(Plac_Sena_Porcino) && 
+        (!porcinoEdit || Number(p.Id_Porcino) !== Number(porcinoEdit.Id_Porcino))
+    )
+
     const gestionarForm = async (e) => {
         e.preventDefault()
+
+        if (chapetaDuplicada) {
+            MySwal.fire({
+                icon: 'warning',
+                title: 'Chapeta ya registrada',
+                html: `La chapeta <b>#${Num_Chapeta}</b> ya se encuentra asignada al porcino <b>"${chapetaDuplicada.Nom_Porcino || 'Sin nombre'}"</b> (${chapetaDuplicada.Tipo_Cerdo}).<br/><br/>No se permite registrar dos animales con el mismo número de chapeta.`,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Entendido'
+            })
+            return
+        }
+
+        if (placaDuplicada) {
+            MySwal.fire({
+                icon: 'warning',
+                title: 'Placa SENA ya registrada',
+                html: `La placa SENA <b>#${Plac_Sena_Porcino}</b> ya se encuentra asignada al porcino <b>"${placaDuplicada.Nom_Porcino || 'Sin nombre'}"</b> (${placaDuplicada.Tipo_Cerdo}).<br/><br/>No se permite registrar dos porcinos con la misma placa.`,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Entendido'
+            })
+            return
+        }
 
 
         const edadCalculada = calcularEdadLlegada(Fec_Nac_Porcino, Fec_Llegada)
@@ -227,6 +273,9 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
                 await apiAxios.post('/porcino/', data)
 
                 if (reload) await reload()
+                await getPorcinos()
+
+                resetForm()
 
                 if (onSuccess) {
                     onSuccess()
@@ -253,6 +302,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
                 await apiAxios.put(`/porcino/${porcinoEdit.Id_Porcino}`, data)
 
                 await reload()
+                await getPorcinos()
 
                 MySwal.fire({
                     title: 'Actualización',
@@ -263,10 +313,11 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
             }
 
         } catch (error) {
+            const errorMsg = error.response?.data?.message || "No se pudo guardar el porcino."
             MySwal.fire({
                 icon: "error",
-                title: "Error",
-                text: "No se pudo guardar el porcino."
+                title: "Atención",
+                text: errorMsg
             })
         }
     }
@@ -305,7 +356,20 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
 
             <div className="mb-3">
                 <label htmlFor="Num_Chapeta" className="form-label fw-semibold">🔖 Chapeta</label>
-                <input type="number" id="Num_Chapeta" className="form-control" value={Num_Chapeta} onChange={(e) => setNumChapeta(e.target.value)} required />
+                <input 
+                    type="number" 
+                    id="Num_Chapeta" 
+                    className={`form-control ${chapetaDuplicada ? 'is-invalid border-danger' : ''}`} 
+                    value={Num_Chapeta} 
+                    onChange={(e) => setNumChapeta(e.target.value)} 
+                    placeholder="Número de chapeta único"
+                    required 
+                />
+                {chapetaDuplicada && (
+                    <div className="text-danger small mt-1 fw-bold">
+                        ⚠️ Esta chapeta (#{Num_Chapeta}) ya está asignada a "{chapetaDuplicada.Nom_Porcino || 'Porcino'}" ({chapetaDuplicada.Tipo_Cerdo}). Debe ser única.
+                    </div>
+                )}
             </div>
 
             <div className="mb-3">
@@ -326,7 +390,20 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
                 <>
                     <div className="mb-3">
                         <label htmlFor="Plac_Sena_Porcino" className="form-label fw-semibold">🪪 Placa Sena</label>
-                        <input type="number" id="Plac_Sena_Porcino" className="form-control" value={Plac_Sena_Porcino} onChange={(e) => setPlacaSena(e.target.value)} required />
+                        <input 
+                            type="number" 
+                            id="Plac_Sena_Porcino" 
+                            className={`form-control ${placaDuplicada ? 'is-invalid border-danger' : ''}`} 
+                            value={Plac_Sena_Porcino} 
+                            onChange={(e) => setPlacaSena(e.target.value)} 
+                            placeholder="Número de placa único"
+                            required 
+                        />
+                        {placaDuplicada && (
+                            <div className="text-danger small mt-1 fw-bold">
+                                ⚠️ Esta placa SENA (#{Plac_Sena_Porcino}) ya está asignada a "{placaDuplicada.Nom_Porcino || 'Porcino'}". Debe ser única.
+                            </div>
+                        )}
                     </div>
 
                     <div className="mb-3">

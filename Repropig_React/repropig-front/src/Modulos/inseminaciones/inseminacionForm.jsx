@@ -155,6 +155,36 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             MySwal.fire({ icon: 'warning', title: 'Requerido', text: 'Debes seleccionar al menos un responsable' })
             return
         }
+
+        // ✅ Verificar que la colecta se pueda utilizar (activa y vigente)
+        if (Id_colecta) {
+            const col = colectas.find(c => String(c.Id_colecta) === String(Id_colecta));
+            if (col) {
+                const diasValidez = col.Tipo === 'Externo' ? 5 : 3;
+                const fechaCol = col.Fecha ? new Date(col.Fecha.substring(0, 10) + 'T12:00:00Z') : null;
+                const fechaInsem = Fec_hora ? new Date(Fec_hora.substring(0, 10) + 'T12:00:00Z') : new Date();
+                const hoy = new Date();
+
+                let esVencida = false;
+                if (fechaCol) {
+                    const diasDif = Math.round((fechaInsem.getTime() - fechaCol.getTime()) / (1000 * 60 * 60 * 24));
+                    const diasDesdeCol = Math.round((hoy.getTime() - fechaCol.getTime()) / (1000 * 60 * 60 * 24));
+                    if (diasDif > diasValidez || diasDesdeCol > diasValidez || diasDif < 0) {
+                        esVencida = true;
+                    }
+                }
+
+                const esInactiva = col.Estado === 'Inactivo';
+                if (esInactiva || esVencida) {
+                    return MySwal.fire({
+                        icon: 'error',
+                        title: 'Colecta no permitida',
+                        text: `La colecta #${col.Id_colecta} ${esInactiva ? 'está inactiva' : 'está vencida'}. Debe estar activa y vigente para poder realizar la inseminación.`
+                    });
+                }
+            }
+        }
+
         const formData = {
             Fec_hora, Id_Porcino, cantidad,
             Id_Responsable: JSON.stringify(Id_Responsable),
@@ -337,29 +367,34 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                 
                                 let mensajeVencida = "";
                                 let isVencida = false;
-                                if (Fec_hora && c.Fecha) {
-                                    // Utilizar UTC explícitamente para evitar saltos de zona horaria
-                                    // Fec_hora es YYYY-MM-DD
-                                    const tInsemDate = new Date(Fec_hora + 'T12:00:00Z');
-                                    // c.Fecha puede tener horas y usar espacio en vez de T, tomamos los primeros 10 caracteres
+
+                                if (c.Estado === 'Inactivo') {
+                                    mensajeVencida = " (Inactiva)";
+                                    isVencida = true;
+                                }
+
+                                if (c.Fecha) {
                                     const fechaColStr = c.Fecha.substring(0, 10);
                                     const tColDate = new Date(fechaColStr + 'T12:00:00Z');
+                                    const diasValidez = c.Tipo === 'Externo' ? 5 : 3;
+                                    const hoy = new Date();
+                                    const diasDesdeCol = Math.round((hoy.getTime() - tColDate.getTime()) / (1000 * 60 * 60 * 24));
 
-                                    // Diferencia en días exactos
-                                    const diasDif = Math.round((tInsemDate.getTime() - tColDate.getTime()) / (1000 * 60 * 60 * 24));
-                                    
-                                    if (isNaN(diasDif)) {
-                                        isVencida = false;
-                                    } else if (diasDif < 0) {
-                                        mensajeVencida = " (Colecta futura)";
+                                    if (diasDesdeCol > diasValidez) {
+                                        mensajeVencida = ` (Vencida - ${diasValidez}d)`;
                                         isVencida = true;
-                                    } else if (c.Tipo === 'Interno' && diasDif > 3) {
-                                        mensajeVencida = " (Vencida - +3 días)";
-                                        isVencida = true;
-                                    } else if (c.Tipo === 'Externo' && diasDif > 5) {
-                                        // Las externas suelen durar un poco más o no controlarse igual, dejaremos un límite razonable o el que usen
-                                        mensajeVencida = " (Vencida)";
-                                        isVencida = true;
+                                    }
+
+                                    if (Fec_hora) {
+                                        const tInsemDate = new Date(Fec_hora.substring(0, 10) + 'T12:00:00Z');
+                                        const diasDif = Math.round((tInsemDate.getTime() - tColDate.getTime()) / (1000 * 60 * 60 * 24));
+                                        if (diasDif < 0) {
+                                            mensajeVencida = " (Colecta futura)";
+                                            isVencida = true;
+                                        } else if (diasDif > diasValidez) {
+                                            mensajeVencida = ` (Vencida - +${diasValidez}d)`;
+                                            isVencida = true;
+                                        }
                                     }
                                 }
 
@@ -367,8 +402,8 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                     mensajeVencida += " (Agotada)";
                                 }
 
-                                // Bloquear la selección si está vencida o no hay pajillas
-                                const debeDeshabilitar = (disponibles <= 0 || isVencida) && c.Id_colecta != Id_colecta;
+                                // Bloquear la selección si está vencida, inactiva o no hay pajillas
+                                const debeDeshabilitar = (disponibles <= 0 || isVencida || c.Estado === 'Inactivo') && c.Id_colecta != Id_colecta;
 
                                 return (
                                     <option key={c.Id_colecta} value={c.Id_colecta} disabled={debeDeshabilitar}>

@@ -5,12 +5,22 @@ import DataTable from "react-data-table-component";
 import MontaForm from "./montaForm.jsx";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const CrudMonta = () => {
     const MySwal = WithReactContent(Swal)
+    const { usuario } = useAuth()
     const navigate = useNavigate()
     const location = useLocation()
     const filtroDesdeCiclo = (location.state && location.state.Id_Ciclo) ? location.state : null // { Id_Ciclo, Id_Porcino, Nom_Porcino }
+
+    const esAdmin = (user) => {
+        if (!user) return false
+        const c = (user.cargo || user.Cargo || '').toLowerCase()
+        const n = (user.nombres || '').toLowerCase()
+        const e = (user.email || '').toLowerCase()
+        return c === 'instructor' || c === 'administrador' || c === 'admin' || n.includes('admin') || e.includes('admin')
+    }
 
     const [montas, setMontas] = useState([]);
     const [responsables, setResponsables] = useState([]);
@@ -38,41 +48,15 @@ const CrudMonta = () => {
         } catch { return Id_Responsable }
     }
 
-    // 🔹 Toggle Estado Monta con confirmación SweetAlert
-    const toggleEstado = async (row) => {
-        const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
-        const accion = esActivo ? 'inactivar' : 'activar';
-
-        const result = await MySwal.fire({
-            title: `¿Deseas ${accion} esta monta?`,
-            text: `La monta #${row.Id_Monta} pasará a estar ${esActivo ? 'Inactiva' : 'Activa'}.`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: esActivo ? '#d33' : '#198754',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await apiAxios.put(`/monta/${row.Id_Monta}/toggle-estado`);
-                MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
-                getAllMontas();
-            } catch (error) {
-                try {
-                    const nuevoEstado = esActivo ? 'Inactivo' : 'Activo';
-                    await apiAxios.put(`/monta/${row.Id_Monta}`, { ...row, Estado: nuevoEstado });
-                    MySwal.fire({ icon: 'success', title: 'Estado actualizado', timer: 1500, showConfirmButton: false });
-                    getAllMontas();
-                } catch (err) {
-                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo cambiar el estado.' });
-                }
-            }
-        }
-    }
-
     const handleDelete = async (row) => {
+        if (!esAdmin(usuario)) {
+            return MySwal.fire({
+                icon: 'warning',
+                title: 'Acceso denegado',
+                text: 'Solo el administrador puede eliminar registros de montas.'
+            })
+        }
+
         const result = await MySwal.fire({
             title: '¿Estás seguro?',
             text: `Se eliminará la monta #${row.Id_Monta} permanentemente.`,
@@ -128,21 +112,6 @@ const CrudMonta = () => {
         },
         { name: 'Id Ciclo', selector: row => row.Id_Ciclo },
         {
-            name: 'Estado',
-            cell: row => {
-                const esActivo = row.Estado === 'Activo' || row.Estado === 'A' || !row.Estado;
-                return (
-                    <button
-                        className={`badge border-0 ${esActivo ? 'bg-success' : 'bg-danger'}`}
-                        onClick={() => toggleEstado(row)}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        {esActivo ? 'Activo' : 'Inactivo'}
-                    </button>
-                );
-            }
-        },
-        {
             name: 'Acciones', cell: row => {
                 let isInactive = false;
                 if (filtroDesdeCiclo) {
@@ -163,18 +132,14 @@ const CrudMonta = () => {
                             title={isInactive ? "El ciclo está inactivo" : "Editar"}>
                             <i className="fa-solid fa-pencil text-xs"></i>
                         </button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                            onClick={() => handleDelete(row)}
-                            disabled={isInactive}
-                            title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
-                            <i className="fa-solid fa-trash text-xs"></i>
-                        </button>
-                        <button className={`btn btn-sm ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'btn-success' : 'btn-warning'}`}
-                            onClick={() => toggleEstado(row)}
-                            disabled={isInactive}
-                            title={isInactive ? "El ciclo está inactivo" : row.Estado === 'Inactivo' || row.Estado === 'I' ? 'Activar' : 'Inactivar'}>
-                            <i className={`fa-solid ${row.Estado === 'Inactivo' || row.Estado === 'I' ? 'fa-check' : 'fa-ban'}`}></i>
-                        </button>
+                        {esAdmin(usuario) && (
+                            <button className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                onClick={() => handleDelete(row)}
+                                disabled={isInactive}
+                                title={isInactive ? "El ciclo está inactivo" : "Eliminar"}>
+                                <i className="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        )}
                     </div>
                 );
             }

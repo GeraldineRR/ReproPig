@@ -75,9 +75,23 @@ const CrudPorcinos = () => {
 
     const [porcinoEdit, setPorcinoEdit] = useState(null)
     const [createTipo, setCreateTipo] = useState('Adulto')
+    const [formKey, setFormKey] = useState(Date.now())
     const [porcinoQR, setPorcinoQR] = useState(null)
     const [filterText, setFilterText] = useState('')
     const [filterTipo, setFilterTipo] = useState('Todos')
+
+    const formatFechaCorta = (dateStr) => {
+        if (!dateStr) return '—'
+        try {
+            const clean = typeof dateStr === 'string' ? dateStr.split('T')[0] : ''
+            if (clean && clean.includes('-')) {
+                const [y, m, d] = clean.split('-')
+                const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+                return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`
+            }
+            return new Date(dateStr).toLocaleDateString('es-CO')
+        } catch { return '—' }
+    }
 
     const columnsTable = [
         { name: 'Nombre', selector: row => row.Nom_Porcino, },
@@ -116,8 +130,8 @@ const CrudPorcinos = () => {
 
         { name: 'Procedencia', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : (<span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ring-1 ring-inset ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-blue-50 text-blue-700 ring-blue-600/20'}`} > {row.Proc_Porcino} </span>), },
         { name: 'Lugar Proc.', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Lug_Proc_Porcino, },
-        { name: 'Fecha Nac.', selector: row => row.Fec_Nac_Porcino, },
-        { name: 'Fecha Lleg', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : row.Fec_Llegada, },
+        { name: 'Fecha Nac.', selector: row => formatFechaCorta(row.Fec_Nac_Porcino), },
+        { name: 'Fecha Lleg', selector: row => row.Tipo_Cerdo === 'Lechon' ? '—' : formatFechaCorta(row.Fec_Llegada), },
         {
             name: 'Peso Lleg (kg)', selector: row => {
                 if (row.Tipo_Cerdo === 'Lechon') return '—'
@@ -245,6 +259,7 @@ const CrudPorcinos = () => {
 
     const hideModal = () => {
         setPorcinoEdit(null)
+        setFormKey(Date.now())
         document.getElementById('closeModal').click()
     }
 
@@ -307,17 +322,17 @@ const CrudPorcinos = () => {
 
                     <div className="col-auto">
                         {filterTipo === 'Adulto' && (
-                            <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Adulto'); }}>
+                            <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Adulto'); setFormKey(Date.now()); }}>
                                 🐗 + Registrar Adulto
                             </button>
                         )}
                         {filterTipo === 'Lechon' && (
-                            <button type="button" className="btn btn-dark" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Lechon'); }}>
+                            <button type="button" className="btn btn-dark" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Lechon'); setFormKey(Date.now()); }}>
                                 🐽 + Registrar Lechón
                             </button>
                         )}
                         {filterTipo === 'Todos' && (
-                            <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Todos'); }}>
+                            <button type="button" className="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal" onClick={() => { setPorcinoEdit(null); setCreateTipo('Todos'); setFormKey(Date.now()); }}>
                                 🐷 + Registrar Porcino
                             </button>
                         )}
@@ -345,7 +360,7 @@ const CrudPorcinos = () => {
                                 <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
                             </div>
                             <div className="modal-body">
-                                <PorcinoForm key={porcinoEdit ? porcinoEdit.Id_Porcino : `new_${createTipo}`} hideModal={hideModal} porcinoEdit={porcinoEdit} reload={getAllPorcinos} initialTipo={createTipo} />
+                                <PorcinoForm key={porcinoEdit ? `edit_${porcinoEdit.Id_Porcino}` : `new_${createTipo}_${formKey}`} hideModal={hideModal} porcinoEdit={porcinoEdit} reload={getAllPorcinos} initialTipo={createTipo} />
                             </div>
                         </div>
                     </div>
