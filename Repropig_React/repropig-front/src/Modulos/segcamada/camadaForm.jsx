@@ -426,74 +426,78 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         />
                     </div>
 
-                    {/* Responsables */}
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold d-block">
-                            👨‍🌾 Responsables ({Id_Responsable.length})
-                        </label>
-                        <div className="d-flex flex-wrap gap-2">
-                            {responsables.length === 0 ? (
-                                <span className="text-muted small">No hay responsables registrados</span>
-                            ) : (
-                                responsables.map((responsable) => {
-                                    const activo = Id_Responsable.map(String).includes(String(responsable.Id_Responsable));
-                                    return (
-                                        <span
-                                            key={responsable.Id_Responsable}
-                                            onClick={() => toggleResponsable(responsable.Id_Responsable)}
-                                            className={`px-3 py-1.5 rounded-pill user-select-none ${activo
-                                                    ? "bg-success text-white shadow-sm fw-bold"
-                                                    : "bg-white border text-secondary"
-                                                }`}
-                                            style={{ cursor: "pointer", fontSize: "13px" }}
-                                        >
-                                            {activo ? "✓ " : "+ "}{responsable.Nombres} {responsable.Apellidos || ""}
-                                        </span>
-                                    );
-                                })
-                            )}
+                    <div className="mb-3 position-relative">
+                        <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
+
+                        <div
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                            onClick={() => setShowResponsables(!showResponsables)}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                        >
+                            {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
                         </div>
+
+                        {showResponsables && (
+                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                                {responsables.length === 0 ? (
+                                    <li className="dropdown-item text-muted small">No hay responsables registrados</li>
+                                ) : (
+                                    responsables.map(r => {
+                                        const activo = Id_Responsable.includes(String(r.Id_Responsable))
+                                        return (
+                                            <span
+                                                key={r.Id_Responsable}
+                                                onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                    }`}
+                                                style={{ cursor: "pointer", fontSize: "13px" }}
+                                            >
+                                                {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
+                                            </span>
+                                        )
+                                    })
+                                )}
+                            </ul>
+                        )}
                     </div>
 
-                    {/* Medicamentos */}
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold d-block">
-                            💊 Medicamentos ({Id_Medicamento.length})
-                        </label>
+                    <div className="mb-3 position-relative">
+                        <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
 
-                        <div className="d-flex flex-wrap gap-2">
-                            {medicamentos.length === 0 ? (
-                                <span className="text-muted small">
-                                    No hay medicamentos registrados
-                                </span>
-                            ) : (
-                                medicamentos.map((med) => {
-                                    const activo = Id_Medicamento
-                                        .map(String)
-                                        .includes(String(med.Id_Medicamento));
-
-                                    return (
-                                        <span
-                                            key={med.Id_Medicamento}
-                                            onClick={() =>
-                                                toggleMedicamento(med.Id_Medicamento)
-                                            }
-                                            className={`px-3 py-1.5 rounded-pill user-select-none ${activo
-                                                ? "bg-success text-white shadow-sm fw-bold"
-                                                : "bg-white border text-secondary"
-                                                }`}
-                                            style={{
-                                                cursor: "pointer",
-                                                fontSize: "13px"
-                                            }}
-                                        >
-                                            {activo ? "✓ " : "+ "}
-                                            {med.Nombre}
-                                        </span>
-                                    );
-                                })
-                            )}
+                        <div
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                            onClick={() => setShowMedicamentos(!showMedicamentos)}
+                            style={{ cursor: "pointer", userSelect: "none" }}
+                        >
+                            {Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}
                         </div>
+
+                        {showMedicamentos && (
+                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                                {medicamentos.length === 0 ? (
+                                    <li className="dropdown-item text-muted small">No hay medicamentos registrados</li>
+                                ) : (
+                                    medicamentos.map(m => {
+                                        const activo = Id_Medicamento.includes(String(m.Id_Medicamento))
+                                        return (
+                                            <span
+                                                key={m.Id_Medicamento}
+                                                onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}
+                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
+                                                    ? "bg-primary text-white shadow-sm fw-bold"
+                                                    : "bg-white border text-secondary"
+                                                    }`}
+                                                style={{ cursor: "pointer", fontSize: "13px" }}
+                                            >
+                                                {activo ? "✓ " : "+ "}{m.Nombre}
+                                            </span>
+                                        )
+                                    })
+                                )}
+                            </ul>
+                        )}
                     </div>
 
                     <div className="mb-3">

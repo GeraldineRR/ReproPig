@@ -250,7 +250,7 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                                     }`}
                                 style={{ cursor: "pointer", fontSize: "13px" }}
                             >
-                                {r.Nombres}
+                                {r.Nombres} {r.Apellidos}
                             </span>
                         )
                     })}

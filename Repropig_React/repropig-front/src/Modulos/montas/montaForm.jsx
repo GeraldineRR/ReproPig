@@ -221,12 +221,13 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             <div className="row g-3">
 
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">📅 Fecha</label>
+                    <label className="form-label fw-semibold">📅 Fecha y Hora</label>
                     <input
                         type="datetime-local"
                         className="form-control shadow-sm"
                         value={Fec_hora}
                         onChange={e => setFec_hora(e.target.value)}
+                        max={new Date().toISOString().slice(0, 16)}
                         required
                     />
                 </div>

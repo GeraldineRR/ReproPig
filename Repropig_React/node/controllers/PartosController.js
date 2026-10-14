@@ -60,32 +60,7 @@ export const deletePartos= async(req, res) => {
 }
 
 
-// NUEVA FUNCIÓN PARA ACTIVAR/DESACTIVAR
-export const toggleEstadoParto = async (req, res) => {
-    try {
-        const { id } = req.params;
 
-        const parto = await PartosModel.findByPk(id);
-
-        if (!parto) {
-            return res.status(404).json({ message: "Parto no encontrado" });
-        }
-
-        parto.estado = parto.estado === "Activo"
-            ? "Inactivo"
-            : "Activo";
-
-        await parto.save();
-
-        res.json({
-            message: "Estado actualizado",
-            estado: parto.estado
-        });
-
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
 
 // NUEVA FUNCIÓN PARA VERIFICAR SEGUIMIENTO DE CAMADA
 export const checkSeguimiento = async (req, res) => {

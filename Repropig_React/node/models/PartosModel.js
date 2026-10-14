@@ -49,12 +49,6 @@ const PartosModel = db.define("partos", {
     type: DataTypes.TIME,
   },
 
-  estado: {
-    type: DataTypes.CHAR(10),
-    allowNull: false,
-    defaultValue: "Activo",
-  },
-
   Id_Ciclo: {
     type: DataTypes.INTEGER,
     allowNull: true,
