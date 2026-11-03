@@ -406,6 +406,14 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
 
     // Submit revision
     const guardarRevision = async () => {
+        if (isCicloDetenido) {
+            MySwal.fire({
+                icon: 'error',
+                title: 'Ciclo detenido',
+                text: 'Este ciclo reproductivo se encuentra cerrado o el porcino está dado de baja. No se pueden registrar ni modificar eventos del calendario.'
+            })
+            return
+        }
         if (!revFechaRevision) {
             MySwal.fire({ icon: 'warning', title: 'Fecha requerida', text: 'Debes ingresar la fecha de revisión.' })
             return

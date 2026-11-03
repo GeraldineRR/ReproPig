@@ -57,11 +57,33 @@ const CrudCiclos = () => {
     const modalColectaRef = useRef(null)
     const modalColectaInstanceRef = useRef(null)
 
+    const [novedadesMap, setNovedadesMap] = useState({})
+
     const getAllCiclos = async () => {
         try {
-            const response = await apiAxios.get('/ciclos/')
-            const sorted = [...(response.data || [])].sort((a, b) => Number(b.Id_Ciclo) - Number(a.Id_Ciclo));
-            setCiclos(sorted)
+            const [ciclosRes, novRes] = await Promise.allSettled([
+                apiAxios.get('/ciclos/'),
+                apiAxios.get('/novedades/')
+            ])
+
+            const newMap = {}
+            if (novRes.status === 'fulfilled' && Array.isArray(novRes.value.data)) {
+                novRes.value.data.forEach(n => {
+                    const tipo = (n.Tipo_Novedad || '').trim()
+                    const idPorcino = n.Id_Porcino || n.porcino?.Id_Porcino
+                    if (idPorcino && ['Muerte', 'Descarte', 'Traslado'].includes(tipo)) {
+                        if (!newMap[idPorcino]) {
+                            newMap[idPorcino] = n
+                        }
+                    }
+                })
+                setNovedadesMap(newMap)
+            }
+
+            if (ciclosRes.status === 'fulfilled') {
+                const sorted = [...(ciclosRes.value.data || [])].sort((a, b) => Number(b.Id_Ciclo) - Number(a.Id_Ciclo))
+                setCiclos(sorted)
+            }
         } catch (error) {
             console.error('Error al obtener ciclos:', error)
         }
@@ -178,6 +200,15 @@ const CrudCiclos = () => {
     }
 
     const handleEdit = (ciclo) => {
+        const info = getProgresoYEstado(ciclo)
+        if (info.isBaja) {
+            MySwal.fire({
+                icon: 'info',
+                title: 'Ciclo Inactivo',
+                text: `Este ciclo pertenece a una cerda con baja registrada (${info.motivoBaja}) y no puede ser modificado.`
+            })
+            return
+        }
         setCicloEdit(ciclo)
         abrirModal(modalRef, modalInstanceRef)
     }
@@ -194,16 +225,29 @@ const CrudCiclos = () => {
     }
 
     const handleToggleActivo = async (row) => {
-        if (usuario?.Cargo !== 'Gestor') {
+        const cargo = (usuario?.Cargo || usuario?.cargo || usuario?.Rol || usuario?.rol || '').toLowerCase()
+        const tienePermiso = cargo.includes('instructor') || cargo.includes('gestor') || cargo.includes('admin')
+        if (!tienePermiso) {
             MySwal.fire({
                 icon: 'warning',
                 title: 'Acceso denegado',
-                text: 'Pídele permiso al instructor para activar o inactivar el ciclo.'
+                text: 'Pídele permiso al instructor o gestor para activar o inactivar el ciclo.'
             })
             return
         }
 
-        const isActivo = (row.Estado || '').toUpperCase() === 'ACTIVO';
+        const info = getProgresoYEstado(row)
+        const isActivo = info.isActivo
+
+        if (!isActivo && info.isBaja) {
+            MySwal.fire({
+                icon: 'error',
+                title: 'No se puede activar el ciclo',
+                text: `La cerda "${row.porcino?.Nom_Porcino || ''}" tiene registro de baja (${info.motivoBaja}). Sus ciclos reproductivos no se pueden reactivar.`
+            })
+            return
+        }
+
         const accion = isActivo ? 'inactivar' : 'activar'
         const result = await MySwal.fire({
             title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} ciclo?`,
@@ -262,7 +306,7 @@ const CrudCiclos = () => {
         }
     }
 
-    const getProgresoYEstado = (row) => {
+    const getProgresoYEstado = (row, novMap = novedadesMap) => {
         const cal = row.calendario;
         const hayParto = !!cal?.real_parto || (row.partos && row.partos.length > 0);
         const hayRecelo = cal?.resultado_rc1 === 'recelo_detectado' || cal?.resultado_rc2 === 'recelo_detectado';
@@ -279,7 +323,8 @@ const CrudCiclos = () => {
                 textoProgreso: 'Parto registrado (100%)',
                 isFinalizado: true,
                 isFallido: false,
-                isActivo: false
+                isActivo: false,
+                isBaja: false
             };
         }
 
@@ -298,16 +343,12 @@ const CrudCiclos = () => {
                 textoProgreso: 'Recelo detectado',
                 isFinalizado: false,
                 isFallido: true,
-                isActivo: false
+                isActivo: false,
+                isBaja: false
             };
         }
 
         // 3. Proceso avanzando según cada evento del calendario:
-        // Etapa 1: RC1 (real_rc1) -> 20%
-        // Etapa 2: RC2 (real_rc2) -> 40%
-        // Etapa 3: Cambio de Alimento (real_cambio_alimento) -> 60%
-        // Etapa 4: Traslado a Lactancia (real_dia_107) -> 80%
-        // Etapa 5: Parto (real_parto) -> 100%
         let eventosCompletados = 0;
         if (cal?.real_rc1) eventosCompletados++;
         if (cal?.real_rc2) eventosCompletados++;
@@ -316,6 +357,60 @@ const CrudCiclos = () => {
         if (cal?.real_parto) eventosCompletados++;
 
         const progresoCalculado = eventosCompletados * 20;
+
+        // 4. Verificar si la cerda tiene novedad de baja (Muerte, Descarte, Traslado) o estado no activo
+        const idCerda = row.Id_Cerda || row.porcino?.Id_Porcino;
+        const novBaja = novMap?.[idCerda] || (row.porcino?.novedades || []).find(n =>
+            ['muerte', 'descarte', 'traslado'].includes((n.Tipo_Novedad || '').toLowerCase())
+        );
+        const estadoPorcino = (row.porcino?.Estado || '').trim().toLowerCase();
+
+        let motivoBaja = null;
+        if (novBaja) {
+            const tipo = (novBaja.Tipo_Novedad || '').toLowerCase();
+            if (tipo === 'muerte') motivoBaja = 'Muerte';
+            else if (tipo === 'traslado') motivoBaja = 'Traslado';
+            else if (tipo === 'descarte') motivoBaja = 'Descarte';
+        } else if (estadoPorcino === 'muerto') {
+            motivoBaja = 'Muerte';
+        } else if (estadoPorcino === 'trasladado') {
+            motivoBaja = 'Traslado';
+        } else if (estadoPorcino === 'inactivo') {
+            motivoBaja = 'Descarte';
+        }
+
+        if (motivoBaja) {
+            let badgeClass = 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20';
+            let dotClass = 'bg-rose-500';
+            let barClass = 'bg-rose-400';
+            let motivoTexto = motivoBaja === 'Muerte' ? 'Muerto' : motivoBaja;
+
+            if (motivoBaja.toLowerCase().includes('traslado')) {
+                badgeClass = 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20';
+                dotClass = 'bg-amber-500';
+                barClass = 'bg-amber-400';
+                motivoTexto = 'Traslado';
+            } else if (motivoBaja.toLowerCase().includes('descarte')) {
+                badgeClass = 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-500/20';
+                dotClass = 'bg-slate-500';
+                barClass = 'bg-slate-400';
+                motivoTexto = 'Descarte';
+            }
+
+            return {
+                estado: `Inactivo (${motivoTexto})`,
+                progreso: progresoCalculado,
+                badgeClass,
+                dotClass,
+                barClass,
+                textoProgreso: `Detenido por ${motivoTexto} (${eventosCompletados}/5 etapas)`,
+                isFinalizado: false,
+                isFallido: false,
+                isActivo: false,
+                isBaja: true,
+                motivoBaja: motivoTexto
+            };
+        }
 
         if (estadoRaw.toLowerCase() === 'inactivo') {
             return {
@@ -327,7 +422,8 @@ const CrudCiclos = () => {
                 textoProgreso: `${eventosCompletados}/5 etapas`,
                 isFinalizado: false,
                 isFallido: false,
-                isActivo: false
+                isActivo: false,
+                isBaja: false
             };
         }
 
@@ -340,7 +436,8 @@ const CrudCiclos = () => {
             textoProgreso: `${eventosCompletados}/5 etapas completadas`,
             isFinalizado: false,
             isFallido: false,
-            isActivo: true
+            isActivo: true,
+            isBaja: false
         };
     };
 
@@ -361,18 +458,34 @@ const CrudCiclos = () => {
             selector: row => row.porcino?.Nom_Porcino || 'Sin nombre',
             sortable: true,
             minWidth: '160px',
-            cell: row => (
-                <div className="flex items-center gap-2.5 py-1">
-                    <div>
-                        <div className="font-semibold text-gray-900 text-xs">
-                            {row.porcino?.Nom_Porcino || 'Sin nombre'}
-                        </div>
-                        <div className="text-[11px] text-gray-400">
-                            {row.porcino?.Num_Chapeta ? `Chapeta: ${row.porcino.Num_Chapeta}` : (row.Id_Cerda ? `ID: #${row.Id_Cerda}` : '')}
+            cell: row => {
+                const info = getProgresoYEstado(row);
+                return (
+                    <div className="flex items-center gap-2.5 py-1">
+                        <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-semibold text-gray-900 text-xs">
+                                    {row.porcino?.Nom_Porcino || 'Sin nombre'}
+                                </span>
+                                {info.isBaja && (
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                        info.motivoBaja === 'Muerte' || info.motivoBaja === 'Muerto'
+                                            ? 'bg-rose-100 text-rose-700'
+                                            : info.motivoBaja === 'Traslado'
+                                            ? 'bg-amber-100 text-amber-700'
+                                            : 'bg-gray-100 text-gray-700'
+                                    }`}>
+                                        {info.motivoBaja}
+                                    </span>
+                                )}
+                            </div>
+                            <div className="text-[11px] text-gray-400">
+                                {row.porcino?.Num_Chapeta ? `Chapeta: ${row.porcino.Num_Chapeta}` : (row.Id_Cerda ? `ID: #${row.Id_Cerda}` : '')}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )
+                );
+            }
         },
         {
             name: 'Tipo',
@@ -409,21 +522,23 @@ const CrudCiclos = () => {
         },
         {
             name: 'Estado / Progreso',
-            width: '190px',
+            width: '210px',
             cell: row => {
                 const info = getProgresoYEstado(row);
 
                 return (
                     <div
                         className="w-full py-1"
-                        style={{ cursor: info.isActivo || info.estado === 'Inactivo' ? 'pointer' : 'default' }}
+                        style={{ cursor: info.isActivo || info.estado === 'Inactivo' || info.isBaja ? 'pointer' : 'default' }}
                         onClick={() => {
-                            if (info.isActivo || info.estado === 'Inactivo') {
+                            if (info.isActivo || info.estado === 'Inactivo' || info.isBaja) {
                                 handleToggleActivo(row);
                             }
                         }}
                         title={
-                            info.isActivo || info.estado === 'Inactivo'
+                            info.isBaja
+                                ? `Ciclo detenido e inactivo por motivo: ${info.motivoBaja}`
+                                : info.isActivo || info.estado === 'Inactivo'
                                 ? "Click para cambiar estado Activo/Inactivo"
                                 : `Ciclo ${info.estado}`
                         }

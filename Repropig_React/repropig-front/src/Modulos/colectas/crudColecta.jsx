@@ -7,32 +7,13 @@ import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
 import { customTableStyles } from "../../styles/tableStyles.js";
 import {
-    ResponsiveContainer,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip as RechartsTooltip
-} from "recharts";
-import {
     TbFlask,
-    TbGenderMale,
-    TbAlertTriangle,
-    TbCheck,
-    TbBan,
-    TbFilter,
     TbSearch,
     TbPlus,
-    TbX,
-    TbInfoCircle,
     TbPencil,
-    TbTrash,
-    TbChartBar,
-    TbLayersLinked
+    TbTrash
 } from "react-icons/tb";
-import { formatearFecha, getDiasParaVencer, getEstadoVigenciaColecta } from "../../utils/dateUtils.js";
-import { agruparDatosEvolucion } from "../../utils/chartGroupingUtils.js";
+import { formatearFecha, getEstadoVigenciaColecta } from "../../utils/dateUtils.js";
 import { ModalResponsables, BotonResponsables } from "../../components/ModalResponsables.jsx";
 import { getListaResponsables } from "../../utils/responsablesUtils.js";
 
@@ -49,12 +30,7 @@ const CrudColecta = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [modalResponsablesData, setModalResponsablesData] = useState(null);
 
-    // Filtros de inventario y estadísticas
-    const [filtroPeriodo, setFiltroPeriodo] = useState("all");
-    const [fechaDesde, setFechaDesde] = useState("");
-    const [fechaHasta, setFechaHasta] = useState("");
-    const [filtroStock, setFiltroStock] = useState("all"); // 'all' | 'disponible' | 'vencida'
-    const [filtroMacho, setFiltroMacho] = useState("all");
+
 
     const hideModal = () => {
         const btn = document.getElementById("closeModal");
@@ -134,163 +110,18 @@ const CrudColecta = () => {
         }
     };
 
-    // Donantes únicos para el selector
-    const machosDisponibles = useMemo(() => {
-        const map = new Map();
-        colectas.forEach((c) => {
-            if (c.Id_Porcino) {
-                const nombre = c.porcino?.Nom_Porcino
-                    ? `${c.porcino.Nom_Porcino} ${c.porcino.Num_Chapeta ? `(#${c.porcino.Num_Chapeta})` : ""}`
-                    : `Macho #${c.Id_Porcino}`;
-                map.set(c.Id_Porcino, nombre);
-            }
-        });
-        return Array.from(map.entries()).map(([id, nombre]) => ({ id, nombre }));
-    }, [colectas]);
-
-    // Colectas filtradas reactivamente
-    const colectasFiltradas = useMemo(() => {
-        let base = filtroDesdeInseminacion
+    // Colectas base (aplica filtro si proviene de inseminación)
+    const colectasBase = useMemo(() => {
+        return filtroDesdeInseminacion
             ? colectas.filter((c) => String(c.Id_colecta) === String(filtroDesdeInseminacion.Id_colecta))
             : colectas;
-
-        const ahora = new Date();
-
-        return base.filter((item) => {
-            // 1. Periodo
-            if (item.Fecha) {
-                const parteF = String(item.Fecha).split("T")[0].split(" ")[0];
-                const [y, m, d] = parteF.split("-").map(Number);
-                const f = new Date(y, m - 1, d);
-
-                if (filtroPeriodo === "30d") {
-                    const lim = new Date();
-                    lim.setDate(ahora.getDate() - 30);
-                    lim.setHours(0, 0, 0, 0);
-                    if (f < lim) return false;
-                } else if (filtroPeriodo === "90d") {
-                    const lim = new Date();
-                    lim.setDate(ahora.getDate() - 90);
-                    lim.setHours(0, 0, 0, 0);
-                    if (f < lim) return false;
-                } else if (filtroPeriodo === "year") {
-                    if (f.getFullYear() !== ahora.getFullYear()) return false;
-                } else if (filtroPeriodo === "custom") {
-                    if (fechaDesde && parteF < fechaDesde) return false;
-                    if (fechaHasta && parteF > fechaHasta) return false;
-                }
-            }
-
-            // 2. Macho Donante
-            if (filtroMacho !== "all" && String(item.Id_Porcino) !== String(filtroMacho)) {
-                return false;
-            }
-
-            // 3. Estado de Stock / Vigencia
-            const disponibles = (Number(item.cant_generada) || 0) - (Number(item.cant_utilizada) || 0);
-            const vigencia = getEstadoVigenciaColecta(item);
-
-            if (filtroStock === "disponible") {
-                if (disponibles <= 0 || vigencia.isVencida) return false;
-            } else if (filtroStock === "vencida") {
-                if (!vigencia.isVencida) return false;
-            }
-
-            return true;
-        });
-    }, [colectas, filtroDesdeInseminacion, filtroPeriodo, fechaDesde, fechaHasta, filtroMacho, filtroStock]);
-
-    // KPIs calculados
-    const kpis = useMemo(() => {
-        let gen = 0;
-        let uti = 0;
-        let dispVigente = 0;
-        let vencidasPajillas = 0;
-        let colectasVencidas = 0;
-
-        colectasFiltradas.forEach((c) => {
-            const g = Number(c.cant_generada) || 0;
-            const u = Number(c.cant_utilizada) || 0;
-            const d = Math.max(0, g - u);
-            gen += g;
-            uti += u;
-
-            const vigencia = getEstadoVigenciaColecta(c);
-            if (vigencia.isVencida) {
-                // Si la colecta está vencida, aunque tenga saldo, NO es disponible: es stock vencido/inactivo
-                vencidasPajillas += d;
-                colectasVencidas += 1;
-            } else {
-                dispVigente += d;
-            }
-        });
-
-        const porcentajeUso = gen > 0 ? ((uti / gen) * 100).toFixed(1) : "0.0";
-
-        return {
-            totalColectas: colectasFiltradas.length,
-            pajillasGeneradas: gen,
-            pajillasUtilizadas: uti,
-            pajillasDisponibles: dispVigente,
-            pajillasVencidas: vencidasPajillas,
-            colectasVencidas,
-            tasaUso: porcentajeUso
-        };
-    }, [colectasFiltradas]);
-
-    // Gráfica de Evolución Temporal Dinámica de Colectas
-    const graficaEvolucion = useMemo(() => {
-        const res = agruparDatosEvolucion({
-            items: colectasFiltradas,
-            campoFecha: "Fecha",
-            configPeriodo: { filtroPeriodo, fechaDesde, fechaHasta },
-            entidad: "colectas",
-            camposSuma: [{ campo: "cant_generada", destino: "pajillas" }]
-        });
-        res.datos.forEach((d) => {
-            d.colectas = d.cantidad;
-        });
-        return res;
-    }, [colectasFiltradas, filtroPeriodo, fechaDesde, fechaHasta]);
-
-    // Helper para obtener dosis disponibles de una colecta
-    const getDosisDisponibles = (c) => {
-        const g = Number(c.cant_generada) || 0;
-        const u = Number(c.cant_utilizada) || 0;
-        return Math.max(0, g - u);
-    };
-
-    // Colectas próximas a vencer (≤ 24h restantes de vida útil, vigentes y con saldo > 0)
-    const colectasProximasAVencer = useMemo(() => {
-        return colectas.filter((c) => {
-            const disp = getDosisDisponibles(c);
-            if (disp <= 0) return false;
-            const vig = getEstadoVigenciaColecta(c);
-            return vig.estado === "Vence pronto" || (vig.diasVence !== null && vig.diasVence <= 1 && !vig.isVencida);
-        });
-    }, [colectas]);
-
-    const limpiarFiltros = () => {
-        setFiltroPeriodo("all");
-        setFechaDesde("");
-        setFechaHasta("");
-        setFiltroStock("all");
-        setFiltroMacho("all");
-        setFilterText("");
-    };
-
-    const hayFiltrosActivos =
-        filtroPeriodo !== "all" ||
-        filtroStock !== "all" ||
-        filtroMacho !== "all" ||
-        fechaDesde !== "" ||
-        fechaHasta !== "";
+    }, [colectas, filtroDesdeInseminacion]);
 
     // Filtro DataTable
     const listColectasParaTabla = useMemo(() => {
-        if (!filterText.trim()) return colectasFiltradas;
+        if (!filterText.trim()) return colectasBase;
         const text = filterText.toLowerCase().trim();
-        return colectasFiltradas.filter((item) => {
+        return colectasBase.filter((item) => {
             const id = item.Id_colecta?.toString() || "";
             const fecha = item.Fecha?.toString().toLowerCase() || "";
             const porcino = item.porcino?.Nom_Porcino?.toLowerCase() || item.Id_Porcino?.toString() || "";
@@ -311,7 +142,7 @@ const CrudColecta = () => {
                 olor.includes(text)
             );
         });
-    }, [colectasFiltradas, filterText, responsables]);
+    }, [colectasBase, filterText, responsables]);
 
     // Columnas DataTable
     const columnsTable = [
@@ -477,25 +308,6 @@ const CrudColecta = () => {
         }
     ];
 
-    const CustomChartTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            const dataPoint = payload[0]?.payload;
-            const tituloTooltip = dataPoint?.fullLabel || label || dataPoint?.nombre || payload[0]?.name;
-            return (
-                <div className="bg-white/95 backdrop-blur-md p-3 border border-gray-100 shadow-xl rounded-xl text-xs">
-                    <p className="font-bold text-gray-800">{tituloTooltip}</p>
-                    {payload.map((entry, idx) => (
-                        <p key={idx} className="font-bold mt-1 text-xs flex items-center gap-1.5" style={{ color: entry.color || entry.fill }}>
-                            <span>{entry.name}:</span>
-                            <span className="font-extrabold">{entry.value} {entry.name === "Colectas" ? "colecta(s)" : "dosis"}</span>
-                        </p>
-                    ))}
-                </div>
-            );
-        }
-        return null;
-    };
-
     return (
         <div className="container-fluid px-4 py-4 max-w-7xl mx-auto space-y-6">
             {/* Banner si viene filtrado desde Inseminación */}
@@ -552,326 +364,11 @@ const CrudColecta = () => {
                 </button>
             </div>
 
-            {/* Tarjetas de Indicadores (KPIs) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* KPI 1: Pajillas Generadas */}
-                <div className="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/30 border border-blue-100/80 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
-                            Dosis Generadas
-                        </span>
-                        <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-sm">
-                            <TbFlask size={20} />
-                        </div>
-                    </div>
-                    <div className="mt-3">
-                        <span className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                            {kpis.pajillasGeneradas}
-                        </span>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                            Pajillas producidas en {kpis.totalColectas} colectas
-                        </p>
-                    </div>
-                </div>
-
-                {/* KPI 2: Pajillas Utilizadas */}
-                <div className="bg-gradient-to-br from-teal-50/80 via-white to-teal-50/30 border border-teal-100/80 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">
-                            Dosis Utilizadas
-                        </span>
-                        <div className="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center shadow-sm">
-                            <TbCheck size={20} />
-                        </div>
-                    </div>
-                    <div className="mt-3">
-                        <div className="flex items-baseline gap-1.5">
-                            <span className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                                {kpis.pajillasUtilizadas}
-                            </span>
-                            <span className="text-xs font-semibold text-gray-500">({kpis.tasaUso}% del total)</span>
-                        </div>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                            Consumidas en inseminaciones artificiales
-                        </p>
-                    </div>
-                </div>
-
-                {/* KPI 3: Saldo Disponible */}
-                <div className="bg-gradient-to-br from-emerald-50/80 via-white to-emerald-50/30 border border-emerald-100/80 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                            Existencia Disponible para utilización
-                        </span>
-                        <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-sm">
-                            <TbLayersLinked size={20} />
-                        </div>
-                    </div>
-                    <div className="mt-3">
-                        <span className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                            {kpis.pajillasDisponibles}
-                        </span>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                            Pajillas aptas para uso inmediato
-                        </p>
-                    </div>
-                </div>
-
-                {/* KPI 4: Dosis Vencidas */}
-                <div className="bg-gradient-to-br from-rose-50/80 via-white to-rose-50/30 border border-rose-100/80 rounded-3xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">
-                            Dosis Vencidas
-                        </span>
-                        <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-sm">
-                            <TbAlertTriangle size={20} />
-                        </div>
-                    </div>
-                    <div className="mt-3">
-                        <span className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                            {kpis.pajillasVencidas}
-                        </span>
-                        <p className="text-[11px] text-gray-500 mt-1">
-                            {kpis.colectasVencidas} colecta(s) vencida(s) no aptas para uso
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Barra de Filtros de Inventario */}
-            <div className="bg-white rounded-3xl p-5 border border-gray-100 shadow-sm space-y-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                    <div className="flex items-center gap-2">
-                        <TbFilter className="text-blue-500 text-lg" />
-                        <h6 className="font-bold text-gray-800 m-0 text-sm">Filtros de Control de Inventario</h6>
-                    </div>
-                    {hayFiltrosActivos && (
-                        <button
-                            onClick={limpiarFiltros}
-                            className="inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-semibold px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 transition-colors"
-                        >
-                            <TbX size={14} />
-                            <span>Limpiar filtros</span>
-                        </button>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Periodo */}
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            Periodo de Colecta
-                        </label>
-                        <select
-                            className="form-select form-select-sm rounded-xl text-xs"
-                            value={filtroPeriodo}
-                            onChange={(e) => setFiltroPeriodo(e.target.value)}
-                        >
-                            <option value="all">Todo el historial</option>
-                            <option value="30d">Últimos 30 días</option>
-                            <option value="90d">Últimos 90 días</option>
-                            <option value="year">Año en curso ({new Date().getFullYear()})</option>
-                            <option value="custom">Rango personalizado</option>
-                        </select>
-                    </div>
-
-                    {/* Stock y Vigencia (Sin agotadas ni próximas a vencer) */}
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            Estado del Stock
-                        </label>
-                        <select
-                            className="form-select form-select-sm rounded-xl text-xs"
-                            value={filtroStock}
-                            onChange={(e) => setFiltroStock(e.target.value)}
-                        >
-                            <option value="all">Todos los estados</option>
-                            <option value="disponible">Solo disponibles (Vigentes)</option>
-                            <option value="vencida">Vencidas (Inactivas)</option>
-                        </select>
-                    </div>
-
-                    {/* Donante (Macho) */}
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-600 uppercase mb-1">
-                            Macho Donante
-                        </label>
-                        <select
-                            className="form-select form-select-sm rounded-xl text-xs"
-                            value={filtroMacho}
-                            onChange={(e) => setFiltroMacho(e.target.value)}
-                        >
-                            <option value="all">Todos los machos</option>
-                            {machosDisponibles.map((m) => (
-                                <option key={m.id} value={m.id}>
-                                    {m.nombre}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Rango Personalizado */}
-                    {filtroPeriodo === "custom" && (
-                        <div className="col-span-1 sm:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-gray-50/70 p-3 rounded-2xl border border-gray-100">
-                            <div>
-                                <label className="block text-[11px] font-bold text-gray-600 mb-1">Desde:</label>
-                                <input
-                                    type="date"
-                                    className="form-control form-control-sm rounded-xl text-xs"
-                                    value={fechaDesde}
-                                    onChange={(e) => setFechaDesde(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[11px] font-bold text-gray-600 mb-1">Hasta:</label>
-                                <input
-                                    type="date"
-                                    className="form-control form-control-sm rounded-xl text-xs"
-                                    value={fechaHasta}
-                                    onChange={(e) => setFechaHasta(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Sección: Evolución Temporal y Colectas Próximas a Vencer */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Gráfica: Evolución Temporal Dinámica de Colectas */}
-                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h6 className="font-bold text-gray-900 m-0 text-base">{graficaEvolucion.titulo}</h6>
-                                <p className="text-xs text-gray-500 m-0">{graficaEvolucion.subtitulo}</p>
-                            </div>
-                            <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                                <TbChartBar size={20} />
-                            </span>
-                        </div>
-
-                        {graficaEvolucion.datos.length === 0 ? (
-                            <div className="h-60 flex flex-col items-center justify-center text-gray-400 gap-2">
-                                <TbInfoCircle size={32} />
-                                <span className="text-xs">No hay datos en el periodo seleccionado</span>
-                            </div>
-                        ) : (
-                            <div className="h-60 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart
-                                        data={graficaEvolucion.datos}
-                                        margin={{ top: 10, right: 10, left: -20, bottom: graficaEvolucion.datos.length > 6 ? 20 : 0 }}
-                                    >
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis
-                                            dataKey="label"
-                                            tick={{ fontSize: 9.5, fill: "#64748b" }}
-                                            interval={0}
-                                            angle={graficaEvolucion.datos.length > 6 ? -35 : 0}
-                                            textAnchor={graficaEvolucion.datos.length > 6 ? "end" : "middle"}
-                                            height={graficaEvolucion.datos.length > 6 ? 48 : 28}
-                                        />
-                                        <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#64748b" }} />
-                                        <RechartsTooltip content={<CustomChartTooltip />} />
-                                        <Bar dataKey="colectas" name="Colectas" fill="#0284c7" radius={[5, 5, 0, 0]} maxBarSize={30} />
-                                        <Bar dataKey="pajillas" name="Dosis Producidas" fill="#6366f1" radius={[5, 5, 0, 0]} maxBarSize={30} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="pt-3 border-t border-gray-50 text-[11px] text-gray-400 flex justify-between">
-                        <span>Periodos evaluados: {graficaEvolucion.datos.length}</span>
-                        <span>{kpis.totalColectas} colectas / {kpis.pajillasGeneradas} dosis producidas</span>
-                    </div>
-                </div>
-
-                {/* Tabla Pequeña: Colectas Próximas a Vencer */}
-                <div className="bg-white rounded-3xl p-6 border border-amber-100 shadow-sm flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shadow-xs">
-                                    <TbAlertTriangle size={20} />
-                                </div>
-                                <div>
-                                    <h6 className="font-bold text-gray-900 m-0 text-base">Próximas a Vencer</h6>
-                                    <p className="text-xs text-gray-500 m-0">Requieren uso prioritario (≤ 24h)</p>
-                                </div>
-                            </div>
-                            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                                {colectasProximasAVencer.length} dosis
-                            </span>
-                        </div>
-
-                        {colectasProximasAVencer.length === 0 ? (
-                            <div className="h-60 flex flex-col items-center justify-center text-gray-400 gap-2 p-4 text-center">
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                    <TbCheck size={24} />
-                                </div>
-                                <span className="text-xs font-semibold text-gray-700">Sin alertas de vencimiento</span>
-                                <span className="text-[11px] text-gray-400 max-w-xs">
-                                    Todas las colectas vigentes en inventario disponen de tiempo de vida útil óptimo.
-                                </span>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto max-h-60 overflow-y-auto">
-                                <table className="w-full text-left text-xs">
-                                    <thead>
-                                        <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-gray-50/60">
-                                            <th className="py-2.5 px-3 rounded-l-xl">ID Colecta</th>
-                                            <th className="py-2.5 px-3">Fecha Colecta</th>
-                                            <th className="py-2.5 px-3">Donante</th>
-                                            <th className="py-2.5 px-3 text-right rounded-r-xl">Disponibles</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {colectasProximasAVencer.map((c) => {
-                                            const disp = getDosisDisponibles(c);
-                                            const donanteNombre = c.porcino?.Nom_Porcino
-                                                ? `${c.porcino.Nom_Porcino} ${c.porcino.Num_Chapeta ? `(#${c.porcino.Num_Chapeta})` : ""}`
-                                                : (c.Id_Porcino ? `Macho #${c.Id_Porcino}` : "Externo");
-                                            return (
-                                                <tr key={c.Id_colecta} className="hover:bg-amber-50/40 transition-colors">
-                                                    <td className="py-2.5 px-3 font-mono font-bold text-gray-900">
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
-                                                            #{c.Id_colecta}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-2.5 px-3 font-medium text-gray-700 whitespace-nowrap">
-                                                        {formatearFecha(c.Fecha)}
-                                                    </td>
-                                                    <td className="py-2.5 px-3 text-gray-600 truncate max-w-[130px]" title={donanteNombre}>
-                                                        {donanteNombre}
-                                                    </td>
-                                                    <td className="py-2.5 px-3 text-right">
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                                                            {disp} dosis
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="pt-3 border-t border-gray-50 text-[11px] text-gray-400 flex items-center justify-between">
-                        <span>Semen fresco refrigerado (vida útil: 3 días)</span>
-                        <span className="text-amber-600 font-semibold">Priorizar en inseminaciones</span>
-                    </div>
-                </div>
-            </div>
-
             {/* Tabla Detallada de Colectas */}
             <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h5 className="font-bold text-gray-900 m-0">Registros de Colectas Detallados</h5>
+                        <h5 className="font-bold text-gray-900 m-0">Listado de Colectas</h5>
                         <p className="text-xs text-gray-500 m-0">
                             Mostrando {listColectasParaTabla.length} de {colectas.length} colectas registradas
                         </p>

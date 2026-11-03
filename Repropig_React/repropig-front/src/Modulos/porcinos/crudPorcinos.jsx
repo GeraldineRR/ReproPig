@@ -126,7 +126,7 @@ const CrudPorcinos = () => {
             name: 'Porcino',
             selector: row => row.Nom_Porcino,
             sortable: true,
-            minWidth: '170px',
+            minWidth: '180px',
             cell: row => {
                 return (
                     <div className="flex items-center gap-2.5 py-1">
@@ -134,19 +134,19 @@ const CrudPorcinos = () => {
                             <div className="font-semibold text-gray-900 text-xs">
                                 {row.Nom_Porcino || '---'}
                             </div>
-                            <div className="text-[11px] text-gray-400">
-                                {row.Num_Chapeta ? `Chapeta: ${row.Num_Chapeta}` : `ID: #${row.Id_Porcino}`}
+                            <div className="text-[11px] text-gray-400 flex flex-wrap gap-x-1.5 items-center">
+                                <span>{row.Num_Chapeta ? `Chapeta: ${row.Num_Chapeta}` : `ID: #${row.Id_Porcino}`}</span>
+                                {row.Plac_Sena_Porcino && (
+                                    <>
+                                        <span className="text-gray-300">•</span>
+                                        <span>Placa: {row.Plac_Sena_Porcino}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
                 );
             }
-        },
-        {
-            name: 'Placa Sena',
-            selector: row => row.Plac_Sena_Porcino || '---',
-            width: '110px',
-            cell: row => <span className="text-xs text-gray-600">{row.Plac_Sena_Porcino || '---'}</span>
         },
         {
             name: 'Raza',
@@ -184,26 +184,21 @@ const CrudPorcinos = () => {
         },
         {
             name: 'Procedencia',
-            width: '120px',
+            minWidth: '150px',
             cell: row => (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'
-                    }`}>
-                    {row.Proc_Porcino || '---'}
-                </span>
-            )
-        },
-        {
-            name: 'Lugar Proc.',
-            selector: row => row.Lug_Proc_Porcino || '---',
-            sortable: true,
-            minWidth: '160px',
-            cell: row => (
-                <span
-                    className="text-xs text-gray-500 truncate block max-w-full"
-                    title={row.Lug_Proc_Porcino || '---'}
-                >
-                    {row.Lug_Proc_Porcino || '---'}
-                </span>
+                <div className="flex flex-col gap-0.5 py-1">
+                    <div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'
+                            }`}>
+                            {row.Proc_Porcino || '---'}
+                        </span>
+                    </div>
+                    {row.Lug_Proc_Porcino && (
+                        <span className="text-[11px] text-gray-400 truncate max-w-[140px]" title={row.Lug_Proc_Porcino}>
+                            {row.Lug_Proc_Porcino}
+                        </span>
+                    )}
+                </div>
             )
         },
         {
@@ -329,7 +324,7 @@ const CrudPorcinos = () => {
             name: 'Porcino',
             selector: row => row.Nom_Porcino,
             sortable: true,
-            minWidth: '170px',
+            minWidth: '180px',
             cell: row => {
                 return (
                     <div className="flex items-center gap-2.5 py-1">
@@ -337,19 +332,19 @@ const CrudPorcinos = () => {
                             <div className="font-semibold text-gray-900 text-xs">
                                 {row.Nom_Porcino || '---'}
                             </div>
-                            <div className="text-[11px] text-gray-400">
-                                {row.Num_Chapeta ? `Chapeta: ${row.Num_Chapeta}` : `ID: #${row.Id_Porcino}`}
+                            <div className="text-[11px] text-gray-400 flex flex-wrap gap-x-1.5 items-center">
+                                <span>{row.Num_Chapeta ? `Chapeta: ${row.Num_Chapeta}` : `ID: #${row.Id_Porcino}`}</span>
+                                {row.Plac_Sena_Porcino && (
+                                    <>
+                                        <span className="text-gray-300">•</span>
+                                        <span>Placa: {row.Plac_Sena_Porcino}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
                 );
             }
-        },
-        {
-            name: 'Placa Sena',
-            selector: row => row.Plac_Sena_Porcino || '---',
-            width: '110px',
-            cell: row => <span className="text-xs text-gray-600">{row.Plac_Sena_Porcino || '---'}</span>
         },
         {
             name: 'Sexo',
@@ -376,12 +371,21 @@ const CrudPorcinos = () => {
         },
         {
             name: 'Procedencia',
-            width: '120px',
+            minWidth: '150px',
             cell: row => (
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'
-                    }`}>
-                    {row.Proc_Porcino || '---'}
-                </span>
+                <div className="flex flex-col gap-0.5 py-1">
+                    <div>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold ${row.Proc_Porcino?.trim().toLowerCase() === 'interno' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-sky-50 text-sky-700 border border-sky-200'
+                            }`}>
+                            {row.Proc_Porcino || '---'}
+                        </span>
+                    </div>
+                    {row.Lug_Proc_Porcino && (
+                        <span className="text-[11px] text-gray-400 truncate max-w-[140px]" title={row.Lug_Proc_Porcino}>
+                            {row.Lug_Proc_Porcino}
+                        </span>
+                    )}
+                </div>
             )
         },
         {

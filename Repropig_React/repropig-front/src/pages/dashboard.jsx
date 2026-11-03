@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import apiAxios from "../api/axiosConfig"
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts'
-import { 
-  TbPig, TbDna, TbRefresh, TbHeart, TbVaccine, TbFlask, TbPill, TbUsers, 
-  TbRocket, TbClock, TbInbox, TbChevronRight
+import {
+  TbPig, TbRefresh, TbHeart, TbVaccine, TbFlask,
+  TbClock, TbInbox, TbAlertTriangle, TbCheck
 } from 'react-icons/tb'
+import { formatearFecha, getEstadoVigenciaColecta } from '../utils/dateUtils.js'
 
 // --- Custom SVGs for better aesthetics ---
 const TrendUpIcon = () => (
@@ -32,22 +33,29 @@ const Dashboard = () => {
     inseminaciones: 0,
     ciclos: 0
   })
-  
+
   const [chartData, setChartData] = useState({
-      activos: 0,
-      inactivos: 0,
-      hembras: 0,
-      machos: 0
+    activos: 0,
+    inactivos: 0,
+    hembras: 0,
+    machos: 0
   });
 
   const [ultimasCiclos, setUltimasCiclos] = useState([])
+  const [colectasProximasAVencer, setColectasProximasAVencer] = useState([])
+
+  const getDosisDisponibles = (c) => {
+    const g = Number(c.cant_generada) || 0;
+    const u = Number(c.cant_utilizada) || 0;
+    return Math.max(0, g - u);
+  };
   const [isLoading, setIsLoading] = useState(true)
 
   const hora = new Date().getHours()
   const saludo =
     hora < 12 ? "Buenos días" :
-    hora < 18 ? "Buenas tardes" :
-    "Buenas noches"
+      hora < 18 ? "Buenas tardes" :
+        "Buenas noches"
 
   useEffect(() => {
     cargarDatos()
@@ -87,18 +95,18 @@ const Dashboard = () => {
         inseminaciones: inseminaciones.data.length,
         ciclos: ciclos.data.length
       })
-      
+
       const hembrasCount = porcinos.data.filter(p => p.Gen_Porcino?.toLowerCase() === 'h').length;
       const machosCount = porcinos.data.filter(p => p.Gen_Porcino?.toLowerCase() === 'm').length;
-      
+
       const ciclosActivos = ciclos.data.filter(c => (c.Estado || '').toLowerCase() === 'activo' || c.Activo === 'S').length;
       const ciclosInactivos = ciclos.data.filter(c => (c.Estado || '').toLowerCase() === 'inactivo' || c.Activo === 'N').length;
-      
+
       setChartData({
-          activos: ciclosActivos,
-          inactivos: ciclosInactivos,
-          hembras: hembrasCount,
-          machos: machosCount
+        activos: ciclosActivos,
+        inactivos: ciclosInactivos,
+        hembras: hembrasCount,
+        machos: machosCount
       });
 
       // Clasificación de cerdas (< 14 lechones promedio = Mala)
@@ -185,6 +193,17 @@ const Dashboard = () => {
 
       const ultimas = [...ciclos.data].reverse().slice(0, 5)
       setUltimasCiclos(ultimas)
+
+      const sortedColectas = [...(colectas.data || [])].sort(
+        (a, b) => new Date(b.Fecha || 0) - new Date(a.Fecha || 0)
+      );
+      const proxVencer = sortedColectas.filter((c) => {
+        const disp = getDosisDisponibles(c);
+        if (disp <= 0) return false;
+        const vig = getEstadoVigenciaColecta(c);
+        return vig.estado === "Vence pronto" || (vig.diasVence !== null && vig.diasVence <= 1 && !vig.isVencida);
+      });
+      setColectasProximasAVencer(proxVencer)
     } catch (error) {
       console.error("Error cargando datos del dashboard:", error)
     } finally {
@@ -192,20 +211,7 @@ const Dashboard = () => {
     }
   }
 
-  const todosLosModulos = [
-    { nombre: "Porcinos", icono: <TbPig size={24} strokeWidth={1.5} />, ruta: "/porcinos", desc: "Gestiona tu plantel" },
-    { nombre: "Razas", icono: <TbDna size={24} strokeWidth={1.5} />, ruta: "/razas", desc: "Información genética" },
-    { nombre: "Ciclos", icono: <TbRefresh size={24} strokeWidth={1.5} />, ruta: "/ciclos", desc: "Control reproductivo" },
-    { nombre: "Montas", icono: <TbHeart size={24} strokeWidth={1.5} />, ruta: "/montas", desc: "Monta natural" },
-    { nombre: "Inseminaciones", icono: <TbVaccine size={24} strokeWidth={1.5} />, ruta: "/inseminaciones", desc: "Inseminación artificial" },
-    { nombre: "Colectas", icono: <TbFlask size={24} strokeWidth={1.5} />, ruta: "/colectas", desc: "Material genético" },
-    { nombre: "Medicamentos", icono: <TbPill size={24} strokeWidth={1.5} />, ruta: "/medicamentos", desc: "Control sanitario" },
-    { nombre: "Responsables", icono: <TbUsers size={24} strokeWidth={1.5} />, ruta: "/responsables", desc: "Equipo de trabajo", soloRoles: ['instructor'] }
-  ]
 
-  const modulos = todosLosModulos.filter(m =>
-    !m.soloRoles || m.soloRoles.includes(usuario?.cargo?.toLowerCase())
-  )
 
   const statCards = [
     { label: "Total Porcinos", valor: stats.porcinos, icono: <TbPig size={28} strokeWidth={1.5} />, bg: "bg-gradient-to-br from-pink-50 to-pink-100", iconBg: "bg-pink-200", text: "text-pink-600", ruta: "/porcinos" },
@@ -236,7 +242,7 @@ const Dashboard = () => {
   // Renderización de Gráfico con Recharts
   const renderChart = () => {
     if (isLoading) return <div className="h-64 flex items-center justify-center text-gray-400 animate-pulse">Cargando gráficos...</div>;
-    
+
     const dataPoblacion = [
       { name: 'Hembras', cantidad: chartData.hembras, color: '#ec4899' }, // pink-500
       { name: 'Machos', cantidad: chartData.machos, color: '#3b82f6' }    // blue-500
@@ -262,9 +268,9 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dataPoblacion} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 600}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="cantidad" radius={[8, 8, 0, 0]} maxBarSize={60}>
                   {dataPoblacion.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -283,9 +289,9 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dataCiclos} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12, fontWeight: 600}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="cantidad" radius={[8, 8, 0, 0]} maxBarSize={60}>
                   {dataCiclos.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -304,9 +310,9 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dataProductividad} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11, fontWeight: 600}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <RechartsTooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                 <Bar dataKey="cantidad" radius={[8, 8, 0, 0]} maxBarSize={60}>
                   {dataProductividad.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -448,7 +454,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-8 animate-fade-in-up">
-        
+
         {/* Modern Premium Welcome Banner */}
         <div className="relative overflow-hidden rounded-[2.5rem] p-8 md:p-12 text-white shadow-2xl bg-gradient-to-br from-[#B86B77] via-[#C97A85] to-[#DDA3AA] border border-white/40 group">
           {/* Animated Mesh Gradients */}
@@ -464,13 +470,13 @@ const Dashboard = () => {
                 <CalendarIcon />
                 <span className="capitalize text-white/95">{currentDate}</span>
               </div>
-              
+
               <div>
                 <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-3 text-white drop-shadow-md">
                   {saludo}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-100 to-white">{usuario?.nombres?.split(' ')[0] || 'Usuario'}</span> 👋
                 </h1>
                 <p className="text-lg md:text-xl text-white/90 font-medium max-w-xl leading-relaxed drop-shadow-sm">
-                  Bienvenido al sistema inteligente de gestión reproductiva porcina. 
+                  Bienvenido al sistema inteligente de gestión reproductiva porcina.
                   Aquí tienes el resumen de hoy.
                 </p>
               </div>
@@ -519,15 +525,15 @@ const Dashboard = () => {
                 {/* Spinning halo */}
                 <div className="absolute w-56 h-56 rounded-full border-[2px] border-dashed border-white/40 animate-[spin_15s_linear_infinite]"></div>
                 <div className="absolute w-48 h-48 rounded-full border-[1px] border-white/30 animate-[spin_10s_linear_infinite_reverse]"></div>
-                
+
                 {/* Center glow */}
                 <div className="absolute w-40 h-40 bg-white/30 rounded-full blur-2xl animate-pulse"></div>
-                
+
                 {/* The 3D Rendered Pig */}
                 <div className="relative z-30 w-40 h-40 rounded-full overflow-hidden border-4 border-white/50 shadow-[0_20px_40px_rgba(0,0,0,0.3)] bg-white flex items-center justify-center transform hover:rotate-6 transition-all cursor-pointer">
-                  <img 
-                    src="/pig-3d.jpg" 
-                    alt="Mascota Repropig" 
+                  <img
+                    src="/pig-3d.jpg"
+                    alt="Mascota Repropig"
                     className="w-full h-full object-cover transform scale-110"
                   />
                 </div>
@@ -547,7 +553,7 @@ const Dashboard = () => {
             >
               {/* Decorative top-right circle */}
               <div className={`absolute -top-6 -right-6 w-24 h-24 rounded-full ${s.iconBg} opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out`}></div>
-              
+
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-14 h-14 flex items-center justify-center rounded-2xl ${s.iconBg} ${s.text} shadow-inner group-hover:rotate-12 transition-transform duration-300`}>
@@ -558,7 +564,7 @@ const Dashboard = () => {
                     <span>Activos</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <h2 className="text-4xl font-black text-gray-800 tracking-tight mb-1">
                     {isLoading ? (
@@ -589,9 +595,9 @@ const Dashboard = () => {
               <p className="text-sm text-gray-500 font-medium">Comparativa de población y ciclos reproductivos</p>
             </div>
           </div>
-          
+
           {renderChart()}
-          
+
         </div>
 
         {/* --- TABLERO DE CONTROL VISUAL DE LA GRANJA EN TIEMPO REAL --- */}
@@ -599,42 +605,95 @@ const Dashboard = () => {
 
         {/* Bottom Grid Layout */}
         <div className="grid lg:grid-cols-12 gap-8 mt-4">
-          
-          {/* Quick Access Area (Takes up 7 cols on large screens) */}
-          <div className="lg:col-span-7 bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-8 relative z-10">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800 tracking-tight">Módulos Rápidos</h3>
-                <p className="text-sm text-gray-500 mt-1">Accede a las funciones principales del sistema</p>
-              </div>
-              <div className="p-3 bg-gray-50 text-gray-400 rounded-xl">
-                <TbRocket size={24} strokeWidth={1.5} />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
-              {modulos.map((m, idx) => (
-                <div
-                  key={m.nombre}
-                  onClick={() => navigate(m.ruta)}
-                  className="group relative cursor-pointer border border-gray-100 rounded-2xl p-4 flex items-center gap-4 bg-white hover:bg-gray-50/50 hover:border-pink-200 transition-all duration-300"
-                >
-                  <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl bg-gray-50 text-gray-500 group-hover:bg-pink-50 group-hover:text-pink-600 transition-colors duration-300 z-10">
-                    {m.icono}
+          {/* Colectas Próximas a Vencer (Reemplaza Módulos Rápidos) */}
+          <div className="lg:col-span-7 bg-white rounded-[2rem] p-8 shadow-sm border border-amber-100 flex flex-col justify-between relative overflow-hidden">
+            <div>
+              <div className="flex items-center justify-between mb-6 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shadow-xs">
+                    <TbAlertTriangle size={24} />
                   </div>
-                  <div className="flex-1 z-10">
-                    <div className="text-base font-bold text-gray-700 group-hover:text-gray-900 transition-colors">
-                      {m.nombre}
-                    </div>
-                    <div className="text-xs font-medium text-gray-400 line-clamp-1 mt-0.5">
-                      {m.desc}
-                    </div>
-                  </div>
-                  <div className="text-gray-200 group-hover:text-pink-400 group-hover:translate-x-1 transition-all z-10">
-                    <TbChevronRight size={20} strokeWidth={2} />
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 tracking-tight m-0">Colectas próximas a Vencer</h3>
+                    <p className="text-sm text-gray-500 mt-1 m-0">Requieren uso prioritario (≤ 24h)</p>
                   </div>
                 </div>
-              ))}
+                <span className="text-xs font-bold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  {colectasProximasAVencer.length} dosis
+                </span>
+              </div>
+
+              {isLoading ? (
+                <div className="h-60 flex items-center justify-center text-gray-400 animate-pulse">
+                  Cargando colectas...
+                </div>
+              ) : colectasProximasAVencer.length === 0 ? (
+                <div className="h-60 flex flex-col items-center justify-center text-gray-400 gap-2 p-4 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <TbCheck size={24} />
+                  </div>
+                  <span className="text-xs font-semibold text-gray-700">Sin alertas de vencimiento</span>
+                  <span className="text-[11px] text-gray-400 max-w-xs">
+                    Todas las colectas vigentes en inventario disponen de tiempo de vida útil óptimo.
+                  </span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-gray-50/60">
+                        <th className="py-2.5 px-3 rounded-l-xl">ID Colecta</th>
+                        <th className="py-2.5 px-3">Fecha Colecta</th>
+                        <th className="py-2.5 px-3">Donante</th>
+                        <th className="py-2.5 px-3 text-right rounded-r-xl">Disponibles</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {colectasProximasAVencer.map((c) => {
+                        const disp = getDosisDisponibles(c);
+                        const donanteNombre = c.porcino?.Nom_Porcino
+                          ? `${c.porcino.Nom_Porcino} ${c.porcino.Num_Chapeta ? `(#${c.porcino.Num_Chapeta})` : ''}`
+                          : (c.Id_Porcino ? `Macho #${c.Id_Porcino}` : 'Externo');
+                        return (
+                          <tr
+                            key={c.Id_colecta}
+                            onClick={() => navigate('/colectas')}
+                            className="hover:bg-amber-50/40 transition-colors cursor-pointer"
+                          >
+                            <td className="py-2.5 px-3 font-mono font-bold text-gray-900">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-800 border border-gray-200">
+                                #{c.Id_colecta}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 font-medium text-gray-700 whitespace-nowrap">
+                              {formatearFecha(c.Fecha)}
+                            </td>
+                            <td className="py-2.5 px-3 text-gray-600 truncate max-w-[160px]" title={donanteNombre}>
+                              {donanteNombre}
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                {disp} dosis
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 mt-4 border-t border-gray-50 text-xs text-gray-400 flex items-center justify-between">
+              <span>Semen fresco refrigerado (vida útil: 3 días)</span>
+              <span
+                onClick={() => navigate('/inseminaciones')}
+                className="text-amber-600 hover:text-amber-700 font-semibold cursor-pointer transition-colors"
+              >
+                Priorizar en inseminaciones
+              </span>
             </div>
           </div>
 
@@ -653,7 +712,7 @@ const Dashboard = () => {
             <div className="flex-1 flex flex-col relative z-10">
               {isLoading ? (
                 <div className="space-y-4 flex-1">
-                  {[1,2,3,4,5].map(i => (
+                  {[1, 2, 3, 4, 5].map(i => (
                     <div key={i} className="flex items-center gap-4 p-4 border border-gray-50 rounded-2xl bg-gray-50/50 animate-pulse">
                       <div className="w-10 h-10 bg-gray-200 rounded-xl"></div>
                       <div className="flex-1 space-y-2">
@@ -694,11 +753,10 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wide shadow-sm border ${
-                            isActivo
-                              ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                              : "bg-gray-100 text-gray-500 border-gray-200"
-                          }`}
+                          className={`px-3 py-1 rounded-md text-[11px] font-bold tracking-wide shadow-sm border ${isActivo
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                            : "bg-gray-100 text-gray-500 border-gray-200"
+                            }`}
                         >
                           {r.Activo === "S" ? "ACTIVA" : "INACTIVA"}
                         </span>
@@ -724,9 +782,10 @@ const Dashboard = () => {
 
         </div>
       </div>
-      
+
       {/* Simple global styles for animation */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
