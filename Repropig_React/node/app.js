@@ -20,6 +20,7 @@ import SeguimientoCerda_Model from './models/Seguimiento_CerdaModel.js'
 import CalendarioModel from './models/CalendarioModel.js'
 import NovedadesModel from './models/novedadesModel.js'
 import segcamadaModel from './models/segcamadaModel.js'
+import TipoActividadModel from './models/tipoActividadModel.js'
 
 
 // ====== Relaciones (ANTES de importar rutas) ======
@@ -56,7 +57,9 @@ ciclosModel.belongsTo(PorcinoModel, { foreignKey: 'Id_Cerda', as: 'porcino' })
 PorcinoModel.hasMany(ciclosModel, { foreignKey: 'Id_Cerda', as: 'ciclos' })
 
 ciclosModel.hasMany(montaModel, { foreignKey: 'Id_Ciclo', as: 'montas' })
+montaModel.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
 ciclosModel.hasMany(inseminacionModel, { foreignKey: 'Id_Ciclo', as: 'inseminaciones' })
+inseminacionModel.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
 
 responsablesModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Responsable', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(responsablesModel, { foreignKey: 'Id_Responsable', as: 'Responsables' })
@@ -77,6 +80,9 @@ segcamadaModel.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 
 
 segcamadaModel.hasMany(ActividadesCamadaModel, { foreignKey: 'Id_SegCamada', as: 'actividades_camada' })
 ActividadesCamadaModel.belongsTo(segcamadaModel, { foreignKey: 'Id_SegCamada', as: 'segcamada' })
+
+segcamadaModel.belongsTo(TipoActividadModel, { foreignKey: 'Id_Tipo', as: 'tipo_actividad' })
+TipoActividadModel.hasMany(segcamadaModel, { foreignKey: 'Id_Tipo', as: 'segcamadas' })
 
 ciclosModel.hasMany(PartosModel, { foreignKey: 'Id_Ciclo', as: 'partos' })
 PartosModel.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
@@ -100,6 +106,7 @@ import actividadesCamadaRoutes from './routes/actividadesCamadaRoutes.js'
 import calendarioRoutes from './routes/CalendarioRoutes.js'
 import novedadesRoutes from './routes/novedadesRoutes.js'
 import segcamadaRoutes from './routes/segcamadaRoutes.js'
+import tipoActividadRoutes from './routes/tipoActividadRoutes.js'
 
 const app = express()
 
@@ -121,6 +128,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/calendario', calendarioRoutes)
 app.use('/api/novedades', novedadesRoutes)
 app.use('/api/segcamada', segcamadaRoutes)
+app.use('/api/tipos_actividad', tipoActividadRoutes)
 
 app.get('/', (req, res) => {
     res.send('Hola mundo ADSO')
@@ -129,7 +137,7 @@ app.get('/', (req, res) => {
 try {
     await db.authenticate()
     console.log('✅ Conexión a la base de datos exitosa')
-    
+
     console.log('✅ Base de datos sincronizada')
 } catch (error) {
     console.error('❌ Error al conectar a la base de datos:', error)

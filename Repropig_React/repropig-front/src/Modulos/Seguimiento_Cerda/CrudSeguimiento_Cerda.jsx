@@ -7,6 +7,16 @@ import Seguimiento_CerdaForm from "./Seguimiento_CerdaForm.jsx";
 import * as bootstrap from "bootstrap/dist/js/bootstrap.bundle.min.js";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
+import { ModalResponsables, BotonResponsables } from "../../components/ModalResponsables.jsx";
+import { getListaResponsables } from "../../utils/responsablesUtils.js";
+import {
+    TbNotes,
+    TbSearch,
+    TbPlus,
+    TbPencil,
+    TbPower,
+    TbArrowLeft
+} from "react-icons/tb";
 
 const CrudSeguimiento_Cerda = () => {
     // ==========================================
@@ -19,6 +29,7 @@ const CrudSeguimiento_Cerda = () => {
     const [Seguimiento_CerdaEdit, setSeguimiento_CerdaEdit] = useState(null);
     const [filterText, setFilterText] = useState("");
     const [modalKey, setModalKey] = useState(0);
+    const [modalResponsablesData, setModalResponsablesData] = useState(null);
 
     const { id: partoIdParams } = useParams();
     const navigate = useNavigate();
@@ -300,37 +311,24 @@ const CrudSeguimiento_Cerda = () => {
             name: "Fecha",
             selector: row => row.Fecha || "",
             sortable: true,
-            cell: row => (
-                <span className="text-dark">
-                    {formatFecha(row.Fecha)}
-                </span>
-            ),
-            width: "125px"
-        },
-        {
-            name: "Hora",
-            selector: row => row.Hora || "",
-            sortable: true,
             cell: row => {
-                if (!row.Hora) return <span className="text-secondary small">—</span>;
-
-                const [horas, minutos] = String(row.Hora).split(":");
-
-                let hora = parseInt(horas);
-                const periodo = hora >= 12 ? "PM" : "AM";
-
-                hora = hora % 12;
-                if (hora === 0) hora = 12;
-
-                const horaFormateada = `${String(hora).padStart(2, "0")}:${minutos} ${periodo}`;
-
+                let horaFormateada = "";
+                if (row.Hora) {
+                    const [horas, minutos] = String(row.Hora).split(":");
+                    let hora = parseInt(horas);
+                    const periodo = hora >= 12 ? "PM" : "AM";
+                    hora = hora % 12;
+                    if (hora === 0) hora = 12;
+                    horaFormateada = `${String(hora).padStart(2, "0")}:${minutos} ${periodo}`;
+                }
                 return (
-                    <span className="text-secondary small">
-                        {horaFormateada}
-                    </span>
+                    <div className="py-1">
+                        <div className="text-xs font-medium text-gray-800">{formatFecha(row.Fecha)}</div>
+                        {horaFormateada && <div className="text-[11px] text-gray-400">{horaFormateada}</div>}
+                    </div>
                 );
             },
-            width: "110px"
+            width: "125px"
         },
         {
             name: "Cerda",
@@ -341,29 +339,23 @@ const CrudSeguimiento_Cerda = () => {
             sortable: true,
             cell: row => {
                 const p = porcinosMap[String(row.Id_Porcino)];
-                if (!p) {
-                    return <span className="text-muted">{row.Id_Porcino ? `Cerda #${row.Id_Porcino}` : "—"}</span>;
-                }
                 return (
-                    <div className="d-flex align-items-center gap-1">
-                        <span
-                            className="badge px-2 py-1"
-                            style={{
-                                color: "#9d174d",
-                                fontSize: "0.85rem"
-                            }}
-                        >
-                            {p.Nom_Porcino}
-                        </span>
-                        {p.Num_Chapeta && (
-                            <span className="text-muted small" title="Número de chapeta">
-                                (#{p.Num_Chapeta})
-                            </span>
-                        )}
+                    <div className="flex items-center gap-2.5 py-1">
+                        <div className="w-7 h-7 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs shrink-0">
+                            ♀
+                        </div>
+                        <div>
+                            <div className="font-semibold text-gray-900 text-xs">
+                                {p ? p.Nom_Porcino : (row.Id_Porcino ? `Cerda #${row.Id_Porcino}` : "—")}
+                            </div>
+                            <div className="text-[11px] text-gray-400">
+                                {p?.Num_Chapeta ? `Chapeta: ${p.Num_Chapeta}` : (row.Id_Porcino ? `ID: #${row.Id_Porcino}` : '')}
+                            </div>
+                        </div>
                     </div>
                 );
             },
-            minWidth: "160px"
+            minWidth: "170px"
         },
         {
             name: "Ciclo",
@@ -371,48 +363,46 @@ const CrudSeguimiento_Cerda = () => {
             sortable: true,
             cell: row =>
                 row.Id_Ciclo ? (
-                    <span className="badge bg-light text-secondary border">
-                        🔁 #{row.Id_Ciclo}
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                        #{row.Id_Ciclo}
                     </span>
                 ) : (
-                    <span className="text-muted">—</span>
+                    <span className="text-gray-400 text-xs">—</span>
                 ),
-            width: "105px"
+            width: "95px"
         },
         {
             name: "Responsables",
+            minWidth: "160px",
             cell: row => {
-                const nombres = getResponsablesNames(row.Id_Responsable);
-                if (!nombres.length) return <span className="text-muted">—</span>;
+                const lista = getListaResponsables(row.Id_Responsable, responsables);
                 return (
-                    <div className="d-flex flex-wrap gap-1 py-1">
-                        {nombres.map((nom, idx) => (
-                            <span
-                                key={idx}
-                                className="text-dark"
-                                style={{ fontSize: "0.8rem" }}
-                            >
-                                {nom}
-                            </span>
-                        ))}
-                    </div>
+                    <BotonResponsables
+                        lista={lista}
+                        theme="pink"
+                        onClick={() =>
+                            setModalResponsablesData({
+                                titulo: "Responsables del Seguimiento",
+                                subtitulo: `Seguimiento #${row.Id_Seguimiento_Cerda} — ${row.Fecha || ""}`,
+                                responsables: lista,
+                                theme: "pink"
+                            })
+                        }
+                    />
                 );
             },
-            minWidth: "180px",
-            wrap: true
         },
         {
             name: "Medicamentos",
             cell: row => {
                 const meds = getMedicamentosNames(row.Id_Medicamento);
-                if (!meds.length) return <span className="text-muted">—</span>;
+                if (!meds.length) return <span className="text-gray-400 text-xs">—</span>;
                 return (
-                    <div className="d-flex flex-wrap gap-1 py-1">
+                    <div className="flex flex-wrap gap-1 py-1">
                         {meds.map((nom, idx) => (
                             <span
                                 key={idx}
-                                className="text-dark"
-                                style={{ fontSize: "0.8rem" }}
+                                className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200"
                             >
                                 {nom}
                             </span>
@@ -433,20 +423,19 @@ const CrudSeguimiento_Cerda = () => {
                         wordBreak: "break-word",
                         overflowWrap: "anywhere",
                         lineHeight: "1.4",
-                        width: "100%",
                         display: "-webkit-box",
-                        WebkitLineClamp: 3,
+                        WebKitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden"
                     }}
-                    className="small"
+                    className="text-xs text-gray-600"
                     title={row.Observaciones || ""}
                 >
                     {row.Observaciones || "—"}
                 </div>
             ),
             wrap: true,
-            minWidth: "220px",
+            minWidth: "200px",
             grow: 2
         },
         {
@@ -459,34 +448,39 @@ const CrudSeguimiento_Cerda = () => {
 
                 return (
                     <button
-                        className={`badge border-0 ${esActivo ? "bg-success" : "bg-danger"}`}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                            esActivo
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100"
+                                : "bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100"
+                        }`}
                         onClick={() => toggleEstado(row)}
-                        style={{ cursor: "pointer", fontSize: "0.8rem", padding: "6px 12px" }}
                         title="Clic para cambiar estado"
                     >
+                        <span className={`w-1.5 h-1.5 rounded-full ${esActivo ? "bg-emerald-500" : "bg-rose-500"}`}></span>
                         {esActivo ? "Activo" : "Inactivo"}
                     </button>
                 );
             },
-            width: "110px",
+            width: "105px",
             center: true
         },
         {
             name: "Acciones",
             cell: row => (
-                <div className="d-flex gap-1">
+                <div className="flex gap-1.5 items-center justify-end w-full">
                     <button
-                        className="btn btn-sm btn-info"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors shadow-xs"
                         onClick={() => handleEdit(row)}
                         title="Editar"
                     >
-                        <i className="fa-solid fa-pencil"></i>
+                        <TbPencil className="w-4 h-4" />
                     </button>
                     <button
-                        className={`btn btn-sm ${row.Estado === "Inactivo" || row.Estado === "I"
-                            ? "btn-success"
-                            : "btn-warning text-dark"
-                            }`}
+                        className={`w-8 h-8 flex items-center justify-center rounded-xl transition-colors shadow-xs ${
+                            row.Estado === "Inactivo" || row.Estado === "I"
+                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                : "bg-amber-50 text-amber-700 hover:bg-amber-100"
+                        }`}
                         onClick={() => toggleEstado(row)}
                         title={
                             row.Estado === "Inactivo" || row.Estado === "I"
@@ -494,16 +488,11 @@ const CrudSeguimiento_Cerda = () => {
                                 : "Inactivar"
                         }
                     >
-                        <i
-                            className={`fa-solid ${row.Estado === "Inactivo" || row.Estado === "I"
-                                ? "fa-check"
-                                : "fa-ban"
-                                }`}
-                        ></i>
+                        <TbPower className="w-4 h-4" />
                     </button>
                 </div>
             ),
-            width: "110px"
+            width: "100px"
         }
     ];
 
@@ -511,56 +500,79 @@ const CrudSeguimiento_Cerda = () => {
     // RENDER
     // ==========================================
     return (
-        <div className="container mt-5">
-            {/* CABECERA */}
-            <div className="row d-flex mb-3 justify-content-between align-items-center g-2">
-                <div className="col-md-7 d-flex gap-2">
+        <div className="container-fluid px-4 py-4 max-w-7xl mx-auto space-y-6">
+
+            {/* Header Card */}
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
                     {partoIdParams && (
                         <button
-                            className="btn btn-secondary"
                             onClick={() => navigate("/partos")}
+                            className="w-10 h-10 rounded-2xl bg-gray-50 hover:bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-600 transition-colors shadow-xs"
                             title="Volver a Partos"
                         >
-                            <i className="fa-solid fa-arrow-left"></i>
+                            <TbArrowLeft className="w-5 h-5" />
                         </button>
                     )}
+                    <div className="w-12 h-12 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center text-pink-600 shadow-sm">
+                        <TbNotes className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                                {partoIdParams ? `Seguimiento de Cerda (Parto #${partoIdParams})` : "Seguimiento Diario de Cerdas"}
+                            </h1>
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200/60">
+                                {newListSeguimiento_Cerda.length} registros
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">Control clínico diario, medicaciones y observaciones por cerda</p>
+                    </div>
+                </div>
 
-                    <div className="input-group">
+                <button
+                    type="button"
+                    onClick={handleNuevo}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 text-white font-semibold text-sm shadow-md hover:from-pink-700 hover:to-rose-700 hover:shadow-lg transition-all duration-200"
+                >
+                    <TbPlus className="w-5 h-5" />
+                    <span>Registrar Seguimiento</span>
+                </button>
+            </div>
+
+            {/* Table Card */}
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-gray-100">
+                    <div>
+                        <h2 className="text-base font-bold text-gray-800">Listado de Seguimientos</h2>
+                        <p className="text-xs text-gray-400">Trazabilidad sanitaria de cerdas y tratamientos</p>
+                    </div>
+                    <div className="relative w-full sm:w-80 md:w-96 search-input-container">
+                        <TbSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                         <input
                             type="text"
-                            className="form-control border-start-0"
+                            className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-100 outline-none transition-all placeholder:text-gray-400"
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
-                            placeholder="🔍 Buscar por cerda, responsable, medicamento, fecha..."
+                            placeholder="Buscar por cerda, responsable, medicamento..."
                         />
                     </div>
                 </div>
 
-                <div className="col-md-4 text-end">
-                    <button
-                        type="button"
-                        className="btn btn-success"
-                        onClick={handleNuevo}
-                    >
-                        + Registrar seguimiento
-                    </button>
-                </div>
-            </div>
-
-            {/* TABLA */}
-            <div className="table-responsive">
                 <DataTable
-                    title={<h4 className="fw-bold text-gray-800 m-0 py-2">{partoIdParams ? `Seguimiento de Cerda (Parto #${partoIdParams})` : "Seguimiento Diario de Cerdas"}</h4>}
                     columns={columnsTable}
                     data={newListSeguimiento_Cerda}
                     keyField="Id_Seguimiento_Cerda"
                     pagination
                     highlightOnHover
-                    pointerOnHover
                     striped
                     responsive
                     customStyles={customTableStyles}
-                    noDataComponent="No hay registros de seguimiento para esta cerda"
+                    noDataComponent={
+                        <div className="p-8 text-center text-gray-400 text-sm">
+                            No hay registros de seguimiento para esta cerda
+                        </div>
+                    }
                 />
             </div>
 
@@ -599,6 +611,12 @@ const CrudSeguimiento_Cerda = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Responsables */}
+            <ModalResponsables
+                data={modalResponsablesData}
+                onClose={() => setModalResponsablesData(null)}
+            />
         </div>
     );
 };

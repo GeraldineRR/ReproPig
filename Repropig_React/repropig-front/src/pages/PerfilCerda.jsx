@@ -1,20 +1,19 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import apiAxios from "../api/axiosConfig"
+import { formatearFecha, formatearFechaYHora } from "../utils/dateUtils"
 
 const toSortKey = (dateStr) => {
     if (!dateStr) return "0000-00-00T00:00:00.000Z"
     try { return new Date(dateStr).toISOString() } catch (e) { return "0000-00-00T00:00:00.000Z" }
 }
 
-const fmtFecha = (dateStr) => {
-    if (!dateStr) return "—"
-    try { return new Date(dateStr).toLocaleDateString() } catch (e) { return "—" }
-}
+const fmtFecha = (dateStr) => formatearFecha(dateStr)
 
 const fmtFechaHora = (dateStr) => {
     if (!dateStr) return "—"
-    try { return new Date(dateStr).toLocaleString() } catch (e) { return "—" }
+    const { fecha, hora } = formatearFechaYHora(dateStr)
+    return hora ? `${fecha} · ${hora}` : fecha
 }
 
 export default function PerfilCerda() {
@@ -345,11 +344,11 @@ export default function PerfilCerda() {
                                     </div>
                                     <div className="flex justify-between items-center pb-3 border-b border-gray-50">
                                         <span className="text-gray-500 flex items-center"><i className="fa-solid fa-cake-candles w-5 text-gray-400"></i> Nacimiento</span>
-                                        <span className="font-semibold text-gray-800">{porcino.Fec_Nac_Porcino}</span>
+                                        <span className="font-semibold text-gray-800">{fmtFecha(porcino.Fec_Nac_Porcino)}</span>
                                     </div>
                                     <div className="flex justify-between items-center pb-3 border-b border-gray-50">
                                         <span className="text-gray-500 flex items-center"><i className="fa-solid fa-truck-ramp-box w-5 text-gray-400"></i> Llegada</span>
-                                        <span className="font-semibold text-gray-800">{porcino.Fec_Llegada}</span>
+                                        <span className="font-semibold text-gray-800">{fmtFecha(porcino.Fec_Llegada)}</span>
                                     </div>
                                     <div className="flex justify-between items-center pb-3 border-b border-gray-50">
                                         <span className="text-gray-500 flex items-center"><i className="fa-solid fa-weight-scale w-5 text-gray-400"></i> Peso Inicial</span>
@@ -589,7 +588,7 @@ export default function PerfilCerda() {
                                                         <div className="flex justify-between items-start mb-1">
                                                             <h4 className={`font-bold ${textClass}`}>{nov.Tipo_Novedad}</h4>
                                                             <span className="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded shadow-sm">
-                                                                {nov.Fecha_Novedad?.split('T')[0]?.split('-').reverse().join('/')}
+                                                                {fmtFecha(nov.Fecha_Novedad)}
                                                             </span>
                                                         </div>
                                                         {nov.Causa_Motivo && (
@@ -699,7 +698,7 @@ export default function PerfilCerda() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-xs font-semibold bg-white text-gray-700 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
                                                                     <i className="fa-regular fa-clock mr-1 text-amber-600"></i>
-                                                                    {monta.Fec_hora ? new Date(monta.Fec_hora).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'Fecha no especificada'}
+                                                                    {monta.Fec_hora ? fmtFechaHora(monta.Fec_hora) : 'Fecha no especificada'}
                                                                 </span>
                                                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${(monta.Estado || '').toLowerCase() === 'inactivo' || monta.Estado === 'I'
                                                                     ? 'bg-red-100 text-red-700'
@@ -768,7 +767,7 @@ export default function PerfilCerda() {
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-xs font-semibold bg-white text-gray-700 px-2.5 py-1 rounded-full border border-gray-200 shadow-sm">
                                                                     <i className="fa-regular fa-clock mr-1 text-blue-600"></i>
-                                                                    {insem.Fec_hora ? new Date(insem.Fec_hora).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }) : 'Fecha no especificada'}
+                                                                    {insem.Fec_hora ? fmtFechaHora(insem.Fec_hora) : 'Fecha no especificada'}
                                                                 </span>
                                                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${(insem.Estado || '').toLowerCase() === 'inactivo' || insem.Estado === 'I'
                                                                     ? 'bg-red-100 text-red-700'

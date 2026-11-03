@@ -42,7 +42,57 @@ class PartosService {
         return parto
     }
 
+    async getByCiclo(idCiclo) {
+        return await PartosModel.findOne({
+            where: { Id_Ciclo: idCiclo },
+            include: [
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    include: [{ model: RazaModel, as: 'raza' }]
+                },
+                {
+                    model: PorcinoModel,
+                    as: 'lechones',
+                    attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta', 'Gen_Porcino', 'Pes_Nacer', 'Estado']
+                },
+                { model: ciclosModel, as: 'ciclo' }
+            ],
+            order: [['Id_parto', 'DESC']]
+        })
+    }
+
     async create(data) {
+        if (data.Id_Ciclo) {
+            const ciclo = await ciclosModel.findByPk(data.Id_Ciclo, {
+                include: [
+                    { model: CalendarioModel, as: 'calendario' },
+                    { model: PartosModel, as: 'partos' }
+                ]
+            });
+
+            if (!ciclo) {
+                throw new Error("El ciclo especificado no existe");
+            }
+            if (ciclo.Estado !== 'Activo') {
+                throw new Error("El ciclo reproductivo debe estar activo para registrar un parto");
+            }
+
+            const cal = ciclo.calendario;
+            if (!cal) {
+                throw new Error("El ciclo no tiene un calendario reproductivo asociado");
+            }
+            if (cal.resultado_rc1 === 'recelo_detectado' || cal.resultado_rc2 === 'recelo_detectado') {
+                throw new Error("El ciclo presentó recelo detectado. No se puede registrar un parto en este ciclo");
+            }
+            if (!cal.real_rc1 || !cal.real_rc2 || !cal.real_cambio_alimento || !cal.real_dia_107) {
+                throw new Error("El ciclo tiene eventos pendientes en el calendario reproductivo (debe completar RC1, RC2, Cambio de alimento y Día 107 para habilitar el parto)");
+            }
+            if (cal.real_parto || (ciclo.partos && ciclo.partos.length > 0)) {
+                throw new Error("Este ciclo ya tiene un parto registrado");
+            }
+        }
+
         const parto = await PartosModel.create(data)
 
         if (data.Id_Ciclo) {
@@ -104,88 +154,9 @@ class PartosService {
             }
         }
 
-        // ── Auto-crear lechones (porcinos) basándose en el total de nacidos ──
-        const nacVivos = Number(data.Nac_vivos) || 0;
-        const nacMuertos = Number(data.Nac_muertos) || 0;
-        const nacMomias = Number(data.Nac_momias) || 0;
-        const fechaParto = data.Fec_fin || new Date();
-
-        // Obtener la raza de la madre para asignarla a los lechones
-        const madre = await PorcinoModel.findByPk(data.Id_Porcino);
-        const razaId = madre ? madre.Id_Raza : 1; // Fallback a 1 si no se encuentra
-
-        const porcinosData = [];
-        const novedadesData = [];
-
-        let numLechon = 1;
-
-        // Las crías vivas ya no se auto-crean aquí porque el usuario las registra en cadena
-        // a través de la interfaz (PorcinoForm).
-
-        // Crías nacidas muertas
-        for (let i = 0; i < nacMuertos; i++) {
-            porcinosData.push({
-                Id_Raza: razaId,
-                Gen_Porcino: '-',
-                Tipo_Cerdo: 'Lechon',
-                Proc_Porcino: 'Interno',
-                Fec_Nac_Porcino: fechaParto,
-                Estado: 'Inactivo', // Nacido muerto
-                Id_parto: parto.Id_parto
-            });
-        }
-
-        // Crías momias
-        for (let i = 0; i < nacMomias; i++) {
-            porcinosData.push({
-                Id_Raza: razaId,
-                Gen_Porcino: '-',
-                Tipo_Cerdo: 'Lechon',
-                Proc_Porcino: 'Interno',
-                Fec_Nac_Porcino: fechaParto,
-                Estado: 'Inactivo', // Momia
-                Id_parto: parto.Id_parto
-            });
-        }
-
-        if (porcinosData.length > 0) {
-            const creados = await PorcinoModel.bulkCreate(porcinosData);
-
-            // Crear novedades para los muertos y momias
-            let indexCreado = 0; // Comenzamos desde el 0 porque ya no hay crías vivas en este array
-
-            // Novedades para muertos
-            for (let i = 0; i < nacMuertos; i++) {
-                if (creados[indexCreado]) {
-                    novedadesData.push({
-                        Id_Porcino: creados[indexCreado].Id_Porcino,
-                        Tipo_Novedad: 'Muerte',
-                        Fecha_Novedad: fechaParto,
-                        Causa_Motivo: 'Nacido muerto'
-                    });
-                }
-                indexCreado++;
-            }
-
-            // Novedades para momias
-            for (let i = 0; i < nacMomias; i++) {
-                if (creados[indexCreado]) {
-                    novedadesData.push({
-                        Id_Porcino: creados[indexCreado].Id_Porcino,
-                        Tipo_Novedad: 'Muerte',
-                        Fecha_Novedad: fechaParto,
-                        Causa_Motivo: 'Momia'
-                    });
-                }
-                indexCreado++;
-            }
-
-            if (novedadesData.length > 0) {
-                await NovedadesModel.bulkCreate(novedadesData);
-            }
-        }
-
-        return parto
+        // Los nacidos muertos y momias NO se registran en la base de datos como porcinos ni novedades,
+        // únicamente se conservan como conteo numérico en el parto (Nac_muertos, Nac_momias).
+        return parto;
     }
 
     async update(id, data) {

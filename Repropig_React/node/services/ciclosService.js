@@ -3,11 +3,14 @@ import PorcinoModel from "../models/porcinoModel.js";
 import MontaModel from "../models/montaModel.js";
 import InseminacionModel from "../models/inseminacionModel.js";
 import colectaModel from "../models/colectaModel.js";
+import CalendarioModel from "../models/CalendarioModel.js";
+import PartosModel from "../models/PartosModel.js";
 
 class ciclosService {
 
     async getAll() {
         return await ciclosModel.findAll({
+            order: [['Id_Ciclo', 'DESC']],
             include: [
                 { model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] },
                 {
@@ -25,6 +28,15 @@ class ciclosService {
                         as: 'colecta',
                         include: [{ model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
                     }]
+                },
+                {
+                    model: CalendarioModel,
+                    as: 'calendario'
+                },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    separate: true
                 }
             ]
         })
@@ -49,6 +61,15 @@ class ciclosService {
                         as: 'colecta',
                         include: [{ model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
                     }]
+                },
+                {
+                    model: CalendarioModel,
+                    as: 'calendario'
+                },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    separate: true
                 }
             ]
         })

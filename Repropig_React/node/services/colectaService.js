@@ -9,7 +9,7 @@ class colectaService {
                 include: [{
                     model: PorcinoModel,
                     as: 'porcino',
-                    attributes: ['Nom_Porcino']
+                    attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
                 }]
             })
         } catch (err) {

@@ -77,6 +77,13 @@ export default function NotificacionesCamada() {
                 return;
             }
 
+            if (notif.id && String(notif.id).startsWith('peso-21d-')) {
+                navigate('/partos', { state: { 
+                    openLechonesPartoId: notif.idParto
+                } });
+                return;
+            }
+
             if (notif.categoria === 'camada') {
                 // Notificación de seguimiento de camada → ir al parto específico
                 const ruta = notif.ruta || (notif.idParto ? `/actividades_camada/parto/${notif.idParto}` : '/dashboard');

@@ -25,6 +25,19 @@ export const getPartos = async (req, res) => {
 }
 
 
+export const getPartoByCiclo = async (req, res) => {
+    try {
+        const parto = await PartosService.getByCiclo(req.params.idCiclo)
+        if (!parto) {
+            return res.status(404).json({ message: "No se encontró registro de parto para este ciclo" })
+        }
+        res.status(200).json(parto)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+
 export const createPartos = async (req, res) =>{
     try{
 

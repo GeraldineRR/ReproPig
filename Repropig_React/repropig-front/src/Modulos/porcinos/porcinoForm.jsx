@@ -5,7 +5,7 @@ import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
 
-const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', onSuccess, forcedPartoId, forcedFecNac, loopInfo }) => {
+const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Adulto', onSuccess, forcedPartoId, forcedFecNac, loopInfo, porcinosList = [] }) => {
     const MySwal = withReactContent(Swal)
 
     const defaultName = loopInfo && !porcinoEdit ? `Lechón #${loopInfo.current} (${loopInfo.nombreMadre || 'Madre'} - Parto #${forcedPartoId})` : '';
@@ -14,7 +14,9 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
     const [Nom_Porcino, setNombre] = useState(defaultName)
     const [Fec_Nac_Porcino, setFecNacimiento] = useState(forcedFecNac ? forcedFecNac.split('T')[0] : '')
     const [Gen_Porcino, setGenero] = useState('')
-    const [Tipo_Cerdo, setTipoCerdo] = useState(initialTipo === 'Todos' ? 'Adulto' : initialTipo)
+    const [Tipo_Cerdo, setTipoCerdo] = useState(
+        porcinoEdit ? (porcinoEdit.Tipo_Cerdo || 'Adulto') : (initialTipo === 'Lechon' ? 'Lechon' : 'Adulto')
+    )
     const [Plac_Sena_Porcino, setPlacaSena] = useState('')
     const [Proc_Porcino, setProcedencia] = useState('')
     const [Lug_Proc_Porcino, setLugarProc] = useState('')
@@ -27,10 +29,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
     const [Pes_Nacer, setPesNacer] = useState('')
-    const [Pes_21_Dias, setPes21Dias] = useState('')
-    const [Fec_21_Dias, setFec21Dias] = useState('')
-    const [Pes_Destete, setPesDestete] = useState('')
-    const [Fec_Destete, setFecDestete] = useState('')
     const [Observaciones, setObservaciones] = useState('')
 
 
@@ -114,24 +112,20 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
             setEdadLlegada(porcinoEdit.Edad_Llegada ?? 0)
             setRaza(porcinoEdit.Id_Raza ?? '')
             setTextFormButton("Actualizar")
-            
+
             setPesNacer(porcinoEdit.Pes_Nacer ?? '')
-            setPes21Dias(porcinoEdit.Pes_21_Dias ?? '')
-            setFec21Dias(porcinoEdit.Fec_21_Dias?.split('T')[0] ?? '')
-            setPesDestete(porcinoEdit.Pes_Destete ?? '')
-            setFecDestete(porcinoEdit.Fec_Destete?.split('T')[0] ?? '')
             setObservaciones(porcinoEdit.Observaciones ?? '')
         } else {
             resetForm()
         }
-    }, [porcinoEdit])
+    }, [porcinoEdit, initialTipo])
 
     const resetForm = () => {
         setNumChapeta('')
         setNombre(defaultName)
         setFecNacimiento(forcedFecNac ? forcedFecNac.split('T')[0] : '')
         setGenero('')
-        setTipoCerdo(initialTipo === 'Todos' ? 'Adulto' : initialTipo)
+        setTipoCerdo(initialTipo === 'Lechon' ? 'Lechon' : 'Adulto')
         setPlacaSena('')
         setProcedencia('')
         setLugarProc('')
@@ -142,10 +136,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
         setTextFormButton("Enviar")
 
         setPesNacer('')
-        setPes21Dias('')
-        setFec21Dias('')
-        setPesDestete('')
-        setFecDestete('')
         setObservaciones('')
     }
 
@@ -158,13 +148,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
         }
     }
 
-    useEffect(() => {
-        if (Fec_Nac_Porcino && Tipo_Cerdo === 'Lechon') {
-            const date = new Date(Fec_Nac_Porcino);
-            date.setDate(date.getDate() + 21);
-            setFec21Dias(date.toISOString().split('T')[0]);
-        }
-    }, [Fec_Nac_Porcino, Tipo_Cerdo])
 
     const huboCambios = () => {
         if (!porcinoEdit) return true
@@ -182,10 +165,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
             Number(Peso_Llegada) === Number(porcinoEdit.Peso_Llegada) &&
             Number(Id_Raza) === Number(porcinoEdit.Id_Raza) &&
             Number(Pes_Nacer) === Number(porcinoEdit.Pes_Nacer) &&
-            Number(Pes_21_Dias) === Number(porcinoEdit.Pes_21_Dias) &&
-            Fec_21_Dias === porcinoEdit.Fec_21_Dias?.split('T')[0] &&
-            Number(Pes_Destete) === Number(porcinoEdit.Pes_Destete) &&
-            Fec_Destete === porcinoEdit.Fec_Destete?.split('T')[0] &&
             Observaciones === porcinoEdit.Observaciones
         )
     }
@@ -200,31 +179,82 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
         const edadActualCalculada = calcularEdadActual(Fec_Nac_Porcino)
         setEdadActual(edadActualCalculada)
 
+        // Validaciones de obligatoriedad para Adultos
+        if (Tipo_Cerdo === 'Adulto') {
+            if (!Num_Chapeta) {
+                MySwal.fire({
+                    icon: 'warning',
+                    title: 'Campo obligatorio',
+                    text: 'La chapeta es obligatoria para porcinos adultos.'
+                })
+                return
+            }
+            if (!Plac_Sena_Porcino) {
+                MySwal.fire({
+                    icon: 'warning',
+                    title: 'Campo obligatorio',
+                    text: 'La placa SENA es obligatoria para porcinos adultos.'
+                })
+                return
+            }
+        }
+
+        // Validación de unicidad de chapeta
+        if (Num_Chapeta) {
+            const chapetaRepetida = porcinosList.find(p =>
+                p.Num_Chapeta &&
+                Number(p.Num_Chapeta) === Number(Num_Chapeta) &&
+                (!porcinoEdit || p.Id_Porcino !== porcinoEdit.Id_Porcino)
+            )
+            if (chapetaRepetida) {
+                MySwal.fire({
+                    icon: 'warning',
+                    title: 'No se permite guardar al animal',
+                    text: `La chapeta ${Num_Chapeta} ya se encuentra registrada en el porcino "${chapetaRepetida.Nom_Porcino || '#' + chapetaRepetida.Id_Porcino}". Debe ser única.`
+                })
+                return
+            }
+        }
+
+        // Validación de unicidad de placa SENA
+        if (Plac_Sena_Porcino) {
+            const placaRepetida = porcinosList.find(p =>
+                p.Plac_Sena_Porcino &&
+                Number(p.Plac_Sena_Porcino) === Number(Plac_Sena_Porcino) &&
+                (!porcinoEdit || p.Id_Porcino !== porcinoEdit.Id_Porcino)
+            )
+            if (placaRepetida) {
+                MySwal.fire({
+                    icon: 'warning',
+                    title: 'No se permite guardar al animal',
+                    text: `La placa SENA ${Plac_Sena_Porcino} ya se encuentra registrada en el porcino "${placaRepetida.Nom_Porcino || '#' + placaRepetida.Id_Porcino}". Debe ser única.`
+                })
+                return
+            }
+        }
+
         const data = {
-            Num_Chapeta,
+            Num_Chapeta: Num_Chapeta ? Number(Num_Chapeta) : null,
             Nom_Porcino,
             Fec_Nac_Porcino,
             Gen_Porcino,
             Tipo_Cerdo,
-            Plac_Sena_Porcino: Tipo_Cerdo === 'Adulto' ? Plac_Sena_Porcino : null,
+            Plac_Sena_Porcino: Plac_Sena_Porcino ? Number(Plac_Sena_Porcino) : null,
             Proc_Porcino: Tipo_Cerdo === 'Adulto' ? Proc_Porcino : 'Interno',
             Lug_Proc_Porcino: Tipo_Cerdo === 'Adulto' ? Lug_Proc_Porcino : null,
             Fec_Llegada: Tipo_Cerdo === 'Adulto' ? Fec_Llegada : null,
             Peso_Llegada: Tipo_Cerdo === 'Adulto' ? Peso_Llegada : null,
             Edad_Llegada: Tipo_Cerdo === 'Adulto' ? Number(edadCalculada) : null,
-            Id_Raza: Tipo_Cerdo === 'Adulto' ? Id_Raza : null,
-            Pes_Nacer: Tipo_Cerdo === 'Lechon' ? Pes_Nacer : null,
-            Pes_21_Dias: Tipo_Cerdo === 'Lechon' ? Pes_21_Dias : null,
-            Fec_21_Dias: Tipo_Cerdo === 'Lechon' ? Fec_21_Dias : null,
-            Pes_Destete: Tipo_Cerdo === 'Lechon' ? Pes_Destete : null,
-            Fec_Destete: Tipo_Cerdo === 'Lechon' ? Fec_Destete : null,
-            Observaciones: Tipo_Cerdo === 'Lechon' ? Observaciones : null,
-            Id_parto: forcedPartoId || null
+            Id_Raza: Tipo_Cerdo === 'Adulto' ? Id_Raza : (porcinoEdit?.Id_Raza || null),
+            Pes_Nacer: Tipo_Cerdo === 'Lechon' ? (Pes_Nacer ? Number(Pes_Nacer) : null) : null,
+            Observaciones: Tipo_Cerdo === 'Lechon' ? (Observaciones || null) : null,
+            Id_parto: forcedPartoId ? Number(forcedPartoId) : (porcinoEdit?.Id_parto ? Number(porcinoEdit.Id_parto) : null)
         }
 
         try {
             if (textFormButton === 'Enviar') {
                 await apiAxios.post('/porcino/', data)
+                resetForm()
 
                 if (reload) await reload()
 
@@ -251,6 +281,7 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
                 }
 
                 await apiAxios.put(`/porcino/${porcinoEdit.Id_Porcino}`, data)
+                resetForm()
 
                 await reload()
 
@@ -263,10 +294,11 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
             }
 
         } catch (error) {
+            const mensaje = error.response?.data?.message || error.message || "No se pudo guardar el porcino."
             MySwal.fire({
-                icon: "error",
-                title: "Error",
-                text: "No se pudo guardar el porcino."
+                icon: "warning",
+                title: "No se permite guardar al animal",
+                text: mensaje
             })
         }
     }
@@ -282,21 +314,11 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
                 <small className="text-muted">Gestión de animales</small>
                 {loopInfo && (
                     <div className="alert alert-info py-2 mt-2">
-                        <span className="fw-bold">Registro en cadena (Parto)</span><br/>
+                        <span className="fw-bold">Registro en cadena (Parto)</span><br />
                         Lechón {loopInfo.current} de {loopInfo.total}
                     </div>
                 )}
             </div>
-
-            {initialTipo === 'Todos' && !porcinoEdit && (
-                <div className="mb-3">
-                    <label htmlFor="Tipo_Cerdo" className="form-label fw-semibold">🐽 Tipo de Cerdo</label>
-                    <select id="Tipo_Cerdo" className="form-control" value={Tipo_Cerdo} onChange={(e) => setTipoCerdo(e.target.value)} required>
-                        <option value="Adulto">Adulto</option>
-                        <option value="Lechon">Lechón</option>
-                    </select>
-                </div>
-            )}
 
             <div className="mb-3">
                 <label htmlFor="Nom_Porcino" className="form-label fw-semibold">🏷️ Nombre</label>
@@ -304,8 +326,33 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
             </div>
 
             <div className="mb-3">
-                <label htmlFor="Num_Chapeta" className="form-label fw-semibold">🔖 Chapeta</label>
-                <input type="number" id="Num_Chapeta" className="form-control" value={Num_Chapeta} onChange={(e) => setNumChapeta(e.target.value)} required />
+                <label htmlFor="Num_Chapeta" className="form-label fw-semibold">
+                    🔖 Chapeta {Tipo_Cerdo === 'Adulto' ? <span className="text-danger">*</span> : <span className="text-muted fw-normal">(Opcional)</span>}
+                </label>
+                <input
+                    type="number"
+                    id="Num_Chapeta"
+                    className="form-control"
+                    value={Num_Chapeta}
+                    onChange={(e) => setNumChapeta(e.target.value)}
+                    required={Tipo_Cerdo === 'Adulto'}
+                    placeholder={Tipo_Cerdo === 'Adulto' ? 'Número de chapeta (obligatorio)' : 'Número de chapeta'}
+                />
+            </div>
+
+            <div className="mb-3">
+                <label htmlFor="Plac_Sena_Porcino" className="form-label fw-semibold">
+                    🪪 Placa Sena {Tipo_Cerdo === 'Adulto' ? <span className="text-danger">*</span> : <span className="text-muted fw-normal">(Opcional)</span>}
+                </label>
+                <input
+                    type="number"
+                    id="Plac_Sena_Porcino"
+                    className="form-control"
+                    value={Plac_Sena_Porcino}
+                    onChange={(e) => setPlacaSena(e.target.value)}
+                    required={Tipo_Cerdo === 'Adulto'}
+                    placeholder={Tipo_Cerdo === 'Adulto' ? 'Placa SENA (obligatoria)' : 'Placa SENA'}
+                />
             </div>
 
             <div className="mb-3">
@@ -324,11 +371,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
 
             {Tipo_Cerdo === 'Adulto' && (
                 <>
-                    <div className="mb-3">
-                        <label htmlFor="Plac_Sena_Porcino" className="form-label fw-semibold">🪪 Placa Sena</label>
-                        <input type="number" id="Plac_Sena_Porcino" className="form-control" value={Plac_Sena_Porcino} onChange={(e) => setPlacaSena(e.target.value)} required />
-                    </div>
-
                     <div className="mb-3">
                         <label htmlFor="Proc_Porcino" className="form-label fw-semibold">📍 Procedencia</label>
                         <select id="Proc_Porcino" className="form-control" value={Proc_Porcino} onChange={(e) => setProcedencia(e.target.value)} required>
@@ -381,27 +423,6 @@ const PorcinoForm = ({ hideModal, porcinoEdit, reload, initialTipo = 'Todos', on
                     <div className="mb-3">
                         <label htmlFor="Pes_Nacer" className="form-label fw-semibold">⚖️ Peso al Nacer (kg)</label>
                         <input type="number" step="0.01" id="Pes_Nacer" className="form-control" value={Pes_Nacer} onChange={(e) => setPesNacer(e.target.value)} required />
-                    </div>
-
-                    <div className="mb-3">
-                        <label htmlFor="Fec_21_Dias" className="form-label fw-semibold">📅 Fecha a los 21 días (Automático)</label>
-                        <input type="date" className="form-control bg-light" value={Fec_21_Dias} readOnly />
-                        <small className="text-muted d-block mt-1">Calculado sumando 21 días a la fecha de nacimiento.</small>
-                    </div>
-
-                    <div className="mb-3">
-                        <label htmlFor="Pes_21_Dias" className="form-label fw-semibold">⚖️ Peso a los 21 días (kg)</label>
-                        <input type="number" step="0.01" id="Pes_21_Dias" className="form-control" value={Pes_21_Dias} onChange={(e) => setPes21Dias(e.target.value)} placeholder="Ej: 6.5" />
-                    </div>
-
-                    <div className="mb-3">
-                        <label htmlFor="Fec_Destete" className="form-label fw-semibold">📅 Fecha de Destete</label>
-                        <input type="date" className="form-control" value={Fec_Destete} onChange={(e) => setFecDestete(e.target.value)} />
-                    </div>
-
-                    <div className="mb-3">
-                        <label htmlFor="Pes_Destete" className="form-label fw-semibold">⚖️ Peso al Destete (kg)</label>
-                        <input type="number" step="0.01" id="Pes_Destete" className="form-control" value={Pes_Destete} onChange={(e) => setPesDestete(e.target.value)} placeholder="Ej: 7.2" />
                     </div>
 
                     <div className="mb-3">

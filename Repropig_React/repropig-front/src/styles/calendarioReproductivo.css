@@ -334,6 +334,12 @@
     border: 1px solid #a7f3d0;
 }
 
+.cal-status-no-realizado {
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+}
+
 .cal-status-no-aplica {
     background: #f1f5f9;
     color: #94a3b8;

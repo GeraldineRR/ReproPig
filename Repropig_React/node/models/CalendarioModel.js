@@ -21,6 +21,8 @@ const CalendarioModel = db.define('Calendario', {
 
     resultado_rc1: { type: DataTypes.STRING(20), allowNull: true },
     resultado_rc2: { type: DataTypes.STRING(20), allowNull: true },
+    resultado_cambio: { type: DataTypes.STRING(30), allowNull: true },
+    resultado_107: { type: DataTypes.STRING(30), allowNull: true },
 
     observaciones_rc1: { type: DataTypes.TEXT, allowNull: true },
     observaciones_rc2: { type: DataTypes.TEXT, allowNull: true },

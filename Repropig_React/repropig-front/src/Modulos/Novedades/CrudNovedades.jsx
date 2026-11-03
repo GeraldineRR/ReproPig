@@ -6,6 +6,14 @@ import * as bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { customTableStyles } from "../../styles/tableStyles.js";
+import { formatearFecha } from "../../utils/dateUtils.js";
+import {
+    TbAlertTriangle,
+    TbSearch,
+    TbPlus,
+    TbPencil,
+    TbTrash
+} from "react-icons/tb";
 
 const CrudNovedades = () => {
     const MySwal = withReactContent(Swal);
@@ -14,37 +22,78 @@ const CrudNovedades = () => {
     const [novedadEdit, setNovedadEdit] = useState(null);
     const [filterText, setFilterText] = useState('');
 
+    const [porcinosMap, setPorcinosMap] = useState({});
+
     const columns = [
         {
             name: 'ID',
             selector: row => row.Id_Novedad,
             sortable: true,
-            width: '80px'
+            width: '80px',
+            cell: row => (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                    #{row.Id_Novedad}
+                </span>
+            )
         },
         {
             name: 'Porcino',
-            selector: row => row.porcino?.Nom_Porcino || `Porcino #${row.Id_Porcino}`,
-            sortable: true
+            selector: row => row.porcino?.Nom_Porcino || porcinosMap[row.Id_Porcino]?.Nom_Porcino || `Porcino #${row.Id_Porcino}`,
+            sortable: true,
+            minWidth: '170px',
+            cell: row => {
+                const p = row.porcino || porcinosMap[row.Id_Porcino];
+                const nombre = p?.Nom_Porcino || (p?.Num_Chapeta ? `Chapeta: ${p.Num_Chapeta}` : `Porcino #${row.Id_Porcino}`);
+                const sub = p?.Num_Chapeta ? `Chapeta: ${p.Num_Chapeta}` : (row.Id_Porcino ? `ID: #${row.Id_Porcino}` : '');
+                return (
+                    <div className="flex items-center gap-2.5 py-1">
+                        <div>
+                            <div className="font-bold text-gray-900 text-xs">
+                                {nombre}
+                            </div>
+                            {sub && (
+                                <div className="text-[11px] text-gray-400">
+                                    {sub}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            }
         },
         {
             name: 'Tipo de Novedad',
-            selector: row => {
-                let badgeClass = 'bg-secondary';
-                if (row.Tipo_Novedad === 'Muerte' || row.Tipo_Novedad === 'Descarte') badgeClass = 'bg-danger';
-                else if (row.Tipo_Novedad === 'Enfermedad' || row.Tipo_Novedad === 'Lesión') badgeClass = 'bg-warning text-dark';
-                else if (row.Tipo_Novedad === 'Traslado') badgeClass = 'bg-info text-dark';
-                return <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold ${badgeClass}`}>{row.Tipo_Novedad}</span>;
-            },
-            sortable: true
+            selector: row => row.Tipo_Novedad,
+            sortable: true,
+            width: '160px',
+            cell: row => {
+                let badgeClass = 'bg-gray-50 text-gray-700 border-gray-200';
+                if (row.Tipo_Novedad === 'Muerte' || row.Tipo_Novedad === 'Descarte') {
+                    badgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                } else if (row.Tipo_Novedad === 'Enfermedad' || row.Tipo_Novedad === 'Lesión') {
+                    badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                } else if (row.Tipo_Novedad === 'Traslado') {
+                    badgeClass = 'bg-sky-50 text-sky-700 border-sky-200';
+                }
+                return (
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`}>
+                        {row.Tipo_Novedad}
+                    </span>
+                );
+            }
         },
         {
             name: 'Fecha',
-            selector: row => row.Fecha_Novedad?.split('T')[0]?.split('-').reverse().join('/'),
-            sortable: true
+            selector: row => row.Fecha_Novedad,
+            sortable: true,
+            width: '120px',
+            cell: row => <span className="text-xs font-medium text-gray-800">{formatearFecha(row.Fecha_Novedad) || '—'}</span>
         },
         {
             name: 'Causa / Motivo',
-            selector: row => row.Causa_Motivo || '—'
+            selector: row => row.Causa_Motivo || '—',
+            width: '150px',
+            cell: row => <span className="text-xs font-medium text-gray-700">{row.Causa_Motivo || '—'}</span>
         },
         {
             name: "Observaciones",
@@ -56,39 +105,33 @@ const CrudNovedades = () => {
                         wordBreak: "break-word",
                         overflowWrap: "anywhere",
                         lineHeight: "1.4",
-                        width: "100%",
                         display: "-webkit-box",
-                        WebkitLineClamp: 3,
+                        WebKitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden"
                     }}
-                    className="small"
+                    className="text-xs text-gray-600"
                     title={row.Observaciones || ""}
                 >
                     {row.Observaciones || "—"}
                 </div>
             ),
             wrap: true,
-            minWidth: "220px",
+            minWidth: "180px",
             grow: 2
         },
         {
             name: 'Acciones',
+            width: '110px',
+            center: true,
             cell: row => (
-                <div className="flex gap-2 items-center justify-end w-full">
+                <div className="flex items-center justify-center w-full">
                     <button
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors shadow-xs"
                         title="Editar Novedad"
                         onClick={() => handleEdit(row)}
                     >
-                        <i className="fa-solid fa-pencil text-xs"></i>
-                    </button>
-                    <button
-                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                        title="Eliminar Novedad"
-                        onClick={() => handleDelete(row.Id_Novedad)}
-                    >
-                        <i className="fa-solid fa-trash text-xs"></i>
+                        <TbPencil className="w-4 h-4" />
                     </button>
                 </div>
             )
@@ -101,33 +144,21 @@ const CrudNovedades = () => {
 
     const getAllNovedades = async () => {
         try {
-            const response = await apiAxios.get('/novedades/');
-            // Ordenar de más reciente a más antigua
-            const sortedData = response.data.sort((a, b) => new Date(b.Fecha_Novedad) - new Date(a.Fecha_Novedad));
+            const [response, resPorcinos] = await Promise.all([
+                apiAxios.get('/novedades/'),
+                apiAxios.get('/porcino/').catch(() => ({ data: [] }))
+            ]);
+
+            const map = {};
+            (resPorcinos.data || []).forEach(p => {
+                map[p.Id_Porcino] = p;
+            });
+            setPorcinosMap(map);
+
+            const sortedData = (response.data || []).sort((a, b) => new Date(b.Fecha_Novedad) - new Date(a.Fecha_Novedad));
             setNovedades(sortedData);
         } catch (error) {
             console.error("Error al obtener novedades:", error);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        const result = await MySwal.fire({
-            title: '¿Estás seguro?',
-            text: "Esta acción no se puede revertir",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        });
-
-        if (result.isConfirmed) {
-            try {
-                await apiAxios.delete(`/novedades/${id}`);
-                MySwal.fire('¡Eliminada!', 'La novedad fue eliminada.', 'success');
-                getAllNovedades();
-            } catch (error) {
-                MySwal.fire('Error', 'No se pudo eliminar la novedad.', 'error');
-            }
         }
     };
 
@@ -146,8 +177,18 @@ const CrudNovedades = () => {
 
     const hideModal = () => {
         setNovedadEdit(null);
-        document.getElementById('closeModalNovedades').click();
+        document.getElementById('closeModalNovedades')?.click();
     };
+
+    useEffect(() => {
+        const modalEl = document.getElementById('modalNovedades');
+        if (!modalEl) return;
+        const handleHidden = () => {
+            setNovedadEdit(null);
+        };
+        modalEl.addEventListener('hidden.bs.modal', handleHidden);
+        return () => modalEl.removeEventListener('hidden.bs.modal', handleHidden);
+    }, []);
 
     const handleEdit = (novedad) => {
         setNovedadEdit(novedad);
@@ -156,43 +197,71 @@ const CrudNovedades = () => {
     };
 
     return (
-        <div className="container mt-5">
-            <div className="row d-flex mb-3 justify-content-between align-items-center">
-                <div className="col-4">
-                    <div className="input-group">
+        <div className="container-fluid px-4 py-4 max-w-7xl mx-auto space-y-6">
+
+            {/* Header Card */}
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-sm">
+                        <TbAlertTriangle className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">Registro de Novedades</h1>
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60">
+                                {filteredNovedades.length} novedades
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">Control de incidencias sanitarias, descartes, traslados y decesos</p>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 text-white font-semibold text-sm shadow-md hover:from-amber-700 hover:to-orange-700 hover:shadow-lg transition-all duration-200"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modalNovedades"
+                    onClick={() => setNovedadEdit(null)}
+                >
+                    <TbPlus className="w-5 h-5" />
+                    <span>Registrar Novedad</span>
+                </button>
+            </div>
+
+            {/* Table Card */}
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-gray-100">
+                    <div>
+                        <h2 className="text-base font-bold text-gray-800">Listado de Novedades</h2>
+                        <p className="text-xs text-gray-400">Historial cronológico de eventos e incidencias</p>
+                    </div>
+                    <div className="relative w-full sm:w-80 md:w-96 search-input-container">
+                        <TbSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
                         <input
                             type="text"
-                            className="form-control"
-                            placeholder="🔍 Buscar por porcino, tipo, causa..."
+                            className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-100 outline-none transition-all placeholder:text-gray-400"
+                            placeholder="Buscar por porcino, tipo, causa..."
                             value={filterText}
                             onChange={(e) => setFilterText(e.target.value)}
                         />
                     </div>
                 </div>
-                <div className="col-4 text-end">
-                    <button
-                        type="button"
-                        className="btn btn-success"
-                        data-bs-toggle="modal"
-                        data-bs-target="#modalNovedades"
-                        onClick={() => setNovedadEdit(null)}
-                    >
-                        + Registrar Novedad
-                    </button>
-                </div>
-            </div>
 
-            <DataTable
-                title={<h4 className="fw-bold text-gray-800 m-0 py-2">Registro de Novedades</h4>}
-                columns={columns}
-                data={filteredNovedades}
-                pagination
-                highlightOnHover
-                pointerOnHover
-                striped
-                customStyles={customTableStyles}
-                noDataComponent="No hay novedades registradas"
-            />
+                <DataTable
+                    columns={columns}
+                    data={filteredNovedades}
+                    pagination
+                    highlightOnHover
+                    striped
+                    responsive
+                    customStyles={customTableStyles}
+                    noDataComponent={
+                        <div className="p-8 text-center text-gray-400 text-sm">
+                            No hay novedades registradas
+                        </div>
+                    }
+                />
+            </div>
 
             <div className="modal fade" id="modalNovedades" tabIndex="-1">
                 <div className="modal-dialog">

@@ -3,12 +3,14 @@ import ciclosModel from "../models/ciclosModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 
 function calcularEventos(fechaServicio) {
-    const base = new Date(fechaServicio + 'T00:00:00');
+    const clean = String(fechaServicio || '').split('T')[0].split(' ')[0];
+    const [y, m, d] = clean.split('-').map(Number);
+    const base = (y && m && d) ? new Date(y, m - 1, d, 12, 0, 0) : new Date();
 
     const sumar = (dias) => {
-        const d = new Date(base);
-        d.setDate(d.getDate() + dias);
-        return d;
+        const dObj = new Date(base);
+        dObj.setDate(dObj.getDate() + dias);
+        return dObj;
     };
 
     return {
@@ -117,6 +119,38 @@ class CalendarioService {
             throw new Error('No se puede modificar este evento porque ya existe un registro posterior')
         }
 
+        // Validar orden secuencial: los pasos anteriores deben estar completados
+        if (evento === 'rc2' && !calendario.real_rc1) {
+            throw new Error('Debes completar primero el 1er control de recelo (RC1) antes de registrar el 2° control.')
+        }
+        if (evento === 'cambio_alimento') {
+            if (!calendario.real_rc1) {
+                throw new Error('Debes completar primero el 1er control de recelo (RC1).')
+            }
+            if (!calendario.real_rc2) {
+                throw new Error('Debes completar primero el 2° control de recelo (RC2).')
+            }
+        }
+        if (evento === 'dia_107') {
+            if (!calendario.real_rc1 || !calendario.real_rc2) {
+                throw new Error('Debes completar primero los controles de recelo anteriores.')
+            }
+            if (!calendario.real_cambio_alimento) {
+                throw new Error('Debes registrar primero el evento de Cambio de Alimento antes del Traslado a Lactancia.')
+            }
+        }
+        if (evento === 'parto') {
+            if (!calendario.real_rc1 || !calendario.real_rc2) {
+                throw new Error('Debes completar primero los controles de recelo anteriores.')
+            }
+            if (!calendario.real_cambio_alimento) {
+                throw new Error('Debes completar primero el Cambio de Alimento.')
+            }
+            if (!calendario.real_dia_107) {
+                throw new Error('Debes completar primero el Traslado a Lactancia (Día 107).')
+            }
+        }
+
         const { fecha_revision, resultado, observaciones } = revisionData
 
         const updateData = {}
@@ -134,10 +168,12 @@ class CalendarioService {
                 break
             case 'cambio_alimento':
                 updateData.real_cambio_alimento = fecha_revision || null
+                updateData.resultado_cambio = resultado || 'realizado'
                 updateData.observaciones_cambio = observaciones || null
                 break
             case 'dia_107':
                 updateData.real_dia_107 = fecha_revision || null
+                updateData.resultado_107 = resultado || 'realizado'
                 updateData.observaciones_107 = observaciones || null
                 break
             case 'parto':
@@ -156,20 +192,24 @@ class CalendarioService {
             const hayRecelo = updatedCal.resultado_rc1 === 'recelo_detectado' || updatedCal.resultado_rc2 === 'recelo_detectado'
             const hayParto = !!updatedCal.real_parto
 
-            if (hayRecelo || hayParto) {
-                // Inactivar ciclo si se detectó recelo (gestación fallida) o si ya parió
+            if (hayRecelo) {
+                // Si presenta recelo en RC1 o RC2, pasa a Fallido
                 await ciclosModel.update(
-                    { Estado: 'Inactivo' },
+                    { Estado: 'Fallido' },
                     { where: { Id_Ciclo: updatedCal.Id_Ciclo } }
                 )
-            } else if (evento === 'rc1' || evento === 'rc2') {
-                // Si ambos controles de recelo están limpios (no recelo) y no hay parto, mantener o restaurar activo
-                if (updatedCal.resultado_rc1 !== 'recelo_detectado' && updatedCal.resultado_rc2 !== 'recelo_detectado' && !updatedCal.real_parto) {
-                    await ciclosModel.update(
-                        { Estado: 'Activo' },
-                        { where: { Id_Ciclo: updatedCal.Id_Ciclo } }
-                    )
-                }
+            } else if (hayParto) {
+                // Si se registró el parto, pasa a Finalizado
+                await ciclosModel.update(
+                    { Estado: 'Finalizado' },
+                    { where: { Id_Ciclo: updatedCal.Id_Ciclo } }
+                )
+            } else {
+                // Si no hay recelo ni parto y el calendario sigue en marcha, pasa a Activo
+                await ciclosModel.update(
+                    { Estado: 'Activo' },
+                    { where: { Id_Ciclo: updatedCal.Id_Ciclo } }
+                )
             }
         }
 

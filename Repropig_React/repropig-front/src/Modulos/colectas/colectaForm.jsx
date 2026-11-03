@@ -30,7 +30,12 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'))
+            const machoPermitido = String(rowToEdit?.Id_Porcino || '')
+            setPorcinos((response.data || []).filter(p => 
+                p.Gen_Porcino === 'M' && 
+                p.Tipo_Cerdo === 'Adulto' && 
+                ((p.Estado || '').trim().toLowerCase() === 'activo' || String(p.Id_Porcino) === machoPermitido)
+            ))
         } catch (error) {
             console.error('Error al obtener porcinos:', error);
         }
