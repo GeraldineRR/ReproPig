@@ -3,40 +3,67 @@ import apiAxios from "../../api/axiosConfig.js"
 import DataTable from 'react-data-table-component'
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import { customTableStyles } from "../../styles/tableStyles.js"
+import { TbTrash } from "react-icons/tb"
 
 const SubActividades = ({ segCamada }) => {
     const MySwal = withReactContent(Swal)
     const [actividades, setActividades] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
-    const [form, setForm] = useState({ Tipo_Actividad: '', Fecha_Actividad: segCamada?.Fecha_Real?.split('T')[0] || new Date().toISOString().split('T')[0], Observaciones: '', Id_Medicamento: '' })
+    const [tipos, setTipos] = useState([])
+    const [form, setForm] = useState({
+        Tipo_Actividad: '',
+        Fecha_Actividad: segCamada?.Fecha_Real?.split('T')[0] || new Date().toISOString().split('T')[0],
+        Observaciones: '',
+        Id_Medicamento: ''
+    })
 
     const columns = [
         {
             name: 'Tipo Actividad',
-            selector: row => row.Tipo_Actividad
+            selector: row => row.Tipo_Actividad,
+            cell: row => (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                    {row.Tipo_Actividad}
+                </span>
+            ),
+            sortable: true
         },
         {
             name: 'Fecha',
-            selector: row => row.Fecha_Actividad
+            selector: row => row.Fecha_Actividad ? row.Fecha_Actividad.split('T')[0].split('-').reverse().join('/') : '—',
+            sortable: true,
+            width: '110px'
         },
         {
             name: 'Medicamento',
-            selector: row => row.medicamentos?.Nombre || 'N/A'
+            selector: row => row.medicamentos?.Nombre || '—',
+            cell: row => (
+                row.medicamentos?.Nombre ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                        {row.medicamentos.Nombre}
+                    </span>
+                ) : <span className="text-gray-400 italic text-xs">—</span>
+            ),
+            sortable: true
         },
         {
             name: 'Observaciones',
-            selector: row => row.Observaciones || 'N/A'
+            selector: row => row.Observaciones || '—',
+            cell: row => <span className="text-gray-600 text-xs">{row.Observaciones || '—'}</span>
         },
         {
             name: 'Acciones',
             cell: row => (
                 <button
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                    className="p-1.5 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
                     onClick={() => handleDelete(row.Id_Actividad)}
+                    title="Eliminar"
                 >
-                    <i className="fa-solid fa-trash text-xs"></i>
+                    <TbTrash className="w-4 h-4" />
                 </button>
-            )
+            ),
+            width: '80px'
         }
     ]
 
@@ -44,8 +71,21 @@ const SubActividades = ({ segCamada }) => {
         if (segCamada) {
             getActividades()
             getMedicamentos()
+            getTipos()
         }
     }, [segCamada])
+
+    const getTipos = async () => {
+        try {
+            const res = await apiAxios.get('/tipos_actividad/')
+            const lista = Array.isArray(res.data)
+                ? res.data.filter(t => t.Estado !== 'Inactivo').map(t => t.Nombre || t)
+                : []
+            setTipos(lista)
+        } catch (error) {
+            console.error("Error al obtener tipos de actividad:", error)
+        }
+    }
 
     const getActividades = async () => {
         try {
@@ -53,16 +93,16 @@ const SubActividades = ({ segCamada }) => {
             const filtradas = res.data.filter(a => Number(a.Id_SegCamada) === Number(segCamada.Id_SegCamada))
             setActividades(filtradas)
         } catch (error) {
-            console.error(error)
+            console.error("Error al obtener actividades:", error)
         }
     }
 
     const getMedicamentos = async () => {
         try {
             const res = await apiAxios.get('/medicamentos/')
-            setMedicamentos(res.data)
+            setMedicamentos(Array.isArray(res.data) ? res.data : [])
         } catch (error) {
-            console.error(error)
+            console.error("Error al obtener medicamentos:", error)
         }
     }
 
@@ -89,46 +129,67 @@ const SubActividades = ({ segCamada }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        if (!form.Tipo_Actividad) {
+            MySwal.fire({ icon: 'warning', title: 'Atención', text: 'Por favor selecciona el tipo de actividad.' })
+            return
+        }
+
         try {
             await apiAxios.post('/actividades_camada/', {
                 ...form,
                 Id_SegCamada: segCamada.Id_SegCamada,
                 Id_Medicamento: form.Id_Medicamento || null
             })
-            MySwal.fire({ icon: 'success', title: 'Guardado', timer: 1500, showConfirmButton: false })
-            setForm({ Tipo_Actividad: '', Fecha_Actividad: segCamada?.Fecha_Real?.split('T')[0] || new Date().toISOString().split('T')[0], Observaciones: '', Id_Medicamento: '' })
+            MySwal.fire({ icon: 'success', title: 'Guardado', text: 'Actividad registrada correctamente.', timer: 1500, showConfirmButton: false })
+            setForm({
+                Tipo_Actividad: '',
+                Fecha_Actividad: segCamada?.Fecha_Real?.split('T')[0] || new Date().toISOString().split('T')[0],
+                Observaciones: '',
+                Id_Medicamento: ''
+            })
             getActividades()
         } catch (error) {
-            MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo guardar.' })
+            console.error("Error al guardar actividad:", error)
+            MySwal.fire({ icon: 'error', title: 'Error', text: error.response?.data?.message || 'No se pudo guardar.' })
         }
     }
 
     return (
         <div className="container">
             <form onSubmit={handleSubmit} className="mb-4 bg-light p-3 rounded">
-                <h6 className="mb-3">Registrar Nueva Actividad</h6>
+                <h6 className="mb-3 font-bold text-gray-800">Registrar Nueva Actividad</h6>
                 <div className="row">
                     <div className="col-md-3 mb-2">
-                        <label className="form-label">Tipo Actividad</label>
-                        <select className="form-control" required value={form.Tipo_Actividad} onChange={e => setForm({...form, Tipo_Actividad: e.target.value})}>
+                        <label className="form-label font-semibold text-xs text-gray-700">Tipo Actividad</label>
+                        <select
+                            className="form-control text-xs"
+                            required
+                            value={form.Tipo_Actividad}
+                            onChange={e => setForm({...form, Tipo_Actividad: e.target.value})}
+                        >
                             <option value="">Selecciona...</option>
-                            <option value="Vacunación">Vacunación</option>
-                            <option value="Desparasitación">Desparasitación</option>
-                            <option value="Pesaje">Pesaje</option>
-                            <option value="Corte de cola">Corte de cola</option>
-                            <option value="Corte de colmillos">Corte de colmillos</option>
-                            <option value="Castración">Castración</option>
-                            <option value="Aplicación hierro">Aplicación hierro</option>
-                            <option value="Otro">Otro</option>
+                            {tipos.map((t, idx) => (
+                                <option key={idx} value={t}>{t}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="col-md-3 mb-2">
-                        <label className="form-label">Fecha</label>
-                        <input type="date" className="form-control" required value={form.Fecha_Actividad} onChange={e => setForm({...form, Fecha_Actividad: e.target.value})} />
+                        <label className="form-label font-semibold text-xs text-gray-700">Fecha</label>
+                        <input
+                            type="date"
+                            className="form-control text-xs"
+                            required
+                            value={form.Fecha_Actividad}
+                            onChange={e => setForm({...form, Fecha_Actividad: e.target.value})}
+                        />
                     </div>
                     <div className="col-md-3 mb-2">
-                        <label className="form-label">Medicamento</label>
-                        <select className="form-control" value={form.Id_Medicamento} onChange={e => setForm({...form, Id_Medicamento: e.target.value})}>
+                        <label className="form-label font-semibold text-xs text-gray-700">Medicamento</label>
+                        <select
+                            className="form-control text-xs"
+                            value={form.Id_Medicamento}
+                            onChange={e => setForm({...form, Id_Medicamento: e.target.value})}
+                        >
                             <option value="">Ninguno</option>
                             {medicamentos.map(m => (
                                 <option key={m.Id_Medicamento} value={m.Id_Medicamento}>{m.Nombre}</option>
@@ -136,19 +197,28 @@ const SubActividades = ({ segCamada }) => {
                         </select>
                     </div>
                     <div className="col-md-3 mb-2">
-                        <label className="form-label">Observaciones</label>
-                        <input type="text" className="form-control" value={form.Observaciones} onChange={e => setForm({...form, Observaciones: e.target.value})} />
+                        <label className="form-label font-semibold text-xs text-gray-700">Observaciones</label>
+                        <input
+                            type="text"
+                            className="form-control text-xs"
+                            placeholder="Detalles u observaciones..."
+                            value={form.Observaciones}
+                            onChange={e => setForm({...form, Observaciones: e.target.value})}
+                        />
                     </div>
                 </div>
-                <button type="submit" className="btn btn-success mt-2">Agregar Actividad</button>
+                <button type="submit" className="btn btn-sm btn-success mt-2 font-medium">Agregar Actividad</button>
             </form>
 
-            <DataTable
-                columns={columns}
-                data={actividades}
-                noDataComponent="No hay actividades registradas en esta sesión"
-                striped
-            />
+            <div className="border border-gray-100 rounded-2xl overflow-hidden mt-3">
+                <DataTable
+                    columns={columns}
+                    data={actividades}
+                    noDataComponent="No hay actividades registradas en esta sesión"
+                    customStyles={customTableStyles}
+                    highlightOnHover
+                />
+            </div>
         </div>
     )
 }

@@ -2,6 +2,7 @@ import SegcamadaModel from "../models/segcamadaModel.js"
 import PorcinoModel from "../models/porcinoModel.js"
 import MedicamentosModel from "../models/MedicamentosModel.js"
 import PartosModel from "../models/PartosModel.js"
+import TipoActividadModel from "../models/tipoActividadModel.js"
 import db from "../database/db.js"
 import { Op } from "sequelize"
 
@@ -13,17 +14,21 @@ class SegcamadaService {
                 {
                     model: PorcinoModel,
                     as: 'porcino',
-                    where: { Tipo_Cerdo: 'Lechon' },
-                    include:
-                    {
+                    where: { Tipo_Cerdo: 'Lechon', Gen_Porcino: { [Op.ne]: '-' } },
+                    include: {
                         model: PartosModel,
-                        as: 'parto'
+                        as: 'parto',
+                        include: [{ model: PorcinoModel, as: 'porcino' }]
                     }
 
                 },
                 {
                     model: MedicamentosModel,
                     as: 'medicamentos'
+                },
+                {
+                    model: TipoActividadModel,
+                    as: 'tipo_actividad'
                 }
             ]
         })
@@ -41,6 +46,10 @@ class SegcamadaService {
                 {
                     model: MedicamentosModel,
                     as: 'medicamentos'
+                },
+                {
+                    model: TipoActividadModel,
+                    as: 'tipo_actividad'
                 }
 
             ]

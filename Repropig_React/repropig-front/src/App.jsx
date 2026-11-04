@@ -31,7 +31,7 @@ import PerfilCerda from "./pages/PerfilCerda"
 import MiPerfil from "./pages/MiPerfil"
 import CrudNovedades from "./Modulos/Novedades/CrudNovedades"
 import CrudActividadesCamada from "./Modulos/ActividadesCamada/CrudActividadesCamada"
-import CrudActividades from "./Modulos/Actividades/CrudActividades"
+import CrudTiposActividad from "./Modulos/TiposActividad/CrudTiposActividad"
 
 function App() {
   return (
@@ -72,7 +72,9 @@ function App() {
           <Route path="/mi-perfil" element={<MiPerfil />} />
           <Route path="/novedades" element={<CrudNovedades />} />
           <Route path="/actividades_camada" element={<CrudActividadesCamada />} />
-          <Route path="/actividades" element={<CrudActividades />} />
+          <Route path="/tipos_actividad" element={<CrudTiposActividad />} />
+          <Route path="/tipo_actividad" element={<Navigate to="/tipos_actividad" replace />} />
+          <Route path="/actividades" element={<Navigate to="/tipos_actividad" replace />} />
 
           <Route element={<RutaProtegida rolesPermitidos={["instructor"]} />}>
             <Route path="/responsables" element={<CrudResponsables />} />
@@ -83,6 +85,7 @@ function App() {
       {/* compatibilidad con rutas antiguas */}
       <Route path="/Seguimiento_Cerda" element={<Navigate to="/seguimiento_cerda" replace />} />
       <Route path="/Calendario" element={<Navigate to="/calendario" replace />} />
+      <Route path="/Actividades" element={<Navigate to="/tipos_actividad" replace />} />
     </Routes>
   )
 }

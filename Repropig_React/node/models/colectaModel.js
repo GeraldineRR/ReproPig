@@ -3,7 +3,7 @@ import { DataTypes } from 'sequelize';
 
 const colectaModel = db.define('colecta', {
     Id_colecta: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-    Fecha: { type: DataTypes.DATE },
+    Fecha: { type: DataTypes.DATEONLY },
     Uso_colecta: { type: DataTypes.ENUM('Si', 'No') },
     Tipo: { type: DataTypes.ENUM('Interno', 'Externo') },
     Id_Porcino: { type: DataTypes.INTEGER, allowNull: true },

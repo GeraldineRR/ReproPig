@@ -5,6 +5,7 @@ const SegcamadaModel = db.define('segcamada', {
 
     Id_SegCamada: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
     Id_Porcino: { type: DataTypes.INTEGER, allowNull: false },
+    Id_Tipo: { type: DataTypes.INTEGER, allowNull: true },
     Dia_Programado: { type: DataTypes.INTEGER, allowNull: false },
     Fecha_Real: { type: DataTypes.DATE, allowNull: false },
     Peso_Cria: { type: DataTypes.DECIMAL(5, 2), allowNull: false },

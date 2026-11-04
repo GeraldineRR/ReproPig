@@ -1,8 +1,23 @@
 import NovedadesModel from "../models/novedadesModel.js";
+import PorcinoModel from "../models/porcinoModel.js";
+import ciclosModel from "../models/ciclosModel.js";
+import { Op } from "sequelize";
 
 export const getAllNovedades = async (req, res) => {
     try {
-        const novedades = await NovedadesModel.findAll();
+        const novedades = await NovedadesModel.findAll({
+            where: {
+                Causa_Motivo: { [Op.notIn]: ['Nacido muerto', 'Momia'] }
+            },
+            include: [
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta', 'Tipo_Cerdo', 'Estado']
+                }
+            ],
+            order: [['Id_Novedad', 'DESC']]
+        });
         res.json(novedades);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -21,7 +36,47 @@ export const getNovedad = async (req, res) => {
 
 export const createNovedad = async (req, res) => {
     try {
+        const { Id_Porcino, Tipo_Novedad } = req.body;
+
+        const tiposBaja = ['Muerte', 'Descarte', 'Traslado'];
+
+        if (tiposBaja.includes(Tipo_Novedad)) {
+            // Verificar si el porcino ya tiene una novedad previa de Muerte, Descarte o Traslado
+            const existente = await NovedadesModel.findOne({
+                where: {
+                    Id_Porcino,
+                    Tipo_Novedad: tiposBaja
+                }
+            });
+            if (existente) {
+                return res.status(400).json({
+                    message: `El porcino #${Id_Porcino} ya cuenta con un registro previo de ${existente.Tipo_Novedad}. No se permiten duplicados.`
+                });
+            }
+
+            // Verificar si el porcino ya está inactivo, muerto o trasladado
+            const porcino = await PorcinoModel.findByPk(Id_Porcino);
+            if (porcino && ['Muerto', 'Inactivo', 'Trasladado'].includes(porcino.Estado)) {
+                return res.status(400).json({
+                    message: `El porcino #${Id_Porcino} ya se encuentra registrado como ${porcino.Estado}. No se puede registrar ${Tipo_Novedad} nuevamente.`
+                });
+            }
+        }
+
         const novedad = await NovedadesModel.create(req.body);
+
+        // Actualizar el estado del porcino en la base de datos y detener ciclos reproductivos activos
+        if (tiposBaja.includes(Tipo_Novedad)) {
+            const nuevoEstado = Tipo_Novedad === 'Muerte' ? 'Muerto' : Tipo_Novedad === 'Traslado' ? 'Trasladado' : 'Inactivo';
+            await PorcinoModel.update({ Estado: nuevoEstado }, { where: { Id_Porcino } });
+
+            // Detener cualquier ciclo reproductivo activo del porcino
+            await ciclosModel.update(
+                { Estado: 'Inactivo' },
+                { where: { Id_Cerda: Id_Porcino, Estado: 'Activo' } }
+            );
+        }
+
         res.status(201).json({ message: "Creada exitosamente", novedad });
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -30,7 +85,38 @@ export const createNovedad = async (req, res) => {
 
 export const updateNovedad = async (req, res) => {
     try {
-        await NovedadesModel.update(req.body, { where: { Id_Novedad: req.params.id } });
+        const { Id_Porcino, Tipo_Novedad } = req.body;
+        const { id } = req.params;
+        const tiposBaja = ['Muerte', 'Descarte', 'Traslado'];
+
+        if (tiposBaja.includes(Tipo_Novedad)) {
+            const existente = await NovedadesModel.findOne({
+                where: {
+                    Id_Porcino,
+                    Tipo_Novedad: tiposBaja,
+                    Id_Novedad: { [Op.ne]: id }
+                }
+            });
+            if (existente) {
+                return res.status(400).json({
+                    message: `El porcino #${Id_Porcino} ya cuenta con otro registro de ${existente.Tipo_Novedad}. No se permiten duplicados.`
+                });
+            }
+        }
+
+        await NovedadesModel.update(req.body, { where: { Id_Novedad: id } });
+
+        if (tiposBaja.includes(Tipo_Novedad)) {
+            const nuevoEstado = Tipo_Novedad === 'Muerte' ? 'Muerto' : Tipo_Novedad === 'Traslado' ? 'Trasladado' : 'Inactivo';
+            await PorcinoModel.update({ Estado: nuevoEstado }, { where: { Id_Porcino } });
+
+            // Detener cualquier ciclo reproductivo activo del porcino
+            await ciclosModel.update(
+                { Estado: 'Inactivo' },
+                { where: { Id_Cerda: Id_Porcino, Estado: 'Activo' } }
+            );
+        }
+
         res.json({ message: "Actualizada" });
     } catch (error) {
         res.status(400).json({ message: error.message });

@@ -2,6 +2,7 @@ import express from 'express'
 import { 
     getALLPartos, 
     getPartos, 
+    getPartoByCiclo,
     createPartos, 
     updatePartos, 
     deletePartos,
@@ -18,6 +19,7 @@ const router = express.Router()
 router.use(verificarToken)
 
 router.get('/', getALLPartos)
+router.get('/ciclo/:idCiclo', getPartoByCiclo)
 router.get('/:id/tiene-seguimiento', checkSeguimiento)
 router.get('/:id', getPartos)
 router.post('/', createPartos)

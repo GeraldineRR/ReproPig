@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import apiAxios from "../../api/axiosConfig";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { calcularFechaProgramada } from "../../utils/dateUtils";
 
 const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const MySwal = withReactContent(Swal);
@@ -16,35 +17,22 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const [Dia_Programado, setDiaProgramado] = useState(0);
     const [Fecha_Real, setFechaReal] = useState('');
     const [Peso_Cria, setPesoCria] = useState('');
+    const [Id_Tipo, setIdTipo] = useState('');
+    const [tiposActividad, setTiposActividad] = useState([]);
     const [Id_Medicamento, setIdMedicamento] = useState([]);
     const [medicamentos, setMedicamentos] = useState([]);
     const [Id_Responsable, setIdResponsable] = useState([]);
     const [responsables, setResponsables] = useState([]);
+    const [showResponsables, setShowResponsables] = useState(false);
+    const [showMedicamentos, setShowMedicamentos] = useState(false);
+    const responsablesRef = useRef(null);
+    const medicamentosRef = useRef(null);
     const [Observaciones, setObservaciones] = useState('');
     const [Fecha_Programada, setFechaProgramada] = useState('');
     const [textFormButton, setTextFormButton] = useState('Enviar');
     const { id: partoIdParams } = useParams();
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
-
-    function calcularFechaProgramada(fechaParto, dia) {
-        if (!fechaParto || !dia) return '';
-
-        const fecha = new Date(fechaParto);
-
-        if (isNaN(fecha.getTime())) {
-            console.error("Fecha de parto inválida:", fechaParto);
-            return '';
-        }
-
-        fecha.setDate(fecha.getDate() + (Number(dia) - 1));
-
-        const year = fecha.getFullYear();
-        const month = String(fecha.getMonth() + 1).padStart(2, '0');
-        const day = String(fecha.getDate()).padStart(2, '0');
-
-        return `${year}-${month}-${day}`;
-    }
 
     const actualizarDiaYFecha = async (idPorcino) => {
         if (!Id_parto || !idPorcino) return;
@@ -91,19 +79,23 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                 return;
             }
 
-            const fechaParto = partoSeleccionado.Fec_fin;
+            // Priorizar la fecha de nacimiento del lechón si existe; de lo contrario Fec_fin o Fec_inicio del parto
+            const lechonSeleccionado = lechones.find(
+                l => String(l.Id_Porcino) === String(idPorcino)
+            );
+            const fechaBase = lechonSeleccionado?.Fec_Nac_Porcino || partoSeleccionado.Fec_fin || partoSeleccionado.Fec_inicio;
 
-            if (!fechaParto) {
+            if (!fechaBase) {
                 console.warn(
-                    "El parto no tiene Fec_fin:",
+                    "El parto/lechón no tiene fecha base:",
                     partoSeleccionado
                 );
                 return;
             }
 
-            // Calcular fecha programada
+            // Calcular fecha programada sin desfase horario
             const fechaProg = calcularFechaProgramada(
-                fechaParto,
+                fechaBase,
                 diaCalculado
             );
 
@@ -124,7 +116,20 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     useEffect(() => { getPartos() }, []);
     useEffect(() => { if (Id_parto) getLechonesPorParto(Id_parto) }, [Id_parto]);
-    useEffect(() => { getMedicamentos(); getResponsables(); }, []);
+    useEffect(() => { getMedicamentos(); getResponsables(); getTiposActividad(); }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (responsablesRef.current && !responsablesRef.current.contains(event.target)) {
+                setShowResponsables(false);
+            }
+            if (medicamentosRef.current && !medicamentosRef.current.contains(event.target)) {
+                setShowMedicamentos(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         if (
@@ -138,6 +143,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         Id_Porcino,
         Id_parto,
         partos,
+        lechones,
         modoCorreccion
     ]);
 
@@ -154,11 +160,13 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                 `/porcino/lechones/parto/${idParto}`
             );
 
-            setLechones(
-                Array.isArray(response.data)
-                    ? response.data
-                    : []
+            const rawList = Array.isArray(response.data) ? response.data : [];
+            const permitidos = rawList.filter(p => 
+                (p.Estado || '').trim().toLowerCase() === 'activo' ||
+                (actividadEdit && String(p.Id_Porcino) === String(actividadEdit.Id_Porcino))
             );
+
+            setLechones(permitidos);
 
         } catch (error) {
             console.error(
@@ -184,6 +192,37 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
         } catch (error) { console.error("Error cargando responsables:", error); }
     }
 
+    const getTiposActividad = async () => {
+        try {
+            const response = await apiAxios.get('/tipos_actividad/');
+            const rawList = Array.isArray(response.data) ? response.data : [];
+            const permitidos = rawList.filter(t =>
+                (t.Estado || '').trim().toLowerCase() === 'activo' ||
+                (actividadEdit && String(t.Id_Tipo) === String(actividadEdit.Id_Tipo))
+            );
+            setTiposActividad(permitidos);
+        } catch (error) {
+            console.error("Error cargando tipos de actividad:", error);
+            setTiposActividad([]);
+        }
+    }
+
+    const toggleResponsable = (id) => {
+        setIdResponsable(prev => {
+            const idStr = String(id);
+            const actual = (Array.isArray(prev) ? prev : []).map(String);
+            return actual.includes(idStr) ? actual.filter(r => r !== idStr) : [...actual, idStr];
+        });
+    };
+
+    const toggleMedicamento = (id) => {
+        setIdMedicamento(prev => {
+            const idStr = String(id);
+            const actual = (Array.isArray(prev) ? prev : []).map(String);
+            return actual.includes(idStr) ? actual.filter(m => m !== idStr) : [...actual, idStr];
+        });
+    };
+
     const parsearMultiples = (val) => {
         if (!val) return [];
         if (Array.isArray(val)) return val.map(String);
@@ -198,11 +237,14 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
             setIdParto(actividadEdit.porcino?.Id_parto ?? '');
             setPartoConfirmado(true);
             setIdPorcino(actividadEdit.Id_Porcino ?? '');
+            setIdTipo(actividadEdit.Id_Tipo ?? '');
             setDiaProgramado(actividadEdit.Dia_Programado ?? '');
 
             const parto = partos.find(p => p.Id_parto === Number(actividadEdit.porcino?.Id_parto));
-            if (parto?.Fec_fin && actividadEdit.Dia_Programado) {
-                const fechaProg = calcularFechaProgramada(parto.Fec_fin, actividadEdit.Dia_Programado);
+            const lechon = lechones.find(l => String(l.Id_Porcino) === String(actividadEdit.Id_Porcino));
+            const fechaBase = lechon?.Fec_Nac_Porcino || actividadEdit.porcino?.Fec_Nac_Porcino || parto?.Fec_fin || parto?.Fec_inicio;
+            if (fechaBase && actividadEdit.Dia_Programado) {
+                const fechaProg = calcularFechaProgramada(fechaBase, actividadEdit.Dia_Programado);
                 setFechaProgramada(fechaProg);
             }
 
@@ -223,23 +265,33 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
     const resetForm = () => {
         setIdPorcino('');
+        setIdTipo('');
         setDiaProgramado('');
         setFechaReal('');
         setPesoCria('');
         setIdMedicamento([]);
         setIdResponsable([]);
+        setShowResponsables(false);
+        setShowMedicamentos(false);
         setObservaciones('');
         setTextFormButton("Enviar");
     }
 
     const huboCambios = () => {
         if (!actividadEdit) return true;
+        const currentMeds = (Array.isArray(Id_Medicamento) ? Id_Medicamento : []).map(String).sort().join(',');
+        const editMeds = parsearMultiples(actividadEdit.Id_Medicamento).sort().join(',');
+        const currentResps = (Array.isArray(Id_Responsable) ? Id_Responsable : []).map(String).sort().join(',');
+        const editResps = parsearMultiples(actividadEdit.Id_Responsable).sort().join(',');
+
         return !(
             Number(Id_Porcino) === Number(actividadEdit.Id_Porcino) &&
+            Number(Id_Tipo || 0) === Number(actividadEdit.Id_Tipo || 0) &&
             Number(Dia_Programado) === Number(actividadEdit.Dia_Programado) &&
             Fecha_Real === actividadEdit.Fecha_Real?.split('T')[0] &&
             Number(Peso_Cria) === Number(actividadEdit.Peso_Cria) &&
-            Number(Id_Medicamento || 0) === Number(actividadEdit.Id_Medicamento || 0) &&
+            currentMeds === editMeds &&
+            currentResps === editResps &&
             Observaciones === (actividadEdit.Observaciones || '')
         );
     }
@@ -296,6 +348,7 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
 
         const data = {
             Id_Porcino,
+            Id_Tipo: Id_Tipo ? Number(Id_Tipo) : null,
             Dia_Programado,
             Fecha_Real,
             Peso_Cria,
@@ -570,114 +623,106 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                         <label className="form-label">Peso Lechón (kg)</label>
                         <input type="number" step="0.01" className="form-control" value={Peso_Cria} onChange={(e) => setPesoCria(e.target.value)} required />
                     </div>
-                    {/* RESPONSABLES */}
-                    <div className="mb-3">
-                        <label className="form-label fw-semibold d-block">
+
+                    {/* RESPONSABLES DROPDOWN */}
+                    <div className="mb-3 position-relative" ref={responsablesRef}>
+                        <label className="form-label fw-semibold">
                             👨‍🌾 Responsables ({Id_Responsable.length})
                         </label>
-
-                        <div className="d-flex flex-wrap gap-2">
-                            {responsables.length === 0 ? (
-                                <span className="text-muted small">
-                                    No hay responsables registrados
-                                </span>
-                            ) : (
-                                responsables.map((resp) => {
-                                    const activo = Id_Responsable
-                                        .map(String)
-                                        .includes(
-                                            String(resp.Id_Responsable)
-                                        );
-
-                                    return (
-                                        <button
-                                            key={resp.Id_Responsable}
-                                            type="button"
-                                            onClick={() =>
-                                                setIdResponsable((prev) => {
-                                                    const actual = Array.isArray(prev)
-                                                        ? prev.map(String)
-                                                        : [];
-
-                                                    const id = String(
-                                                        resp.Id_Responsable
-                                                    );
-
-                                                    return actual.includes(id)
-                                                        ? actual.filter(
-                                                            (r) => r !== id
-                                                        )
-                                                        : [...actual, id];
-                                                })
-                                            }
-                                            className={`btn btn-sm rounded-pill ${activo
-                                                ? "bg-success text-white shadow-sm fw-bold"
-                                                : "bg-white border text-secondary"
-                                                }`}
-                                        >
-                                            {activo ? "✓ " : "+ "}
-                                            {resp.Nombres}{" "}
-                                            {resp.Apellidos || ""}
-                                        </button>
-                                    );
-                                })
-                            )}
+                        <div 
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                            onClick={() => setShowResponsables(!showResponsables)}
+                            style={{ cursor: "pointer", userSelect: "none", backgroundColor: "#fff" }}
+                        >
+                            <span>
+                                {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
+                            </span>
+                            <span className="text-muted small">▼</span>
                         </div>
+                        {showResponsables && (
+                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                                {responsables.length === 0 ? (
+                                    <li className="dropdown-item text-muted small">No hay responsables registrados</li>
+                                ) : (
+                                    responsables.filter(r => r.Estado === 'Activo' || Id_Responsable.map(String).includes(String(r.Id_Responsable))).map(r => {
+                                        const activo = Id_Responsable.map(String).includes(String(r.Id_Responsable));
+                                        return (
+                                            <li key={r.Id_Responsable} onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}>
+                                                <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="form-check-input m-0" 
+                                                        checked={activo}
+                                                        readOnly
+                                                    />
+                                                    {r.Nombres} {r.Apellidos || ''}
+                                                </a>
+                                            </li>
+                                        );
+                                    })
+                                )}
+                            </ul>
+                        )}
                     </div>
 
-
-                    {/* MEDICAMENTOS */}
+                    {/* TIPO DE ACTIVIDAD (arriba de Medicamentos) */}
                     <div className="mb-3">
-                        <label className="form-label fw-semibold d-block">
+                        <label className="form-label fw-semibold">
+                            🏷️ Tipo de Actividad
+                        </label>
+                        <select
+                            className="form-select shadow-sm"
+                            value={Id_Tipo}
+                            onChange={(e) => setIdTipo(e.target.value)}
+                        >
+                            <option value="">Selecciona tipo de actividad...</option>
+                            {tiposActividad.map((tipo) => (
+                                <option key={tipo.Id_Tipo} value={tipo.Id_Tipo}>
+                                    {tipo.Nombre}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* MEDICAMENTOS DROPDOWN */}
+                    <div className="mb-3 position-relative" ref={medicamentosRef}>
+                        <label className="form-label fw-semibold">
                             💊 Medicamentos ({Id_Medicamento.length})
                         </label>
-
-                        <div className="d-flex flex-wrap gap-2">
-                            {medicamentos.length === 0 ? (
-                                <span className="text-muted small">
-                                    No hay medicamentos registrados
-                                </span>
-                            ) : (
-                                medicamentos.map((med) => {
-                                    const activo = Id_Medicamento
-                                        .map(String)
-                                        .includes(
-                                            String(med.Id_Medicamento)
-                                        );
-
-                                    return (
-                                        <button
-                                            key={med.Id_Medicamento}
-                                            type="button"
-                                            onClick={() =>
-                                                setIdMedicamento((prev) => {
-                                                    const actual = Array.isArray(prev)
-                                                        ? prev.map(String)
-                                                        : [];
-
-                                                    const id = String(
-                                                        med.Id_Medicamento
-                                                    );
-
-                                                    return actual.includes(id)
-                                                        ? actual.filter(
-                                                            (m) => m !== id
-                                                        )
-                                                        : [...actual, id];
-                                                })
-                                            }
-                                            className={`btn btn-sm rounded-pill ${activo
-                                                ? "bg-success text-white shadow-sm fw-bold"
-                                                : "bg-white border text-secondary"
-                                                }`}
-                                        >
-                                            {activo ? "✓ " : "+ "}
-                                            {med.Nombre}
-                                        </button>
-                                    );
-                                })
-                            )}
+                        <div 
+                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
+                            onClick={() => setShowMedicamentos(!showMedicamentos)}
+                            style={{ cursor: "pointer", userSelect: "none", backgroundColor: "#fff" }}
+                        >
+                            <span>
+                                {Id_Medicamento.length === 0 ? "Seleccionar medicamentos..." : `${Id_Medicamento.length} seleccionados`}
+                            </span>
+                            <span className="text-muted small">▼</span>
                         </div>
+                        {showMedicamentos && (
+                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
+                                {medicamentos.length === 0 ? (
+                                    <li className="dropdown-item text-muted small">No hay medicamentos registrados</li>
+                                ) : (
+                                    medicamentos.filter(m => (m.Estado || '').trim().toLowerCase() === 'activo' || Id_Medicamento.map(String).includes(String(m.Id_Medicamento))).map(m => {
+                                        const activo = Id_Medicamento.map(String).includes(String(m.Id_Medicamento));
+                                        return (
+                                            <li key={m.Id_Medicamento} onClick={(e) => { e.stopPropagation(); toggleMedicamento(m.Id_Medicamento); }}>
+                                                <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="form-check-input m-0" 
+                                                        checked={activo}
+                                                        readOnly
+                                                    />
+                                                    {m.Nombre}
+                                                </a>
+                                            </li>
+                                        );
+                                    })
+                                )}
+                            </ul>
+                        )}
                     </div>
                     <div className="mb-3">
                         <label className="form-label">Observaciones</label>

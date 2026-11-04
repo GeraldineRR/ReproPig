@@ -5,6 +5,7 @@ import PorcinoModel from "../models/porcinoModel.js";
 import CalendarioModel from "../models/CalendarioModel.js";
 import ciclosModel from "../models/ciclosModel.js";
 import Seguimiento_CerdaModel from "../models/Seguimiento_CerdaModel.js";
+import { Op } from "sequelize";
 
 export const getAllSegcamadas = async (req, res) => {
     try {
@@ -80,7 +81,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
     try {
         const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
-        // Formatear fecha YYYY-MM-DD usando hora local segura
+        // Formatear fecha YYYY-MM-DD de forma segura sin desfase UTC
         const formatDateLocal = (dateVal) => {
             if (!dateVal) return null;
             if (typeof dateVal === 'string') {
@@ -89,24 +90,28 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                     return str;
                 }
             }
-            const d = new Date(dateVal);
-            if (isNaN(d.getTime())) return null;
+            if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+                return dateVal.toISOString().split('T')[0];
+            }
+            const strVal = String(dateVal).split('T')[0].split(' ')[0];
+            if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) {
+                return strVal;
+            }
+            return null;
+        };
+
+        const getTodayLocal = (offsetDays = 0) => {
+            const d = new Date();
+            if (offsetDays !== 0) d.setDate(d.getDate() + offsetDays);
             const year = d.getFullYear();
             const month = String(d.getMonth() + 1).padStart(2, '0');
             const day = String(d.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         };
 
-        const hoy = new Date();
-        const hoyStr = formatDateLocal(hoy);
-
-        const manana = new Date(hoy);
-        manana.setDate(manana.getDate() + 1);
-        const mananaStr = formatDateLocal(manana);
-
-        const enDosDias = new Date(hoy);
-        enDosDias.setDate(enDosDias.getDate() + 2);
-        const enDosDiasStr = formatDateLocal(enDosDias);
+        const hoyStr = getTodayLocal(0);
+        const mananaStr = getTodayLocal(1);
+        const enDosDiasStr = getTodayLocal(2);
 
         const notificaciones = [];
 
@@ -144,10 +149,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
             });
 
             for (const parto of partos) {
-                if (!parto.Fec_fin) continue;
-
-                const fechaFin = new Date(parto.Fec_fin);
-                const fechaFinStr = formatDateLocal(fechaFin);
+                const fechaFinStr = formatDateLocal(parto.Fec_fin || parto.Fec_inicio);
                 if (!fechaFinStr) continue;
 
                 const [year, month, day] = fechaFinStr.split('-').map(Number);
@@ -155,13 +157,20 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                 const madre = parto.porcino;
                 const nombreCerda = madre?.Nom_Porcino || madre?.Num_Chapeta || `Cerda #${parto.Id_Porcino}`;
 
-                const lechones = parto.lechones || [];
+
+                const lechones = await PorcinoModel.findAll({
+                    where: {
+                        Id_parto: parto.Id_parto,
+                        Tipo_Cerdo: 'Lechon',
+                        Gen_Porcino: { [Op.ne]: '-' }
+                    },
+                    order: [['Id_Porcino', 'ASC']]
+                });
+
 
                 // VERIFICAR LECHONES FALTANTES (REGISTRO INCOMPLETO)
                 const nacVivos = parto.Nac_vivos || 0;
-                const nacMuertos = parto.Nac_muertos || 0;
-                const nacMomias = parto.Nac_momias || 0;
-                const registradosVivos = lechones.length - (nacMuertos + nacMomias);
+                const registradosVivos = lechones.length;
                 
                 if (nacVivos > registradosVivos) {
                     const faltantes = nacVivos - registradosVivos;
@@ -182,6 +191,67 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                 }
 
                 if (lechones.length === 0) continue;
+
+                // =========================================================================
+                // ALERTA DE PESO A LOS 21 DÍAS DE LOS LECHONES
+                // =========================================================================
+                const lechonesVivos = lechones.filter(l => l.Estado !== 'Muerto');
+                const lechonesSinPeso21 = lechonesVivos.filter(l =>
+                    l.Pes_21_Dias === null || l.Pes_21_Dias === undefined || l.Pes_21_Dias === '' || Number(l.Pes_21_Dias) <= 0
+                );
+
+                if (lechonesSinPeso21.length > 0) {
+                    const fecBase = lechones[0]?.Fec_Nac_Porcino || parto.Fec_fin || parto.Fec_inicio;
+                    if (fecBase) {
+                        const fecBaseStr = formatDateLocal(fecBase);
+                        if (fecBaseStr) {
+                            const [by, bm, bd] = fecBaseStr.split('-').map(Number);
+                            const fecha21 = new Date(by, bm - 1, bd + 21);
+                            const fecha21Str = formatDateLocal(fecha21);
+
+                            const [hy, hm, hd] = hoyStr.split('-').map(Number);
+                            const dHoy = new Date(hy, hm - 1, hd);
+                            const diffDays = Math.round((fecha21.getTime() - dHoy.getTime()) / (1000 * 60 * 60 * 24));
+
+                            let tipoPeso21 = null;
+                            let tituloPeso21 = '';
+                            let mensajePeso21 = '';
+
+                            if (diffDays > 0 && diffDays <= 3) {
+                                tipoPeso21 = 'recordatorio';
+                                tituloPeso21 = 'Recordatorio: Peso a los 21 días';
+                                mensajePeso21 = diffDays === 1
+                                    ? `Recordatorio: Mañana se cumplen los 21 días de la camada de ${nombreCerda} (Parto #${parto.Id_parto}). Alista el registro de peso a los 21 días.`
+                                    : `Recordatorio: En ${diffDays} días se cumplen los 21 días de la camada de ${nombreCerda} (Parto #${parto.Id_parto}). Recuerda registrar el peso a los 21 días de ${lechonesSinPeso21.length} lechón(es).`;
+                            } else if (diffDays === 0) {
+                                tipoPeso21 = 'hoy';
+                                tituloPeso21 = '¡Hoy! Peso a los 21 días';
+                                mensajePeso21 = `¡Hoy se cumplen los 21 días de la camada de ${nombreCerda} (Parto #${parto.Id_parto})! Debes registrar el peso a los 21 días para ${lechonesSinPeso21.length} lechón(es).`;
+                            } else if (diffDays < 0 && diffDays >= -30) {
+                                tipoPeso21 = 'atrasado';
+                                tituloPeso21 = 'Atrasado: Peso a los 21 días';
+                                mensajePeso21 = `⚠️ Atrasado: Han pasado ${Math.abs(diffDays)} días desde los 21 días de la camada de ${nombreCerda} (Parto #${parto.Id_parto}) y ${lechonesSinPeso21.length} lechón(es) aún no tienen peso registrado.`;
+                            }
+
+                            if (tipoPeso21) {
+                                notificaciones.push({
+                                    id: `peso-21d-${parto.Id_parto}`,
+                                    categoria: 'camada',
+                                    subcategoria: 'peso_21_dias',
+                                    tipo: tipoPeso21,
+                                    titulo: tituloPeso21,
+                                    mensaje: mensajePeso21,
+                                    ruta: `/partos`,
+                                    idParto: parto.Id_parto,
+                                    fecha21: fecha21Str,
+                                    diasDiferencia: diffDays,
+                                    cantidadPendientes: lechonesSinPeso21.length,
+                                    nombreMadre: nombreCerda
+                                });
+                            }
+                        }
+                    }
+                }
 
                 const criasPorDia = {};
 
@@ -209,9 +279,12 @@ export const getNotificacionesSeguimiento = async (req, res) => {
 
                 for (const [diaStr, crias] of Object.entries(criasPorDia)) {
                     const dia = Number(diaStr);
-                    const fechaProgramada = new Date(year, month - 1, day + (dia - 1));
-                    const fechaProgStr = formatDateLocal(fechaProgramada);
-                    if (!fechaProgStr) continue;
+                    const fechaProgramada = new Date(year, month - 1, day, 12, 0, 0);
+                    fechaProgramada.setDate(fechaProgramada.getDate() + (dia - 1));
+                    const resY = fechaProgramada.getFullYear();
+                    const resM = String(fechaProgramada.getMonth() + 1).padStart(2, '0');
+                    const resD = String(fechaProgramada.getDate()).padStart(2, '0');
+                    const fechaProgStr = `${resY}-${resM}-${resD}`;
 
                     let tipo = null;
                     if (fechaProgStr === hoyStr) {

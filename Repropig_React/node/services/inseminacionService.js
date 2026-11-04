@@ -2,16 +2,35 @@ import inseminacionModel from "../models/inseminacionModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
 import colectaModel from "../models/colectaModel.js";
 import db from "../database/db.js";
+import ciclosModel from "../models/ciclosModel.js";
 
 class inseminacionService {
 
     async getAll() {
         return await inseminacionModel.findAll({
-            include: [{
-                model: PorcinoModel,
-                as: 'porcino',
-                attributes: ['Nom_Porcino']
-            }],
+            include: [
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
+                },
+                {
+                    model: colectaModel,
+                    as: 'colecta',
+                    include: [
+                        {
+                            model: PorcinoModel,
+                            as: 'porcino',
+                            attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
+                        }
+                    ]
+                },
+                {
+                    model: ciclosModel,
+                    as: 'ciclo',
+                    attributes: ['Id_Ciclo', 'Estado', 'TipoCiclo']
+                }
+            ],
             order: [['Id_Inseminacion', 'DESC']]
         })
     }

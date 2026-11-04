@@ -14,34 +14,34 @@ export const customTableStyles = {
             border: '1px solid #f1f5f9',
             marginTop: '1.5rem',
             marginBottom: '1.5rem',
-            overflow: 'hidden',
+            overflowX: 'auto',
         },
     },
     headRow: {
         style: {
             backgroundColor: '#f8fafc',
             borderBottom: '2px solid #e2e8f0',
-            minHeight: '56px',
+            minHeight: '52px',
         },
     },
     headCells: {
         style: {
-            fontSize: '12px',
+            fontSize: '11.5px',
             fontWeight: '700',
             color: '#64748b',
             textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            paddingLeft: '20px',
-            paddingRight: '20px',
+            letterSpacing: '0.05em',
+            paddingLeft: '12px',
+            paddingRight: '12px',
         },
     },
     rows: {
         style: {
-            fontSize: '14.5px',
+            fontSize: '13.5px',
             fontWeight: '500',
             color: '#334155',
             backgroundColor: '#ffffff',
-            minHeight: '68px',
+            minHeight: '62px',
             borderBottom: '1px solid #f1f5f9',
             '&:last-of-type': {
                 borderBottom: 'none',
@@ -56,8 +56,9 @@ export const customTableStyles = {
     },
     cells: {
         style: {
-            paddingLeft: '20px',
-            paddingRight: '20px',
+            paddingLeft: '12px',
+            paddingRight: '12px',
+            overflow: 'hidden',
         },
     },
     pagination: {

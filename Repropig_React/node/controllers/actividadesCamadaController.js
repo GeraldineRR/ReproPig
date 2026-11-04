@@ -2,17 +2,31 @@ import ActividadesCamadaModel from "../models/actividadesCamadaModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
 import segcamadaModel from "../models/segcamadaModel.js";
 import porcinoModel from "../models/porcinoModel.js";
+import PartosModel from "../models/PartosModel.js";
 
 export const getAllActividades = async (req, res) => {
     try {
         const actividades = await ActividadesCamadaModel.findAll({
             include: [
-                { 
-                    model: segcamadaModel, 
+                {
+                    model: segcamadaModel,
                     as: 'segcamada',
-                    include: [{ model: porcinoModel, as: 'porcino' }]
+                    include: [{
+                        model: porcinoModel,
+                        as: 'porcino',
+                        include: [{
+                            model: PartosModel,
+                            as: 'parto',
+                            include: [{ model: porcinoModel, as: 'porcino' }]
+                        }]
+                    }]
+                },
+                {
+                    model: MedicamentosModel,
+                    as: 'medicamentos'
                 }
-            ]
+            ],
+            order: [['Fecha_Actividad', 'DESC'], ['Id_Actividad', 'DESC']]
         });
         res.json(actividades);
     } catch (error) {

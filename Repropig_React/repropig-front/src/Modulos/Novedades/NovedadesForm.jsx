@@ -14,20 +14,37 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
     const [porcinos, setPorcinos] = useState([]);
     const [textFormButton, setTextFormButton] = useState('Guardar');
 
+    const [muertosIds, setMuertosIds] = useState(new Set());
+
     useEffect(() => {
         getPorcinos();
     }, []);
 
     const getPorcinos = async () => {
         try {
-            const response = await apiAxios.get('/porcino/');
-            if (Array.isArray(response.data)) {
-                setPorcinos(response.data);
-            } else if (response.data && Array.isArray(response.data.data)) {
-                setPorcinos(response.data.data);
-            } else {
-                setPorcinos([]);
-            }
+            const [resPorcinos, resNovs] = await Promise.all([
+                apiAxios.get('/porcino/'),
+                apiAxios.get('/novedades/').catch(() => ({ data: [] }))
+            ]);
+
+            const listaPorcinos = Array.isArray(resPorcinos.data)
+                ? resPorcinos.data
+                : (resPorcinos.data?.data || []);
+
+            const idMuertos = new Set();
+            (resNovs.data || []).forEach(n => {
+                if (n.Tipo_Novedad === 'Muerte') {
+                    idMuertos.add(Number(n.Id_Porcino));
+                }
+            });
+            listaPorcinos.forEach(p => {
+                if ((p.Estado || '').trim().toLowerCase() === 'muerto') {
+                    idMuertos.add(Number(p.Id_Porcino));
+                }
+            });
+
+            setMuertosIds(idMuertos);
+            setPorcinos(listaPorcinos);
         } catch (error) {
             console.error("Error cargando porcinos:", error);
             setPorcinos([]);
@@ -69,6 +86,39 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
 
     const gestionarForm = async (e) => {
         e.preventDefault();
+
+        if (Tipo_Novedad === 'Muerte' || Tipo_Novedad === 'Descarte') {
+            const porcinoSel = porcinos.find(p => Number(p.Id_Porcino) === Number(Id_Porcino));
+
+            try {
+                const resNovs = await apiAxios.get('/novedades/');
+                const existente = (resNovs.data || []).find(n =>
+                    Number(n.Id_Porcino) === Number(Id_Porcino) &&
+                    ['Muerte', 'Descarte'].includes(n.Tipo_Novedad) &&
+                    (!novedadEdit || Number(n.Id_Novedad) !== Number(novedadEdit.Id_Novedad))
+                );
+
+                if (existente) {
+                    MySwal.fire({
+                        icon: 'warning',
+                        title: 'Registro no permitido',
+                        text: `El porcino #${Id_Porcino} ya cuenta con una novedad previa de ${existente.Tipo_Novedad}. No se pueden registrar muertes o descartes duplicados.`
+                    });
+                    return;
+                }
+
+                if (porcinoSel && (porcinoSel.Estado === 'Muerto' || porcinoSel.Estado === 'Inactivo') && !novedadEdit) {
+                    MySwal.fire({
+                        icon: 'warning',
+                        title: 'Porcino no activo',
+                        text: `El porcino #${Id_Porcino} ya se encuentra registrado como ${porcinoSel.Estado}. No se puede registrar muerte o descarte nuevamente.`
+                    });
+                    return;
+                }
+            } catch (err) {
+                console.error("Error validando novedades duplicadas:", err);
+            }
+        }
 
         const data = {
             Tipo_Novedad,
@@ -113,11 +163,13 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
 
                 await reload();
                 MySwal.fire({ title: 'Actualizado', text: 'Novedad actualizada correctamente.', icon: 'success' });
+                resetForm();
                 hideModal();
             }
         } catch (error) {
             console.error("Error guardando novedad:", error);
-            MySwal.fire({ icon: "error", title: "Error", text: "No se pudo guardar la novedad." });
+            const msg = error.response?.data?.message || "No se pudo guardar la novedad.";
+            MySwal.fire({ icon: "error", title: "Error", text: msg });
         }
     };
 
@@ -153,12 +205,20 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
                 >
                     <option value="">Selecciona un porcino...</option>
                     {porcinos
-                        .filter(p => filtroTipo === 'Todos' || p.Tipo_Cerdo === filtroTipo)
-                        .map((p) => (
-                        <option key={p.Id_Porcino} value={p.Id_Porcino}>
-                            {p.Nom_Porcino || `Porcino #${p.Id_Porcino}`} — Chapeta: {p.Num_Chapeta || 'S/N'} ({p.Tipo_Cerdo || 'No definido'})
-                        </option>
-                    ))}
+                        .filter(p => {
+                            const matchesTipo = filtroTipo === 'Todos' || p.Tipo_Cerdo === filtroTipo;
+                            const esMuerto = muertosIds.has(Number(p.Id_Porcino)) || (p.Estado || '').trim().toLowerCase() === 'muerto';
+                            const esElActual = novedadEdit && Number(p.Id_Porcino) === Number(novedadEdit.Id_Porcino);
+                            return matchesTipo && (!esMuerto || esElActual);
+                        })
+                        .map((p) => {
+                            const esInactivo = (p.Estado || '').toLowerCase() === 'inactivo';
+                            return (
+                                <option key={p.Id_Porcino} value={p.Id_Porcino}>
+                                    {p.Nom_Porcino || `Porcino #${p.Id_Porcino}`} — Chapeta: {p.Num_Chapeta || 'S/N'} ({p.Tipo_Cerdo || 'No definido'}) {esInactivo ? `[Inactivo]` : ''}
+                                </option>
+                            );
+                        })}
                 </select>
             </div>
 
@@ -213,8 +273,18 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
                 />
             </div>
 
-            <div className="mb-3 mt-4">
-                <input type="submit" className="btn btn-primary w-100 fw-bold py-2 shadow-sm" value={textFormButton} />
+            <div className="d-flex gap-2 mb-3 mt-4">
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary w-50 fw-bold py-2 shadow-sm"
+                    onClick={() => {
+                        resetForm();
+                        hideModal();
+                    }}
+                >
+                    Cancelar
+                </button>
+                <input type="submit" className="btn btn-primary w-50 fw-bold py-2 shadow-sm" value={textFormButton} />
             </div>
         </form>
     );

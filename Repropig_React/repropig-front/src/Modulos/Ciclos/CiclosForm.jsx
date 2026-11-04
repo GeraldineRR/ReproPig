@@ -21,12 +21,17 @@ const CiclosForm = ({ hideModal, cicloEdit, onCicloCreada }) => {
     const tieneMontas = cicloEdit?.montas?.length > 0
     const tieneInseminaciones = cicloEdit?.inseminaciones?.length > 0
 
-    useEffect(() => { getPorcinos() }, [])
+    useEffect(() => { getPorcinos() }, [cicloEdit?.Id_Cerda])
 
     const getPorcinos = async () => {
         try {
             const response = await apiAxios.get('/porcino')
-            setPorcinos(response.data.filter(p => p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'))
+            const cerdaActual = cicloEdit?.Id_Cerda || cicloEdit?.porcino?.Id_Porcino
+            setPorcinos((response.data || []).filter(p => {
+                const esHembraAdulta = p.Gen_Porcino === 'H' && p.Tipo_Cerdo === 'Adulto'
+                const esActiva = (p.Estado || '').trim().toLowerCase() === 'activo' || (cerdaActual && String(p.Id_Porcino) === String(cerdaActual))
+                return esHembraAdulta && esActiva
+            }))
         } catch (error) { console.error("Error al obtener porcinos:", error) }
     }
 

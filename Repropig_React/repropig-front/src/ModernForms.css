@@ -61,6 +61,15 @@
     color: #94a3b8 !important;
 }
 
+/* Input con icono de búsqueda (Lupa) para evitar cualquier solapamiento */
+.form-control.search-input-with-icon,
+.search-input-with-icon,
+input.search-input-with-icon,
+.search-input-container input,
+.search-input-container .form-control {
+    padding-left: 2.85rem !important;
+}
+
 /* Textareas */
 textarea.form-control {
     min-height: 100px;

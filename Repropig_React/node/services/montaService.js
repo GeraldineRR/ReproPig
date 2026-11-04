@@ -1,6 +1,6 @@
 import montaModel from "../models/montaModel.js";
 import PorcinoModel from "../models/porcinoModel.js";
-// ❌ Ya no importamos ResponsablesModel
+import ciclosModel from "../models/ciclosModel.js";
 
 class montaService {
 
@@ -9,13 +9,17 @@ class montaService {
             include: [{
                 model: PorcinoModel,
                 as: 'porcino',
-                attributes: ['Nom_Porcino']
+                attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
             }, {
                 model: PorcinoModel,
                 as: 'cerdo',
-                attributes: ['Nom_Porcino']
-            }]
-            // ❌ Quitado include de responsable
+                attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
+            }, {
+                model: ciclosModel,
+                as: 'ciclo',
+                attributes: ['Id_Ciclo', 'Estado', 'TipoCiclo']
+            }],
+            order: [['Fec_hora', 'DESC']]
         })
     }
 

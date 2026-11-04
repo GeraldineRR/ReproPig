@@ -46,13 +46,19 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             );
 
             const cerdaPermitida = String(rowToEdit?.Id_Porcino || preloaded?.Id_Porcino || '');
+            const machoPermitido = String(rowToEdit?.Id_Cerdo || '');
 
             setPorcinos(response.data.filter(p => 
                 p.Gen_Porcino === 'H' && 
                 p.Tipo_Cerdo === 'Adulto' &&
+                ((p.Estado || '').trim().toLowerCase() === 'activo' || String(p.Id_Porcino) === cerdaPermitida) &&
                 (activeCiclosSows.has(String(p.Id_Porcino)) || String(p.Id_Porcino) === cerdaPermitida)
             ))
-            setMachos(response.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'))
+            setMachos(response.data.filter(p => 
+                p.Gen_Porcino === 'M' && 
+                p.Tipo_Cerdo === 'Adulto' &&
+                ((p.Estado || '').trim().toLowerCase() === 'activo' || String(p.Id_Porcino) === machoPermitido)
+            ))
         } catch (error) { console.error('Error al obtener porcinos:', error) }
     }
 
@@ -72,14 +78,15 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
     // ✅ FIX — se quitó el filtro de TipoCiclo === 'Inseminacion'
     // Una cerda con ciclo activo de cualquier tipo puede recibir una inseminación
-    const getCiclosActivas = async (idPorcino) => {
+    const getCiclosActivas = async (idPorcino, idCicloActual = null) => {
         if (!idPorcino) { setCiclosActivas([]); return }
         try {
             const response = await apiAxios.get('/ciclos/')
-            const activas = (response.data || []).filter(r =>
-                r.Id_Cerda == idPorcino &&
-                (r.Estado || '').toUpperCase() === 'ACTIVO'
-            )
+            const activas = (response.data || []).filter(r => {
+                if (r.Id_Cerda != idPorcino) return false;
+                const est = (r.Estado || '').trim().toUpperCase();
+                return est === 'ACTIVO' || (idCicloActual && String(r.Id_Ciclo) === String(idCicloActual));
+            });
             setCiclosActivas(activas)
         } catch (error) { console.error('Error al obtener ciclos:', error) }
     }
@@ -111,7 +118,7 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
             setId_colecta(rowToEdit.Id_colecta)
             setObservaciones(rowToEdit.Observaciones || '')
             setId_Ciclo(String(rowToEdit.Id_Ciclo))
-            getCiclosActivas(rowToEdit.Id_Porcino) // ✅ carga repros para que el select no quede vacío
+            getCiclosActivas(rowToEdit.Id_Porcino, rowToEdit.Id_Ciclo) // ✅ carga repros para que el select no quede vacío
             setTextFormButton('Actualizar Inseminacion')
         } else if (!preloaded.Id_Ciclo) {
             setFec_hora('')
@@ -151,6 +158,43 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
     const gestionarForm = async (e) => {
         e.preventDefault();
+
+        if (!Id_Ciclo) {
+            MySwal.fire({ icon: 'warning', title: 'Ciclo requerido', text: 'No se puede registrar una inseminación sin asociarla a un ciclo reproductivo activo.' });
+            return;
+        }
+
+        const cicloSel = ciclosActivas.find(c => String(c.Id_Ciclo) === String(Id_Ciclo));
+        if (cicloSel) {
+            const est = (cicloSel.Estado || '').trim().toLowerCase();
+            if (est === 'finalizado' || est === 'fallido' || est === 'realizado' || est === 'inactivo') {
+                MySwal.fire({ icon: 'warning', title: 'Ciclo cerrado', text: `No se permite registrar inseminaciones en un ciclo que ya está ${cicloSel.Estado}.` });
+                return;
+            }
+        }
+
+        if (Id_colecta) {
+            const colSel = colectas.find(c => String(c.Id_colecta) === String(Id_colecta));
+            if (colSel && Fec_hora && colSel.Fecha) {
+                const fechaInsemStr = Fec_hora.split('T')[0];
+                const fechaColStr = String(colSel.Fecha).split('T')[0].split(' ')[0];
+                const [yI, mI, dI] = fechaInsemStr.split('-').map(Number);
+                const [yC, mC, dC] = fechaColStr.split('-').map(Number);
+                const insemD = new Date(yI, mI - 1, dI);
+                const colD = new Date(yC, mC - 1, dC);
+                const diasDif = Math.round((insemD.getTime() - colD.getTime()) / (1000 * 60 * 60 * 24));
+
+                if (colSel.Tipo === 'Interno' && diasDif > 3) {
+                    MySwal.fire({
+                        icon: 'error',
+                        title: 'Colecta Vencida',
+                        text: 'La colecta seleccionada supera los 3 días de vigencia respecto a la fecha del servicio y se encuentra vencida. No se permite su uso.'
+                    });
+                    return;
+                }
+            }
+        }
+
         if (Id_Responsable.length === 0) {
             MySwal.fire({ icon: 'warning', title: 'Requerido', text: 'Debes seleccionar al menos un responsable' })
             return
@@ -279,15 +323,20 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                             {!Id_Porcino
                                 ? 'Primero seleccione una cerda'
                                 : ciclosActivas.length === 0
-                                    ? 'No hay ciclos activos'
-                                    : 'Seleccione un ciclo'}
+                                    ? 'No hay ciclos activos para esta cerda'
+                                    : 'Seleccione un ciclo activo'}
                         </option>
                         {ciclosActivas.map(r => (
                             <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
-                                #{r.Id_Ciclo} — {r.TipoCiclo}
+                                #{r.Id_Ciclo} — {r.TipoCiclo} ({r.Estado || 'Activo'})
                             </option>
                         ))}
                     </select>
+                    {Id_Porcino && ciclosActivas.length === 0 && !esEdicion && (
+                        <div className="text-danger small mt-1 font-semibold">
+                            ⚠️ Esta cerda no tiene ciclos activos disponibles (están Finalizados o Fallidos). No se permite registrar la inseminación.
+                        </div>
+                    )}
                 </div>
 
                 {/* COLECTA */}
@@ -339,15 +388,14 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                 let mensajeVencida = "";
                                 let isVencida = false;
                                 if (Fec_hora && c.Fecha) {
-                                    // Utilizar UTC explícitamente para evitar saltos de zona horaria
-                                    // Fec_hora es YYYY-MM-DD
-                                    const tInsemDate = new Date(Fec_hora + 'T12:00:00Z');
-                                    // c.Fecha puede tener horas y usar espacio en vez de T, tomamos los primeros 10 caracteres
-                                    const fechaColStr = c.Fecha.substring(0, 10);
-                                    const tColDate = new Date(fechaColStr + 'T12:00:00Z');
+                                    const fechaInsemStr = Fec_hora.split('T')[0];
+                                    const fechaColStr = String(c.Fecha).split('T')[0].split(' ')[0];
+                                    const [yI, mI, dI] = fechaInsemStr.split('-').map(Number);
+                                    const [yC, mC, dC] = fechaColStr.split('-').map(Number);
+                                    const insemDate = new Date(yI, mI - 1, dI);
+                                    const colDate = new Date(yC, mC - 1, dC);
 
-                                    // Diferencia en días exactos
-                                    const diasDif = Math.round((tInsemDate.getTime() - tColDate.getTime()) / (1000 * 60 * 60 * 24));
+                                    const diasDif = Math.round((insemDate.getTime() - colDate.getTime()) / (1000 * 60 * 60 * 24));
                                     
                                     if (isNaN(diasDif)) {
                                         isVencida = false;
@@ -356,10 +404,6 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
                                         isVencida = true;
                                     } else if (c.Tipo === 'Interno' && diasDif > 3) {
                                         mensajeVencida = " (Vencida - +3 días)";
-                                        isVencida = true;
-                                    } else if (c.Tipo === 'Externo' && diasDif > 5) {
-                                        // Las externas suelen durar un poco más o no controlarse igual, dejaremos un límite razonable o el que usen
-                                        mensajeVencida = " (Vencida)";
                                         isVencida = true;
                                     }
                                 }
@@ -462,7 +506,12 @@ const InseminacionForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded =
 
             {/* BOTÓN */}
             <div className="d-grid mt-4">
-                <button className="btn btn-primary fw-semibold py-2 shadow-sm">
+                <button 
+                    type="submit"
+                    disabled={!Id_Ciclo || (!esEdicion && ciclosActivas.length === 0)}
+                    className="btn btn-primary fw-semibold py-2 shadow-sm"
+                    title={!Id_Ciclo ? "Debes asociar un ciclo reproductivo activo para continuar" : ""}
+                >
                     {textFormButton}
                 </button>
             </div>

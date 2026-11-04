@@ -75,12 +75,14 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         try {
             const porcinosRes = await apiAxios.get('/porcino/')
             const lista = Array.isArray(porcinosRes.data) ? porcinosRes.data : []
+            const cerdaPermitida = String(Seguimiento_CerdaEdit?.Id_Porcino || '')
             setPorcinos(lista.filter(p => {
                 const gen = p.Gen_Porcino?.trim().toUpperCase()
                 const tipo = p.Tipo_Cerdo?.trim().toLowerCase()
                 const esHembra = gen === 'H' || gen === 'HEMBRA'
                 const esAdulta = !tipo || tipo === 'adulto' || tipo === 'adulta'
-                return esHembra && esAdulta
+                const esActiva = (p.Estado || '').trim().toLowerCase() === 'activo' || String(p.Id_Porcino) === cerdaPermitida
+                return esHembra && esAdulta && esActiva
             }))
         } catch (error) {
             console.error('Error obteniendo porcinos:', error)

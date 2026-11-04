@@ -47,7 +47,7 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             } catch { setId_Responsable([]) }
 
             // ✅ cargar las ciclos de esa cerda para que el select no quede vacío
-            getCiclosActivas(rowToEdit.Id_Porcino)
+            getCiclosActivas(rowToEdit.Id_Porcino, rowToEdit.Id_Ciclo)
 
         } else if (!preloaded?.Id_Ciclo) {
             // Es nuevo y sin preloaded — limpiar todo
@@ -98,13 +98,19 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         );
 
         const cerdaPermitida = String(rowToEdit?.Id_Porcino || preloaded?.Id_Porcino || '');
+        const machoPermitido = String(rowToEdit?.Id_Cerdo || '');
 
         setHembras(res.data.filter(p => 
             p.Gen_Porcino === 'H' && 
             p.Tipo_Cerdo === 'Adulto' && 
+            ((p.Estado || '').trim().toLowerCase() === 'activo' || String(p.Id_Porcino) === cerdaPermitida) &&
             (activeCiclosSows.has(String(p.Id_Porcino)) || String(p.Id_Porcino) === cerdaPermitida)
         ));
-        setMachos(res.data.filter(p => p.Gen_Porcino === 'M' && p.Tipo_Cerdo === 'Adulto'));
+        setMachos(res.data.filter(p => 
+            p.Gen_Porcino === 'M' && 
+            p.Tipo_Cerdo === 'Adulto' && 
+            ((p.Estado || '').trim().toLowerCase() === 'activo' || String(p.Id_Porcino) === machoPermitido)
+        ));
     };
 
     const getResponsables = async () => {
@@ -116,12 +122,16 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
         }
     };
 
-    const getCiclosActivas = async (id) => {
+    const getCiclosActivas = async (id, idCicloActual = null) => {
         if (!id) return setCiclosActivas([]);
         try {
             const res = await apiAxios.get('/ciclos');
-            const todas = (res.data || []).filter(r => r.Id_Cerda == id);
-            setCiclosActivas(todas);
+            const filtradas = (res.data || []).filter(r => {
+                if (r.Id_Cerda != id) return false;
+                const est = (r.Estado || '').trim().toUpperCase();
+                return est === 'ACTIVO' || (idCicloActual && String(r.Id_Ciclo) === String(idCicloActual));
+            });
+            setCiclosActivas(filtradas);
         } catch (error) {
             console.error("Error cargando ciclos:", error);
         }
@@ -137,9 +147,13 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
     // ✅ Para cuando el usuario cambia la cerda manualmente (solo activas)
     const getCiclosActivasSolo = async (id) => {
         if (!id) return setCiclosActivas([]);
-        const res = await apiAxios.get('/ciclos');
-        const activas = res.data.filter(r => r.Id_Cerda == id && (r.Estado || '').toUpperCase() === 'ACTIVO');
-        setCiclosActivas(activas);
+        try {
+            const res = await apiAxios.get('/ciclos');
+            const activas = res.data.filter(r => r.Id_Cerda == id && (r.Estado || '').trim().toUpperCase() === 'ACTIVO');
+            setCiclosActivas(activas);
+        } catch (error) {
+            console.error("Error cargando ciclos:", error);
+        }
     };
 
     const toggleResponsable = (id) => {
@@ -150,6 +164,18 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
 
     const gestionarForm = async (e) => {
         e.preventDefault();
+
+        if (!Id_Ciclo) {
+            return MySwal.fire('Ciclo requerido', 'No se puede registrar una monta sin asociarla a un ciclo reproductivo activo.', 'warning');
+        }
+
+        const cicloSel = ciclosActivas.find(c => String(c.Id_Ciclo) === String(Id_Ciclo));
+        if (cicloSel) {
+            const est = (cicloSel.Estado || '').trim().toLowerCase();
+            if (est === 'finalizado' || est === 'fallido' || est === 'realizado' || est === 'inactivo') {
+                return MySwal.fire('Ciclo cerrado', `No se permite registrar montas en un ciclo que ya está ${cicloSel.Estado}.`, 'warning');
+            }
+        }
 
         if (Id_Responsable.length === 0) {
             return MySwal.fire('Error', 'Selecciona al menos un responsable', 'warning');
@@ -259,18 +285,18 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
                         disabled={esPrellenado}
                         required
                     >
-                        <option value="">Seleccione</option>
+                        <option value="">Seleccione un ciclo activo</option>
                         {ciclosActivas.map(r => (
                             <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
-                                #{r.Id_Ciclo} — {r.TipoCiclo}
+                                #{r.Id_Ciclo} — {r.TipoCiclo} ({r.Estado || 'Activo'})
                             </option>
                         ))}
-                        {(() => {
-                            if (ciclosActivas.length === 0 && !Id_Ciclo) {
-                                return <option value="" disabled>No hay ciclos activos para esta cerda</option>;
-                            }
-                        })()}
                     </select>
+                    {Id_Porcino && ciclosActivas.length === 0 && !esEdicion && (
+                        <div className="text-danger small mt-1 font-semibold">
+                            ⚠️ Esta cerda no tiene ciclos activos disponibles (están Finalizados o Fallidos). No se permite registrar la monta.
+                        </div>
+                    )}
                 </div>
 
                 <div className="col-md-6">
@@ -340,7 +366,12 @@ const MontaForm = ({ hideModal, rowToEdit = {}, refreshTable, preloaded = {} }) 
             </div>
 
             <div className="d-grid mt-4">
-                <button className="btn btn-primary py-2 fw-semibold shadow-sm">
+                <button 
+                    type="submit"
+                    disabled={!Id_Ciclo || (!esEdicion && ciclosActivas.length === 0)}
+                    className="btn btn-primary py-2 fw-semibold shadow-sm"
+                    title={!Id_Ciclo ? "Debes asociar un ciclo reproductivo activo para continuar" : ""}
+                >
                     {textFormButton}
                 </button>
             </div>

@@ -11,6 +11,7 @@ const db = new Sequelize(
     host: process.env.DB_HOST || "127.0.0.1",
     port: parseInt(process.env.DB_PORT || "3306", 10),
     dialect: "mysql",
+
     logging: process.env.NODE_ENV === "development" ? false : false,
     timezone: "-05:00", // Hora legal de Colombia (Espinal, Tolima)
     pool: {
@@ -38,6 +39,7 @@ const db = new Sequelize(
         /PROTOCOL_CONNECTION_LOST/
       ]
     }
+
   }
 );
 

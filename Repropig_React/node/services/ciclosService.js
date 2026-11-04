@@ -3,14 +3,80 @@ import PorcinoModel from "../models/porcinoModel.js";
 import MontaModel from "../models/montaModel.js";
 import InseminacionModel from "../models/inseminacionModel.js";
 import colectaModel from "../models/colectaModel.js";
+import CalendarioModel from "../models/CalendarioModel.js";
+import PartosModel from "../models/PartosModel.js";
+import NovedadesModel from "../models/novedadesModel.js";
 
 class ciclosService {
 
     async getAll() {
+        try {
+            // Sincronizar automáticamente cerdas con bajas para que sus ciclos activos queden en Inactivo
+            const novedadesBaja = await NovedadesModel.findAll({
+                where: {
+                    Tipo_Novedad: ['Muerte', 'Descarte', 'Traslado']
+                },
+                attributes: ['Id_Porcino', 'Tipo_Novedad']
+            });
+
+            if (novedadesBaja && novedadesBaja.length > 0) {
+                const idsBaja = [...new Set(novedadesBaja.map(n => n.Id_Porcino))];
+                await ciclosModel.update(
+                    { Estado: 'Inactivo' },
+                    {
+                        where: {
+                            Id_Cerda: idsBaja,
+                            Estado: 'Activo'
+                        }
+                    }
+                );
+                for (const nov of novedadesBaja) {
+                    const nuevoEstadoPorcino = nov.Tipo_Novedad === 'Muerte' ? 'Muerto' : nov.Tipo_Novedad === 'Traslado' ? 'Trasladado' : 'Inactivo';
+                    await PorcinoModel.update(
+                        { Estado: nuevoEstadoPorcino },
+                        { where: { Id_Porcino: nov.Id_Porcino, Estado: 'Activo' } }
+                    );
+                }
+            }
+
+            // También para cualquier porcino con Estado Muerto, Trasladado o Inactivo
+            const porcinosNoActivos = await PorcinoModel.findAll({
+                where: {
+                    Estado: ['Muerto', 'Trasladado', 'Inactivo']
+                },
+                attributes: ['Id_Porcino']
+            });
+            if (porcinosNoActivos && porcinosNoActivos.length > 0) {
+                const idsNoActivos = porcinosNoActivos.map(p => p.Id_Porcino);
+                await ciclosModel.update(
+                    { Estado: 'Inactivo' },
+                    {
+                        where: {
+                            Id_Cerda: idsNoActivos,
+                            Estado: 'Activo'
+                        }
+                    }
+                );
+            }
+        } catch (syncErr) {
+            console.error('Error sincronizando estados de ciclos y novedades:', syncErr);
+        }
+
         return await ciclosModel.findAll({
             order: [['Id_Ciclo', 'DESC']],
             include: [
-                { model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] },
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta', 'Estado'],
+                    include: [
+                        {
+                            model: NovedadesModel,
+                            as: 'novedades',
+                            attributes: ['Id_Novedad', 'Tipo_Novedad', 'Fecha_Novedad', 'Causa_Motivo']
+                        }
+                    ]
+                },
                 {
                     model: MontaModel,
                     as: 'montas',
@@ -26,6 +92,15 @@ class ciclosService {
                         as: 'colecta',
                         include: [{ model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
                     }]
+                },
+                {
+                    model: CalendarioModel,
+                    as: 'calendario'
+                },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    separate: true
                 }
             ]
         })
@@ -34,7 +109,18 @@ class ciclosService {
     async getById(id) {
         const ciclo = await ciclosModel.findByPk(id, {
             include: [
-                { model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] },
+                {
+                    model: PorcinoModel,
+                    as: 'porcino',
+                    attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta', 'Estado'],
+                    include: [
+                        {
+                            model: NovedadesModel,
+                            as: 'novedades',
+                            attributes: ['Id_Novedad', 'Tipo_Novedad', 'Fecha_Novedad', 'Causa_Motivo']
+                        }
+                    ]
+                },
                 {
                     model: MontaModel,
                     as: 'montas',
@@ -50,6 +136,15 @@ class ciclosService {
                         as: 'colecta',
                         include: [{ model: PorcinoModel, as: 'porcino', attributes: ['Id_Porcino', 'Nom_Porcino'] }]
                     }]
+                },
+                {
+                    model: CalendarioModel,
+                    as: 'calendario'
+                },
+                {
+                    model: PartosModel,
+                    as: 'partos',
+                    separate: true
                 }
             ]
         })
@@ -60,6 +155,21 @@ class ciclosService {
     async create(data) {
         try {
             console.log("📥 Datos recibidos:", data);
+
+            // Validar que la cerda no esté de baja ni tenga novedad de muerte/descarte/traslado
+            const cerda = await PorcinoModel.findByPk(data.Id_Cerda);
+            if (cerda && ['Muerto', 'Inactivo', 'Trasladado'].includes(cerda.Estado)) {
+                throw new Error(`No se puede iniciar ciclo. La cerda está registrada como ${cerda.Estado}.`);
+            }
+            const novedadBaja = await NovedadesModel.findOne({
+                where: {
+                    Id_Porcino: data.Id_Cerda,
+                    Tipo_Novedad: ['Muerte', 'Descarte', 'Traslado']
+                }
+            });
+            if (novedadBaja) {
+                throw new Error(`No se puede iniciar ciclo. La cerda tiene novedad registrada de ${novedadBaja.Tipo_Novedad}.`);
+            }
 
             const existeActiva = await ciclosModel.findOne({
                 where: { Id_Cerda: data.Id_Cerda, Estado: 'Activo' }
@@ -100,6 +210,20 @@ class ciclosService {
         const nuevoEstado = estadoActual === 'Activo' ? 'Inactivo' : 'Activo'
 
         if (nuevoEstado === 'Activo') {
+            const cerda = await PorcinoModel.findByPk(ciclo.Id_Cerda);
+            if (cerda && ['Muerto', 'Inactivo', 'Trasladado'].includes(cerda.Estado)) {
+                throw new Error(`No se puede activar el ciclo porque la cerda está registrada como ${cerda.Estado}.`);
+            }
+            const novedadBaja = await NovedadesModel.findOne({
+                where: {
+                    Id_Porcino: ciclo.Id_Cerda,
+                    Tipo_Novedad: ['Muerte', 'Descarte', 'Traslado']
+                }
+            });
+            if (novedadBaja) {
+                throw new Error(`No se puede activar el ciclo porque la cerda tiene novedad registrada de ${novedadBaja.Tipo_Novedad}.`);
+            }
+
             const existeActiva = await ciclosModel.findOne({
                 where: { Id_Cerda: ciclo.Id_Cerda, Estado: 'Activo' }
             });

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import apiAxios from "../../api/axiosConfig";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { calcularFechaProgramada } from "../../utils/dateUtils";
 
 const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const MySwal = withReactContent(Swal);
@@ -27,13 +28,6 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
 
     const diasSeguimiento = [1, 3, 5, 7, 10, 14, 21, 28];
 
-    // Calcula fecha programada según día y fecha del parto
-    function calcularFechaProgramada(fechaParto, dia) {
-        const [year, month, day] = fechaParto.split('-');
-        const fecha = new Date(year, month - 1, parseInt(day) + (dia - 1));
-        return fecha.toISOString().split('T')[0];
-    }
-
     // Obtiene el siguiente día programado basado en registros existentes para el porcino
     const actualizarDiaYFecha = async (idPorcino) => {
         if (!Id_parto || !idPorcino) return;
@@ -46,9 +40,11 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             const nextDay = diasSeguimiento.find(d => d > ultimoDia) || diasSeguimiento[diasSeguimiento.length - 1];
             setDiaProgramado(nextDay);
 
-            const fechaParto = partos.find(p => p.Id_parto === Number(Id_parto))?.Fec_fin;
-            if (fechaParto) {
-                const fechaProg = calcularFechaProgramada(fechaParto, nextDay);
+            const lechon = lechones.find(l => String(l.Id_Porcino) === String(idPorcino));
+            const parto = partos.find(p => p.Id_parto === Number(Id_parto));
+            const fechaBase = lechon?.Fec_Nac_Porcino || parto?.Fec_fin || parto?.Fec_inicio;
+            if (fechaBase) {
+                const fechaProg = calcularFechaProgramada(fechaBase, nextDay);
                 setFechaProgramada(fechaProg);
                 setFechaReal(fechaProg);
             }
@@ -68,7 +64,7 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                 actualizarDiaYFecha(Id_Porcino);
             }
         }
-    }, [Id_Porcino, Id_parto, partos, modoCorreccion]);
+    }, [Id_Porcino, Id_parto, partos, lechones, modoCorreccion]);
 
     const getPartos = async () => {
         try {
@@ -81,7 +77,11 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
         try {
             // Traemos los porcinos de tipo Lechon asociados al parto
             const response = await apiAxios.get(`/porcino/lechones/parto/${idParto}`);
-            setLechones(response.data);
+            const permitidos = (response.data || []).filter(p => 
+                (p.Estado || '').trim().toLowerCase() === 'activo' || 
+                (segcamadaEdit && String(p.Id_Porcino) === String(segcamadaEdit.Id_Porcino))
+            );
+            setLechones(permitidos);
         } catch (error) {
             console.error("Error cargando lechones:", error);
             setLechones([]);
@@ -123,10 +123,12 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
             const parto = partos.find(
                 p => p.Id_parto === Number(segcamadaEdit.porcino?.Id_parto)
             );
+            const lechon = lechones.find(l => String(l.Id_Porcino) === String(segcamadaEdit.Id_Porcino));
+            const fechaBase = lechon?.Fec_Nac_Porcino || segcamadaEdit.porcino?.Fec_Nac_Porcino || parto?.Fec_fin || parto?.Fec_inicio;
 
-            if (parto?.Fec_fin && segcamadaEdit.Dia_Programado) {
+            if (fechaBase && segcamadaEdit.Dia_Programado) {
                 const fechaProg = calcularFechaProgramada(
-                    parto.Fec_fin,
+                    fechaBase,
                     segcamadaEdit.Dia_Programado
                 );
                 setFechaProgramada(fechaProg);
