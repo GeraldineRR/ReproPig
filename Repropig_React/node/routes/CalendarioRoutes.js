@@ -1,7 +1,10 @@
 import express from 'express';
 import { getAllCalendario, getCalendario, createCalendario, updateCalendario, deleteCalendario, getCalendarioByCiclo, registerRevision } from '../controllers/CalendarioController.js';
+import { verificarToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+router.use(verificarToken);
 
 router.get('/', getAllCalendario);
 router.get('/ciclo/:idCiclo', getCalendarioByCiclo);

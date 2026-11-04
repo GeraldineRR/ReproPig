@@ -7,6 +7,8 @@ import CalendarioModel from "../models/CalendarioModel.js";
 import MontaModel from "../models/montaModel.js";
 import InseminacionModel from "../models/inseminacionModel.js";
 import CalendarioService from "./CalendarioService.js";
+import db from "../database/db.js";
+
 class PartosService {
 
     async getALL() {
@@ -43,149 +45,150 @@ class PartosService {
     }
 
     async create(data) {
-        const parto = await PartosModel.create(data)
+        return await db.transaction(async (t) => {
+            const parto = await PartosModel.create(data, { transaction: t })
 
-        if (data.Id_Ciclo) {
-            await ciclosModel.update(
-                { Estado: 'Finalizado' },
-                { where: { Id_Ciclo: data.Id_Ciclo } }
-            )
+            if (data.Id_Ciclo) {
+                await ciclosModel.update(
+                    { Estado: 'Finalizado' },
+                    { where: { Id_Ciclo: data.Id_Ciclo }, transaction: t }
+                )
 
-            const fechaParto = data.Fec_fin || data.Fec_inicio || new Date();
-            await CalendarioModel.update(
-                { real_parto: fechaParto },
-                { where: { Id_Ciclo: data.Id_Ciclo } }
-            )
+                const fechaParto = data.Fec_fin || data.Fec_inicio || new Date();
+                await CalendarioModel.update(
+                    { real_parto: fechaParto },
+                    { where: { Id_Ciclo: data.Id_Ciclo }, transaction: t }
+                )
 
-            // Sincronizar fecha de revisión en el Calendario
-            const fechaRevisionParto = data.Fec_fin || data.Fec_inicio;
-            if (fechaRevisionParto) {
-                try {
-                    let cal = await CalendarioModel.findOne({ where: { Id_Ciclo: data.Id_Ciclo } });
-                    if (cal) {
-                        await CalendarioModel.update(
-                            {
-                                real_parto: fechaRevisionParto,
-                                observaciones_parto: data.Observaciones || cal.observaciones_parto
-                            },
-                            { where: { Id_Calendario: cal.Id_Calendario } }
-                        );
-                    } else {
-                        // Si no existe calendario pero el ciclo tiene montas o inseminaciones, crearlo
-                        const ciclo = await ciclosModel.findByPk(data.Id_Ciclo, {
-                            include: [
-                                { model: MontaModel, as: 'montas' },
-                                { model: InseminacionModel, as: 'inseminaciones' }
-                            ]
+                // Sincronizar fecha de revisión en el Calendario
+                const fechaRevisionParto = data.Fec_fin || data.Fec_inicio;
+                if (fechaRevisionParto) {
+                    try {
+                        let cal = await CalendarioModel.findOne({
+                            where: { Id_Ciclo: data.Id_Ciclo },
+                            transaction: t
                         });
-                        let fServicio = null;
-                        if (ciclo?.montas?.length > 0) {
-                            fServicio = ciclo.montas[0].Fec_Monta;
-                        } else if (ciclo?.inseminaciones?.length > 0) {
-                            fServicio = ciclo.inseminaciones[0].Fec_Inseminacion;
-                        }
-                        if (fServicio) {
-                            const calNuevo = await CalendarioService.create({
-                                Id_Ciclo: data.Id_Ciclo,
-                                Fecha_Servicio: fServicio
-                            });
+                        if (cal) {
                             await CalendarioModel.update(
                                 {
                                     real_parto: fechaRevisionParto,
-                                    observaciones_parto: data.Observaciones || null
+                                    observaciones_parto: data.Observaciones || cal.observaciones_parto
                                 },
-                                { where: { Id_Calendario: calNuevo.Id_Calendario } }
+                                { where: { Id_Calendario: cal.Id_Calendario }, transaction: t }
                             );
+                        } else {
+                            // Si no existe calendario pero el ciclo tiene montas o inseminaciones, crearlo
+                            const ciclo = await ciclosModel.findByPk(data.Id_Ciclo, {
+                                include: [
+                                    { model: MontaModel, as: 'montas' },
+                                    { model: InseminacionModel, as: 'inseminaciones' }
+                                ],
+                                transaction: t
+                            });
+                            let fServicio = null;
+                            if (ciclo?.montas?.length > 0) {
+                                fServicio = ciclo.montas[0].Fec_Monta;
+                            } else if (ciclo?.inseminaciones?.length > 0) {
+                                fServicio = ciclo.inseminaciones[0].Fec_Inseminacion;
+                            }
+                            if (fServicio) {
+                                const calNuevo = await CalendarioService.create({
+                                    Id_Ciclo: data.Id_Ciclo,
+                                    Fecha_Servicio: fServicio
+                                });
+                                await CalendarioModel.update(
+                                    {
+                                        real_parto: fechaRevisionParto,
+                                        observaciones_parto: data.Observaciones || null
+                                    },
+                                    { where: { Id_Calendario: calNuevo.Id_Calendario }, transaction: t }
+                                );
+                            }
                         }
+                    } catch (calError) {
+                        console.error("Error sincronizando parto con Calendario:", calError);
                     }
-                } catch (calError) {
-                    console.error("Error sincronizando parto con Calendario:", calError);
                 }
             }
-        }
 
-        // ── Auto-crear lechones (porcinos) basándose en el total de nacidos ──
-        const nacVivos = Number(data.Nac_vivos) || 0;
-        const nacMuertos = Number(data.Nac_muertos) || 0;
-        const nacMomias = Number(data.Nac_momias) || 0;
-        const fechaParto = data.Fec_fin || new Date();
+            // ── Auto-crear lechones (porcinos) basándose en el total de nacidos ──
+            const nacVivos = Number(data.Nac_vivos) || 0;
+            const nacMuertos = Number(data.Nac_muertos) || 0;
+            const nacMomias = Number(data.Nac_momias) || 0;
+            const fechaParto = data.Fec_fin || new Date();
 
-        // Obtener la raza de la madre para asignarla a los lechones
-        const madre = await PorcinoModel.findByPk(data.Id_Porcino);
-        const razaId = madre ? madre.Id_Raza : 1; // Fallback a 1 si no se encuentra
+            // Obtener la raza de la madre para asignarla a los lechones
+            const madre = await PorcinoModel.findByPk(data.Id_Porcino, { transaction: t });
+            const razaId = madre ? madre.Id_Raza : 1; // Fallback a 1 si no se encuentra
 
-        const porcinosData = [];
-        const novedadesData = [];
+            const porcinosData = [];
+            const novedadesData = [];
 
-        let numLechon = 1;
-
-        // Las crías vivas ya no se auto-crean aquí porque el usuario las registra en cadena
-        // a través de la interfaz (PorcinoForm).
-
-        // Crías nacidas muertas
-        for (let i = 0; i < nacMuertos; i++) {
-            porcinosData.push({
-                Id_Raza: razaId,
-                Gen_Porcino: '-',
-                Tipo_Cerdo: 'Lechon',
-                Proc_Porcino: 'Interno',
-                Fec_Nac_Porcino: fechaParto,
-                Estado: 'Inactivo', // Nacido muerto
-                Id_parto: parto.Id_parto
-            });
-        }
-
-        // Crías momias
-        for (let i = 0; i < nacMomias; i++) {
-            porcinosData.push({
-                Id_Raza: razaId,
-                Gen_Porcino: '-',
-                Tipo_Cerdo: 'Lechon',
-                Proc_Porcino: 'Interno',
-                Fec_Nac_Porcino: fechaParto,
-                Estado: 'Inactivo', // Momia
-                Id_parto: parto.Id_parto
-            });
-        }
-
-        if (porcinosData.length > 0) {
-            const creados = await PorcinoModel.bulkCreate(porcinosData);
-
-            // Crear novedades para los muertos y momias
-            let indexCreado = 0; // Comenzamos desde el 0 porque ya no hay crías vivas en este array
-
-            // Novedades para muertos
+            // Crías nacidas muertas
             for (let i = 0; i < nacMuertos; i++) {
-                if (creados[indexCreado]) {
-                    novedadesData.push({
-                        Id_Porcino: creados[indexCreado].Id_Porcino,
-                        Tipo_Novedad: 'Muerte',
-                        Fecha_Novedad: fechaParto,
-                        Causa_Motivo: 'Nacido muerto'
-                    });
-                }
-                indexCreado++;
+                porcinosData.push({
+                    Id_Raza: razaId,
+                    Gen_Porcino: '-',
+                    Tipo_Cerdo: 'Lechon',
+                    Proc_Porcino: 'Interno',
+                    Fec_Nac_Porcino: fechaParto,
+                    Estado: 'Inactivo', // Nacido muerto
+                    Id_parto: parto.Id_parto
+                });
             }
 
-            // Novedades para momias
+            // Crías momias
             for (let i = 0; i < nacMomias; i++) {
-                if (creados[indexCreado]) {
-                    novedadesData.push({
-                        Id_Porcino: creados[indexCreado].Id_Porcino,
-                        Tipo_Novedad: 'Muerte',
-                        Fecha_Novedad: fechaParto,
-                        Causa_Motivo: 'Momia'
-                    });
+                porcinosData.push({
+                    Id_Raza: razaId,
+                    Gen_Porcino: '-',
+                    Tipo_Cerdo: 'Lechon',
+                    Proc_Porcino: 'Interno',
+                    Fec_Nac_Porcino: fechaParto,
+                    Estado: 'Inactivo', // Momia
+                    Id_parto: parto.Id_parto
+                });
+            }
+
+            if (porcinosData.length > 0) {
+                const creados = await PorcinoModel.bulkCreate(porcinosData, { transaction: t });
+
+                // Crear novedades para los muertos y momias
+                let indexCreado = 0;
+
+                // Novedades para muertos
+                for (let i = 0; i < nacMuertos; i++) {
+                    if (creados[indexCreado]) {
+                        novedadesData.push({
+                            Id_Porcino: creados[indexCreado].Id_Porcino,
+                            Tipo_Novedad: 'Muerte',
+                            Fecha_Novedad: fechaParto,
+                            Causa_Motivo: 'Nacido muerto'
+                        });
+                    }
+                    indexCreado++;
                 }
-                indexCreado++;
+
+                // Novedades para momias
+                for (let i = 0; i < nacMomias; i++) {
+                    if (creados[indexCreado]) {
+                        novedadesData.push({
+                            Id_Porcino: creados[indexCreado].Id_Porcino,
+                            Tipo_Novedad: 'Muerte',
+                            Fecha_Novedad: fechaParto,
+                            Causa_Motivo: 'Momia'
+                        });
+                    }
+                    indexCreado++;
+                }
+
+                if (novedadesData.length > 0) {
+                    await NovedadesModel.bulkCreate(novedadesData, { transaction: t });
+                }
             }
 
-            if (novedadesData.length > 0) {
-                await NovedadesModel.bulkCreate(novedadesData);
-            }
-        }
-
-        return parto
+            return parto
+        });
     }
 
     async update(id, data) {
@@ -220,23 +223,25 @@ class PartosService {
     }
 
     async delete(id) {
-        const parto = await PartosModel.findByPk(id)
-        const deleted = await PartosModel.destroy({ where: { Id_parto: id } })
+        return await db.transaction(async (t) => {
+            const parto = await PartosModel.findByPk(id, { transaction: t })
+            const deleted = await PartosModel.destroy({ where: { Id_parto: id }, transaction: t })
 
-        if (!deleted) throw new Error("Parto no encontrado")
+            if (!deleted) throw new Error("Parto no encontrado")
 
-        if (parto && parto.Id_Ciclo) {
-            try {
-                await CalendarioModel.update(
-                    { real_parto: null, observaciones_parto: null },
-                    { where: { Id_Ciclo: parto.Id_Ciclo } }
-                )
-            } catch (err) {
-                console.error("Error limpiando real_parto en Calendario:", err)
+            if (parto && parto.Id_Ciclo) {
+                try {
+                    await CalendarioModel.update(
+                        { real_parto: null, observaciones_parto: null },
+                        { where: { Id_Ciclo: parto.Id_Ciclo }, transaction: t }
+                    )
+                } catch (err) {
+                    console.error("Error limpiando real_parto en Calendario:", err)
+                }
             }
-        }
 
-        return true
+            return true
+        })
     }
 }
 

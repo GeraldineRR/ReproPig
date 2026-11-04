@@ -3,23 +3,47 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import nodemailer from 'nodemailer'
-import e from 'express'
+
+// Control de intentos fallidos en memoria para mitigación de fuerza bruta
+const intentosFallidos = new Map() // email -> { count, lockedUntil }
+const MAX_INTENTOS = 5
+const TIEMPO_BLOQUEO_MS = 15 * 60 * 1000 // 15 minutos
 
 class AuthService {
 
     async login(email, password) {
-        const responsable = await ResponsablesModel.findOne({ where: { Email: email } })
-        
-        if (!responsable)
-            throw new Error('Email o contraseña incorrectos')
+        const emailNormalizado = String(email || '').trim().toLowerCase()
+        const ahora = Date.now()
 
-        if (responsable.Estado === 'Inactivo')
-            throw new Error('Tu cuenta está inactiva. Contacta al instructor.')
+        // Verificar si la cuenta está bloqueada temporalmente
+        const intento = intentosFallidos.get(emailNormalizado)
+        if (intento && intento.lockedUntil && intento.lockedUntil > ahora) {
+            const minutosRestantes = Math.ceil((intento.lockedUntil - ahora) / 60000)
+            throw new Error(`Cuenta bloqueada temporalmente por exceso de intentos fallidos. Por favor espera ${minutosRestantes} minuto(s).`)
+        }
+
+        const responsable = await ResponsablesModel.findOne({ where: { Email: emailNormalizado } })
+        
+        if (!responsable) {
+            this._registrarIntentoFallido(emailNormalizado)
+            throw new Error('Email o contraseña incorrectos')
+        }
+
+        if (responsable.Estado === 'Inactivo') {
+            throw new Error('Tu cuenta está inactiva. Contacta al instructor administrador.')
+        }
 
         const passwordValida = await bcrypt.compare(password, responsable.Password)
         
-        if (!passwordValida)
+        if (!passwordValida) {
+            this._registrarIntentoFallido(emailNormalizado)
             throw new Error('Email o contraseña incorrectos')
+        }
+
+        // Login exitoso: restablecer intentos fallidos
+        intentosFallidos.delete(emailNormalizado)
+
+        const jwtSecret = process.env.JWT_SECRET || 'repropig_sena_la_granja_secret_token_secure_2026_98374'
 
         const token = jwt.sign(
             {
@@ -29,10 +53,9 @@ class AuthService {
                 nombres: responsable.Nombres,
                 apellidos: responsable.Apellidos
             },
-            process.env.JWT_SECRET || 'repropig_secret_2024',
+            jwtSecret,
             { expiresIn: '8h' }
         )
-
 
         return {
             token,
@@ -46,6 +69,18 @@ class AuthService {
         }
     }
 
+    _registrarIntentoFallido(email) {
+        const ahora = Date.now()
+        const registro = intentosFallidos.get(email) || { count: 0, lockedUntil: null }
+        registro.count += 1
+
+        if (registro.count >= MAX_INTENTOS) {
+            registro.lockedUntil = ahora + TIEMPO_BLOQUEO_MS
+            registro.count = 0
+        }
+        intentosFallidos.set(email, registro)
+    }
+
     async register(data) {
         const existente = await ResponsablesModel.findOne({ where: { Email: data.Email } })
         if (existente)
@@ -54,6 +89,10 @@ class AuthService {
         const existenteDoc = await ResponsablesModel.findOne({ where: { Documento: data.Documento } })
         if (existenteDoc)
             throw new Error('Ya existe una cuenta con ese documento')
+
+        if (!data.Password || data.Password.length < 6) {
+            throw new Error('La contraseña debe tener al menos 6 caracteres')
+        }
 
         const passwordHash = await bcrypt.hash(data.Password, 10)
 
@@ -69,7 +108,8 @@ class AuthService {
     // ─── RECUPERACIÓN DE CONTRASEÑA ───────────────────────────────────────────
 
     async forgotPassword(email) {
-        const responsable = await ResponsablesModel.findOne({ where: { Email: email } })
+        const emailNormalizado = String(email || '').trim().toLowerCase()
+        const responsable = await ResponsablesModel.findOne({ where: { Email: emailNormalizado } })
 
         // Por seguridad, siempre respondemos igual aunque el email no exista
         if (!responsable) return
@@ -78,7 +118,7 @@ class AuthService {
         const resetToken = crypto.randomBytes(32).toString('hex')
         const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex')
         const expiracion = new Date(Date.now() + 30 * 60 * 1000) // 30 min
-        console.log(`Token generado para ${email}: ${resetToken} (hash: ${resetTokenHash}, expira: ${expiracion})`)  // Para pruebas, mostrar token en consola
+
         // Guardar token hasheado y expiración en el usuario
         await responsable.update({
             ResetPasswordToken: resetTokenHash,
@@ -86,12 +126,15 @@ class AuthService {
         })
 
         // Construir enlace de reseteo
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`
-
-        console.log(`Enlace de recuperación para ${email}: ${resetUrl}`)  // Para pruebas, mostrar el enlace en consola
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173'
+        const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`
 
         // Enviar correo
-        await this._enviarCorreoRecuperacion(responsable, resetUrl)
+        try {
+            await this._enviarCorreoRecuperacion(responsable, resetUrl)
+        } catch (mailError) {
+            console.error('Error al enviar correo de recuperación (verificar credenciales SMTP):', mailError.message)
+        }
     }
 
     async resetPassword(token, nuevaPassword) {

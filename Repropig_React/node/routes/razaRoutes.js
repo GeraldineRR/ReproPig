@@ -1,7 +1,10 @@
 import express from 'express';
 import { getAllRazas, getRaza, createRaza, updateRaza, deleteRaza, toggleEstadoRaza } from '../controllers/razaController.js';
+import { verificarToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+router.use(verificarToken);
 
 router.get('/', getAllRazas);
 router.get('/:id', getRaza);

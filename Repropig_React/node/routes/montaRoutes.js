@@ -1,7 +1,10 @@
 import express from 'express';
 import { getAllmonta, getmonta, createmonta, updatemonta, deletemonta, toggleEstadoMonta } from '../controllers/montaController.js'
+import { verificarToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router()
+
+router.use(verificarToken);
 
 router.get('/', getAllmonta);
 router.get('/:id', getmonta);

@@ -9,9 +9,11 @@ import {
     toggleEstadoSeguimiento_Cerda,
     getSeguimientoByParto
 } from "../controllers/Seguimiento_CerdaController.js";
+import { verificarToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
+router.use(verificarToken);
 
 // OBTENER TODOS
 router.get(

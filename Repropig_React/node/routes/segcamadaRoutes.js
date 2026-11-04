@@ -10,8 +10,11 @@ import {
     toggleEstadoSegcamada,
     getNotificacionesSeguimiento
 } from '../controllers/segcamadaController.js';
+import { verificarToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+
+router.use(verificarToken);
 
 router.get('/', getAllSegcamadas);
 

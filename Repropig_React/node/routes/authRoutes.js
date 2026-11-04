@@ -1,13 +1,17 @@
 import express from 'express'
 import { login, register, forgotPassword, resetPassword } from '../controllers/authController.js'
+import { authRateLimiter } from '../middlewares/rateLimitMiddleware.js'
+import { verificarToken, soloInstructor } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 
-router.post('/login', login)
-router.post('/register', register)
+router.post('/login', authRateLimiter, login)
 
-// Recuperación de contraseña
-router.post('/forgot-password', forgotPassword)   // envía el correo
-router.post('/reset-password', resetPassword)     // cambia la contraseña
+// Solo instructores autenticados pueden registrar nuevos usuarios en el sistema
+router.post('/register', verificarToken, soloInstructor, register)
 
-export default router
+// Recuperación de contraseña con límite de tasa para evitar abuso de correo
+router.post('/forgot-password', authRateLimiter, forgotPassword)
+router.post('/reset-password', authRateLimiter, resetPassword)
+
+export default router

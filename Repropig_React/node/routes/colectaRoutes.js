@@ -1,7 +1,10 @@
 import express from 'express';
 import { getAllcolecta, getcolecta, createcolecta, updatecolecta, deletecolecta, toggleEstadocolecta } from '../controllers/colectaController.js'
+import { verificarToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router()
+
+router.use(verificarToken);
 
 router.get('/', getAllcolecta);
 router.get('/:id', getcolecta);

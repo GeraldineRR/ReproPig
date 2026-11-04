@@ -7,8 +7,11 @@ import {
     toggleActivoCiclo,
     deleteciclos
 } from '../controllers/ciclosController.js';
+import { verificarToken } from '../middlewares/authMiddleware.js';
 
 const router = express.Router()
+
+router.use(verificarToken);
 
 router.get('/', getAllciclos);
 router.get('/:id', getCiclos);

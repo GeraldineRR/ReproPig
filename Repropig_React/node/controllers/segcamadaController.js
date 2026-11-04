@@ -111,13 +111,35 @@ export const getNotificacionesSeguimiento = async (req, res) => {
         const notificaciones = [];
 
         // =========================================================================
-        // 1. SEGUIMIENTO DE CAMADA (Lechones en partos activos)
+        // 1. SEGUIMIENTO DE CAMADA (Lechones en partos activos - EAGER LOADED)
         // =========================================================================
         try {
             const partos = await PartosModel.findAll({
                 where: {
                     estado: 'Activo'
                 },
+                include: [
+                    {
+                        model: PorcinoModel,
+                        as: 'porcino',
+                        attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
+                    },
+                    {
+                        model: PorcinoModel,
+                        as: 'lechones',
+                        where: { Tipo_Cerdo: 'Lechon' },
+                        required: false,
+                        attributes: ['Id_Porcino', 'Num_Chapeta'],
+                        include: [
+                            {
+                                model: SegCamadaModel,
+                                as: 'segcamadas',
+                                required: false,
+                                attributes: ['Id_SegCamada', 'Id_Porcino', 'Dia_Programado']
+                            }
+                        ]
+                    }
+                ],
                 order: [['Id_parto', 'DESC']]
             });
 
@@ -130,16 +152,10 @@ export const getNotificacionesSeguimiento = async (req, res) => {
 
                 const [year, month, day] = fechaFinStr.split('-').map(Number);
 
-                const madre = await PorcinoModel.findByPk(parto.Id_Porcino);
+                const madre = parto.porcino;
                 const nombreCerda = madre?.Nom_Porcino || madre?.Num_Chapeta || `Cerda #${parto.Id_Porcino}`;
 
-                const lechones = await PorcinoModel.findAll({
-                    where: {
-                        Id_parto: parto.Id_parto,
-                        Tipo_Cerdo: 'Lechon'
-                    },
-                    order: [['Id_Porcino', 'ASC']]
-                });
+                const lechones = parto.lechones || [];
 
                 // VERIFICAR LECHONES FALTANTES (REGISTRO INCOMPLETO)
                 const nacVivos = parto.Nac_vivos || 0;
@@ -170,12 +186,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                 const criasPorDia = {};
 
                 for (const lechon of lechones) {
-                    const seguimientos = await SegCamadaModel.findAll({
-                        where: {
-                            Id_Porcino: lechon.Id_Porcino
-                        },
-                        order: [['Dia_Programado', 'ASC']]
-                    });
+                    const seguimientos = lechon.segcamadas || [];
 
                     const diasRegistrados = seguimientos
                         .map(seg => Number(seg.Dia_Programado))
@@ -366,13 +377,20 @@ export const getNotificacionesSeguimiento = async (req, res) => {
         }
 
         // =========================================================================
-        // 3. SEGUIMIENTO DE LA CERDA (Revisiones y tratamientos)
+        // 3. SEGUIMIENTO DE LA CERDA (Revisiones y tratamientos - EAGER LOADED)
         // =========================================================================
         try {
             const seguimientosCerda = await Seguimiento_CerdaModel.findAll({
                 where: {
                     Estado: 'Activo'
                 },
+                include: [
+                    {
+                        model: PorcinoModel,
+                        as: 'porcino',
+                        attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
+                    }
+                ],
                 order: [['Id_Seguimiento_Cerda', 'DESC']],
                 limit: 50
             });
@@ -397,15 +415,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
 
                 if (!tipo) continue;
 
-                let nombreCerda = `Cerda #${seg.Id_Porcino || '—'}`;
-                if (seg.Id_Porcino) {
-                    const cerda = await PorcinoModel.findByPk(seg.Id_Porcino, {
-                        attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
-                    });
-                    if (cerda) {
-                        nombreCerda = cerda.Nom_Porcino || cerda.Num_Chapeta || nombreCerda;
-                    }
-                }
+                const nombreCerda = seg.porcino?.Nom_Porcino || seg.porcino?.Num_Chapeta || (seg.Id_Porcino ? `Cerda #${seg.Id_Porcino}` : '—');
 
                 notificaciones.push({
                     id: `segcerda-${seg.Id_Seguimiento_Cerda}`,

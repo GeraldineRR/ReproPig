@@ -11,20 +11,11 @@ import {
 import multer from 'multer'
 import path from 'path'
 
+import { verificarToken } from '../middlewares/authMiddleware.js'
+
 const router = express.Router()
 
-const almacenamiento = multer.diskStorage({
-    
-    destination: function (req, file, cb)  {
-        cb(null, 'public/uploads')
-    },
-
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname))
-    } 
-})
-
-const upload = multer({ storage: almacenamiento })
+router.use(verificarToken)
 
 router.get('/', getALLPartos)
 router.get('/:id/tiene-seguimiento', checkSeguimiento)
