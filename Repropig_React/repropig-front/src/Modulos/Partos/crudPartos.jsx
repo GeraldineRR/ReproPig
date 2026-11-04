@@ -507,7 +507,6 @@ const CrudPartos = () => {
                         <TbInfoCircle className="w-4 h-4" />
                     </button>
                     <button
-                    <button
                         className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 hover:bg-sky-100 flex items-center justify-center transition-colors shadow-xs"
                         title="Ver Seguimiento de Cerda"
                         onClick={() => navigate(`/seguimiento_cerda/parto/${row.Id_parto}`)}
@@ -516,11 +515,6 @@ const CrudPartos = () => {
                     </button>
                     <button
                         className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center transition-colors shadow-xs"
-                        title="Editar Parto"
-                        onClick={() => handleEdit(row)}
-                    >
-                        <TbPencil className="w-4 h-4" />
-                    </button>
                         title="Editar Parto"
                         onClick={() => handleEdit(row)}
                     >
