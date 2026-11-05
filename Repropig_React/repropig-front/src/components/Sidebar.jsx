@@ -102,7 +102,7 @@ export default function Sidebar({ isOpen }) {
         </div>
 
         {/* 6. Administración */}
-        {(usuario?.Cargo?.toLowerCase().includes("instructor") || usuario?.cargo?.toLowerCase().includes("instructor")) && (
+        {(usuario?.Cargo?.toLowerCase().includes("instructor") || usuario?.cargo?.toLowerCase().includes("instructor") || usuario?.Cargo?.toLowerCase().includes("gestor") || usuario?.cargo?.toLowerCase().includes("gestor")) && (
           <div>
             <button className={buttonClass} onClick={() => setAdminOpen(!adminOpen)}>
               <div className="flex items-center gap-2">

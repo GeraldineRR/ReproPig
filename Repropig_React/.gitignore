@@ -22,3 +22,7 @@ deploy.sh
 Thumbs.db
 .vscode/
 .idea/
+
+# Documentación interna de generación (capturas y borradores)
+DOCUMENTACION_REPROPIG/
+

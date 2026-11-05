@@ -76,7 +76,7 @@ function App() {
           <Route path="/tipo_actividad" element={<Navigate to="/tipos_actividad" replace />} />
           <Route path="/actividades" element={<Navigate to="/tipos_actividad" replace />} />
 
-          <Route element={<RutaProtegida rolesPermitidos={["instructor"]} />}>
+          <Route element={<RutaProtegida rolesPermitidos={["instructor", "gestor"]} />}>
             <Route path="/responsables" element={<CrudResponsables />} />
           </Route>
         </Route>

@@ -40,9 +40,18 @@ export default function PerfilCerda() {
         try {
             setLoading(true)
 
-            // Traer datos principales de la cerda
-            const resPorcino = await apiAxios.get(`/porcino/${id}`)
-            setPorcino(resPorcino.data)
+            // Traer datos principales de la cerda (intenta ruta pública primero para escaneo QR)
+            let porcinoData = null;
+            try {
+                const resPub = await apiAxios.get(`/porcino/public/${id}`);
+                porcinoData = resPub.data;
+            } catch {
+                try {
+                    const resPriv = await apiAxios.get(`/porcino/${id}`);
+                    porcinoData = resPriv.data;
+                } catch (e) {}
+            }
+            setPorcino(porcinoData)
 
             // Traer ciclos
             const resRepro = await apiAxios.get('/ciclos/')

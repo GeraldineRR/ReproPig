@@ -8,8 +8,12 @@ const RutaProtegida = ({ children, rolesPermitidos, redirectTo = '/dashboard' })
 
     if (!usuario) return <Navigate to="/" replace />
 
-    if (rolesPermitidos && !rolesPermitidos.includes(usuario.cargo)) {
-        return <Navigate to={redirectTo} replace />
+    if (rolesPermitidos && rolesPermitidos.length > 0) {
+        const userCargo = (usuario.cargo || usuario.Cargo || '').toLowerCase().trim()
+        const permitidos = rolesPermitidos.map(r => String(r).toLowerCase().trim())
+        if (!permitidos.includes(userCargo)) {
+            return <Navigate to={redirectTo} replace />
+        }
     }
 
     return children ?? <Outlet />

@@ -221,7 +221,7 @@ const CrudResponsables = () => {
                         </div>
                     </div>
 
-                    {usuario?.cargo === 'instructor' && (
+                    {(usuario?.cargo?.toLowerCase() === 'instructor' || usuario?.cargo?.toLowerCase() === 'gestor') && (
                         <button
                             type="button"
                             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold text-sm shadow-md hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg transition-all duration-200"
