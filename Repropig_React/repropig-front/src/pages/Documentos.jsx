@@ -353,6 +353,20 @@ function Documentos() {
           from { opacity: 0; }
           to   { opacity: 1; }
         }
+
+        @media (max-width: 640px) {
+          .docs-container { padding: 24px 14px 40px; }
+          .docs-header-card { padding: 20px 16px; border-radius: 20px; margin-bottom: 24px; }
+          .docs-title { font-size: 2rem; margin-bottom: 10px; }
+          .docs-subtitle { font-size: 0.95rem; margin-bottom: 24px; }
+          .docs-badge { font-size: 0.75rem; padding: 6px 12px; }
+          .docs-card-desc { font-size: 0.95rem; line-height: 1.6; text-align: left; }
+          .docs-btn-group { flex-direction: column; width: 100%; gap: 10px; }
+          .docs-btn-primary, .docs-btn-secondary { width: 100%; justify-content: center; padding: 12px 20px; font-size: 0.95rem; }
+          .docs-brand-card { padding: 24px 16px; border-radius: 20px; text-align: center; }
+          .pdf-modal-overlay { padding: 6px; }
+          .pdf-modal-container { height: 96vh; border-radius: 12px; }
+        }
       `}</style>
 
       <div className="docs-page">

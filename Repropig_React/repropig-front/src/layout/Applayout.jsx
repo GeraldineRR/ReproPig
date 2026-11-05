@@ -4,35 +4,48 @@ import Navbar from "../components/Navbar"
 import Sidebar from "../components/Sidebar"
 
 export default function AppLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Ajustar estado inicial según ancho de pantalla (desktop abierto, móvil cerrado)
+  // Ajustar estado inicial según ancho de pantalla
   useEffect(() => {
-    try {
-      setSidebarOpen(window.innerWidth >= 768)
-    } catch (e) {
-      // no-op en entornos sin window
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        if (window.innerWidth >= 768) {
+          setSidebarOpen(true)
+        } else {
+          setSidebarOpen(false)
+        }
+      }
     }
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
   }, [])
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden bg-slate-50">
 
       <Navbar 
         sidebarOpen={sidebarOpen} 
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+        onToggleSidebar={() => setSidebarOpen(prev => !prev)} 
       />
 
       <div className="flex flex-1 overflow-hidden relative">
 
-        <Sidebar isOpen={sidebarOpen} />
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)}
+        />
 
         {/* Overlay móvil cuando el sidebar está abierto */}
-        {sidebarOpen && typeof window !== 'undefined' && window.innerWidth < 768 && (
-          <div className="fixed inset-0 bg-black/30 z-30" onClick={() => setSidebarOpen(false)} />
-        )}
+        <div 
+          className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-30 md:hidden transition-opacity duration-300 ${
+            sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`} 
+          onClick={() => setSidebarOpen(false)} 
+        />
 
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        <main className="flex-1 p-2 sm:p-4 md:p-6 overflow-y-auto max-w-full w-full">
           <Outlet />
         </main>
 

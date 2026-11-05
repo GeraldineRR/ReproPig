@@ -304,26 +304,26 @@ export default function PerfilCerda() {
     return (
         <div className="min-h-screen bg-gray-50/50 pb-12 relative overflow-hidden overflow-x-hidden">
             {/* Header / Top Bar */}
-            <div className="bg-white shadow-sm border-b px-8 py-4 flex items-center justify-between sticky top-0 z-10">
-                <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-pink-600 transition-colors font-medium">
+            <div className="bg-white shadow-xs border-b px-3 sm:px-8 py-3 sm:py-4 flex flex-wrap gap-2 items-center justify-between sticky top-0 z-10">
+                <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-pink-600 transition-colors font-medium text-xs sm:text-sm cursor-pointer">
                     <i className="fa-solid fa-arrow-left mr-2"></i> Volver a Porcinos
                 </button>
-                <div className="flex items-center space-x-4">
-                    <div className="text-sm text-gray-400 font-medium hidden sm:block">Perfil Clínico y Reproductivo</div>
+                <div className="flex items-center space-x-2 sm:space-x-4">
+                    <div className="text-xs sm:text-sm text-gray-400 font-medium hidden sm:block">Perfil Clínico y Reproductivo</div>
                     <button
                         onClick={exportarPDF}
                         disabled={exportando}
-                        className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow font-medium text-sm transition-colors flex items-center disabled:opacity-50"
+                        className="bg-pink-600 hover:bg-pink-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow font-medium text-xs sm:text-sm transition-colors flex items-center disabled:opacity-50 cursor-pointer"
                     >
-                        <i className={`fa-solid ${exportando ? 'fa-spinner fa-spin' : 'fa-file-pdf'} mr-2`}></i>
+                        <i className={`fa-solid ${exportando ? 'fa-spinner fa-spin' : 'fa-file-pdf'} mr-1.5`}></i>
                         {exportando ? 'Exportando...' : 'Exportar PDF'}
                     </button>
                 </div>
             </div>
 
             {/* VISTA EN PANTALLA (TARJETAS BONITAS ORIGINALES) */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 mt-4 sm:mt-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
 
                     {/* COLUMNA IZQUIERDA: Info Principal */}
                     <div className="lg:col-span-1 space-y-6">

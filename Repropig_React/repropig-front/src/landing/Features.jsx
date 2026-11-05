@@ -28,26 +28,26 @@ function Features() {
   ]
 
   return (
-    <section id="modulos" className="py-[100px] px-8 bg-[#fdfbfb] font-sans">
+    <section id="modulos" className="py-12 sm:py-24 px-4 sm:px-8 bg-[#fdfbfb] font-sans">
 
       <div className="max-w-[1200px] mx-auto">
 
-        <div className="text-center text-[0.8rem] font-bold tracking-[2.5px] uppercase text-[#C97A85] mb-[12px]">
+        <div className="text-center text-[0.75rem] sm:text-[0.8rem] font-bold tracking-[2.5px] uppercase text-[#C97A85] mb-[10px]">
           Plataforma
         </div>
 
-        <h2 className="text-center text-[clamp(2rem,4vw,3rem)] font-extrabold text-[#2d1b2e] mb-[16px] tracking-tight">
+        <h2 className="text-center text-[clamp(1.75rem,4vw,3rem)] font-extrabold text-[#2d1b2e] mb-[12px] tracking-tight">
           Módulos del Sistema
         </h2>
 
-        <p className="text-center text-[#5a4b5c] text-[1.05rem] font-medium max-w-[540px] mx-auto mb-[60px] leading-[1.6]">
+        <p className="text-center text-[#5a4b5c] text-[0.95rem] sm:text-[1.05rem] font-medium max-w-[540px] mx-auto mb-8 sm:mb-[60px] leading-[1.6]">
           Cada módulo está diseñado para una gestión precisa, con trazabilidad y control total del proceso reproductivo.
         </p>
 
 
         {isLoggedIn ? (
 
-          <div className="grid grid-cols-3 gap-[22px] max-[900px]:grid-cols-2 max-[560px]:grid-cols-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-[22px]">
 
             {modulos.map((mod, i) =>
               mod.activo ? (
@@ -55,7 +55,7 @@ function Features() {
                 <div
                   key={i}
                   style={{ "--card-bg": mod.color, "--card-accent": mod.accent }}
-                  className="group relative overflow-hidden rounded-[24px] border border-gray-100 bg-white p-[32px] transition-all duration-300 hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(201,122,133,0.12)] hover:border-pink-100"
+                  className="group relative overflow-hidden rounded-2xl sm:rounded-[24px] border border-gray-100 bg-white p-5 sm:p-[32px] transition-all duration-300 hover:-translate-y-[4px] sm:hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(201,122,133,0.12)] hover:border-pink-100"
                 >
 
                   <div

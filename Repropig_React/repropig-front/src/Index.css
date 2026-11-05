@@ -4,8 +4,8 @@
 
 /* Scrollbar moderno global */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: #f1f5f9;
@@ -21,6 +21,8 @@
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: #fdf2f8;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Modales estilo Tailwind sobre Bootstrap */
@@ -45,26 +47,75 @@ body {
 }
 
 /* DataTable responsive tweaks (react-data-table-component) */
-.rdt_TableWrapper, .rdt_Table { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.rdt_TableCell, .rdt_TableHeadCell { white-space: nowrap; }
+.rdt_TableWrapper {
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  border-radius: 16px !important;
+}
+.rdt_Table {
+  min-width: 680px !important;
+  background-color: #ffffff;
+}
+.rdt_TableCell, .rdt_TableHeadCell {
+  white-space: nowrap;
+}
 
-@media (max-width: 767px) {
+/* Reglas de optimización total para móviles y pantallas pequeñas */
+@media (max-width: 640px) {
+  /* Reducir padding de tarjetas principales para aprovechar al máximo la pantalla */
+  .rounded-3xl.p-6,
+  .rounded-3xl.p-8,
+  .bg-white.rounded-3xl {
+    padding: 1rem !important;
+    border-radius: 1.25rem !important;
+  }
+
+  /* Padding seguro en contenedores fluidos */
+  .container-fluid {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+
+  /* Títulos de módulos responsivos */
+  h1.text-2xl, h2.text-2xl, h3.text-2xl {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Celdas de tabla compactas */
   .rdt_TableCell, .rdt_TableHeadCell {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: 12px !important;
+  }
+
+  /* Paginación touch-friendly */
+  .rdt_Pagination {
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  /* Botones principales táctiles */
+  .btn {
     font-size: 13px !important;
   }
 
-  /* Make bootstrap modals fullscreen on small screens (smoother than forcing every modal) */
-  .modal-fullscreen-sm-down .modal-content {
-    border-radius: 0 !important;
-    height: 100vh;
+  /* SweetAlert2 en móviles: ancho adaptado */
+  .swal2-popup {
+    width: 90% !important;
+    padding: 1.25rem 1rem !important;
+    border-radius: 1.25rem !important;
+    font-size: 0.9rem !important;
   }
-
-  /* Buttons slightly larger and full-width where appropriate */
-  .btn { font-size: 14px !important; }
-  .btn.w-100 { width: 100% !important; }
 }
 
-/* Force table container to allow horizontal scrolling */
-.table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/* Forzar que las tablas horizontales permitan scroll fluido */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

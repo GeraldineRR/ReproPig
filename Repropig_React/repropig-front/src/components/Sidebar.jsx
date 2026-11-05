@@ -3,20 +3,26 @@ import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
 import {
   TbHome, TbPig, TbChevronDown, TbActivityHeartbeat,
-  TbStethoscope, TbUsers, TbMilk, TbAlertTriangle, TbCalendar
+  TbStethoscope, TbUsers, TbMilk, TbX
 } from 'react-icons/tb'
 
-export default function Sidebar({ isOpen }) {
+export default function Sidebar({ isOpen, onClose }) {
   const [animalesOpen, setAnimalesOpen] = useState(true)
   const [reproOpen, setReproOpen] = useState(true)
   const [maternidadOpen, setMaternidadOpen] = useState(true)
-  const [novedadesOpen, setNovedadesOpen] = useState(false)
   const [sanidadOpen, setSanidadOpen] = useState(false)
   const [adminOpen, setAdminOpen] = useState(false)
   const { usuario } = useAuth()
 
+  // En móvil, al hacer clic en cualquier opción, cerramos el drawer automáticamente
+  const handleItemClick = () => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768 && onClose) {
+      onClose()
+    }
+  }
+
   // Estilos modernos para los enlaces
-  const linkClass = "flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-all font-medium text-sm whitespace-nowrap mx-2 my-1"
+  const linkClass = "flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-pink-50 hover:text-pink-600 transition-all font-medium text-sm whitespace-nowrap mx-2 my-1 cursor-pointer"
   const activeClass = "bg-pink-500 text-white shadow-md shadow-pink-200 hover:bg-pink-600 hover:text-white"
 
   // Estilos para los botones desplegables
@@ -24,12 +30,33 @@ export default function Sidebar({ isOpen }) {
 
   return (
     <aside
-      className={`bg-white border-r border-gray-100 h-full transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.02)] relative z-40 shrink-0 ${isOpen ? "w-72 overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:top-0 md:w-72" : "w-0 opacity-0 overflow-hidden pointer-events-none md:relative md:top-0 md:w-0 md:opacity-0 md:pointer-events-none"
-        }`}
+      className={`bg-white border-r border-gray-100 h-full transition-all duration-300 shadow-[4px_0_24px_rgba(0,0,0,0.06)] z-40 shrink-0 ${
+        isOpen
+          ? "w-72 max-w-[85vw] overflow-y-auto fixed left-0 top-16 bottom-0 md:relative md:top-0 md:w-72 translate-x-0 opacity-100"
+          : "w-0 opacity-0 overflow-hidden pointer-events-none -translate-x-full md:translate-x-0 md:relative md:top-0 md:w-0 md:opacity-0 md:pointer-events-none"
+      }`}
     >
+      {/* Cabecera sólo visible en móviles */}
+      <div className="flex md:hidden items-center justify-between px-4 py-3 border-b border-pink-100/60 bg-pink-50/50">
+        <span className="font-extrabold text-sm text-[#8a4f58] flex items-center gap-2">
+          <span>🐷</span> Menú de Navegación
+        </span>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-lg bg-white text-gray-500 hover:text-pink-600 flex items-center justify-center border border-pink-100 shadow-xs cursor-pointer"
+          title="Cerrar menú"
+        >
+          <TbX className="w-5 h-5" />
+        </button>
+      </div>
+
       <nav className="flex flex-col gap-1 py-4 pb-32">
 
-        <NavLink to="/dashboard" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>
+        <NavLink 
+          to="/dashboard" 
+          onClick={handleItemClick}
+          className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}
+        >
           <TbHome className="w-5 h-5" /> Inicio
         </NavLink>
 
@@ -43,9 +70,9 @@ export default function Sidebar({ isOpen }) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${animalesOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/razas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
-              <NavLink to="/porcinos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
-              <NavLink to="/novedades" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Novedades</NavLink>
+              <NavLink to="/razas" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Razas</NavLink>
+              <NavLink to="/porcinos" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Porcinos</NavLink>
+              <NavLink to="/novedades" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Novedades</NavLink>
             </div>
           </div>
         </div>
@@ -60,10 +87,10 @@ export default function Sidebar({ isOpen }) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${reproOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/ciclos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos Reproductivos</NavLink>
-              <NavLink to="/colectas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas de Semen</NavLink>
-              <NavLink to="/inseminaciones" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
-              <NavLink to="/montas" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas</NavLink>
+              <NavLink to="/ciclos" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Ciclos Reproductivos</NavLink>
+              <NavLink to="/colectas" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Colectas de Semen</NavLink>
+              <NavLink to="/inseminaciones" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Inseminaciones</NavLink>
+              <NavLink to="/montas" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Montas</NavLink>
             </div>
           </div>
         </div>
@@ -78,9 +105,9 @@ export default function Sidebar({ isOpen }) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${maternidadOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/partos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
-              <NavLink to="/seguimiento_cerda" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
-              <NavLink to="/actividades_camada" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Camada</NavLink>
+              <NavLink to="/partos" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Partos</NavLink>
+              <NavLink to="/seguimiento_cerda" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Cerda</NavLink>
+              <NavLink to="/actividades_camada" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Seguimiento Camada</NavLink>
             </div>
           </div>
         </div>
@@ -95,8 +122,8 @@ export default function Sidebar({ isOpen }) {
           </button>
           <div className={`overflow-hidden transition-all duration-300 ${sanidadOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
             <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-              <NavLink to="/tipos_actividad" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Tipo de Actividad</NavLink>
-              <NavLink to="/medicamentos" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Medicamentos</NavLink>
+              <NavLink to="/tipos_actividad" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Tipo de Actividad</NavLink>
+              <NavLink to="/medicamentos" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Medicamentos</NavLink>
             </div>
           </div>
         </div>
@@ -112,7 +139,7 @@ export default function Sidebar({ isOpen }) {
             </button>
             <div className={`overflow-hidden transition-all duration-300 ${adminOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
               <div className="ml-5 border-l-2 border-gray-100 pl-2 flex flex-col gap-1 py-1">
-                <NavLink to="/responsables" className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Responsables</NavLink>
+                <NavLink to="/responsables" onClick={handleItemClick} className={({ isActive }) => `${linkClass} ${isActive ? activeClass : ""}`}>Responsables</NavLink>
               </div>
             </div>
           </div>

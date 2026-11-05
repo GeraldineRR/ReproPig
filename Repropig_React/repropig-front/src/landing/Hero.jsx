@@ -222,11 +222,23 @@ function Hero() {
         }
 
         @media (max-width: 960px) {
-          .rp-hero-inner { grid-template-columns: 1fr; padding: 40px 24px 60px; text-align: center; gap: 20px; }
+          .rp-hero { padding: 30px 0 30px; min-height: auto; }
+          .rp-hero-inner { grid-template-columns: 1fr; padding: 20px 20px 40px; text-align: center; gap: 20px; }
           .rp-right-col { order: 1; width: 100%; }
-          .rp-pig-canvas-wrap { height: 300px; }
+          .rp-pig-canvas-wrap { height: 260px; }
           .rp-hero-content { order: 2; padding-right: 0; display: flex; flex-direction: column; align-items: center; }
           .rp-hero-h1 .rp-accent { display: inline; }
+        }
+
+        @media (max-width: 640px) {
+          .rp-hero { padding: 15px 0 25px; }
+          .rp-hero-inner { padding: 10px 14px 30px; gap: 15px; }
+          .rp-pig-canvas-wrap { height: 210px; }
+          .rp-hero-h1 { font-size: 1.75rem; line-height: 1.2; }
+          .rp-hero-h1 .rp-accent { font-size: 2.1rem; }
+          .rp-hero-sub { font-size: 0.9rem; line-height: 1.5; margin: 12px 0 18px 0; }
+          .rp-btn-primary { width: 100%; text-align: center; padding: 12px 20px; font-size: 0.95rem; }
+          .rp-buttons { width: 100%; }
         }
       `}</style>
 

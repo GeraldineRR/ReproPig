@@ -2,18 +2,18 @@ import React from 'react';
 
 export default function Contact() {
   return (
-    <section id="contactanos" className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Contáctanos</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+    <section id="contactanos" className="py-10 sm:py-20 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="text-center mb-8 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-gray-900 mb-2 sm:mb-4">Contáctanos</h2>
+          <p className="text-sm sm:text-lg text-gray-600 max-w-3xl mx-auto">
             Estamos aquí para ayudarte. Encuentra nuestra ubicación o comunícate con nosotros para más información.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 bg-white rounded-2xl sm:rounded-3xl shadow-xl overflow-hidden">
           {/* Columna de Información */}
-          <div className="p-8 lg:p-12 bg-pink-600 text-white flex flex-col justify-center">
+          <div className="p-5 sm:p-8 lg:p-12 bg-pink-600 text-white flex flex-col justify-center">
             <h3 className="text-2xl font-bold mb-6">Información de Contacto</h3>
             
             <div className="space-y-6">
@@ -83,7 +83,7 @@ export default function Contact() {
           </div>
 
           {/* Columna del Mapa */}
-          <div className="h-96 lg:h-auto relative min-h-[400px]">
+          <div className="h-72 sm:h-96 lg:h-auto relative min-h-[280px] sm:min-h-[400px]">
             {/* 
               Usamos un iframe de Google Maps con la ruta Chicoral - Espinal 
               Una vez que el usuario pase la ubicación exacta, podemos actualizar este enlace

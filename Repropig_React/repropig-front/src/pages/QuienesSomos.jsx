@@ -222,6 +222,19 @@ function QuienesSomos() {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+
+        @media (max-width: 640px) {
+          .qs-container { padding: 24px 14px 40px; }
+          .qs-main-card { padding: 20px 16px; border-radius: 20px; margin-bottom: 24px; }
+          .qs-card-text { font-size: 0.95rem; line-height: 1.6; text-align: left; }
+          .qs-title { font-size: 2rem; margin-bottom: 10px; }
+          .qs-subtitle { font-size: 0.95rem; margin-bottom: 24px; }
+          .qs-badge { font-size: 0.75rem; padding: 6px 12px; }
+          .qs-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 30px; }
+          .qs-pillar-card { padding: 18px 16px; }
+          .qs-actions { flex-direction: column; width: 100%; gap: 10px; }
+          .qs-btn-primary, .qs-btn-secondary { width: 100%; justify-content: center; padding: 12px 20px; font-size: 0.95rem; }
+        }
       `}</style>
 
       <div className="qs-page">

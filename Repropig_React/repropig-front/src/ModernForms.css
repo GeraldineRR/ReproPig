@@ -128,3 +128,67 @@ form button[type="submit"]:active, .btn-primary:active {
     transform: scale(1) translateY(0);
     opacity: 1;
 }
+
+/* ========================================================= */
+/* AJUSTES RESPONSIVOS PARA DISPOSITIVOS MÓVILES (SMARTPHONES) */
+/* ========================================================= */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: calc(100% - 1rem) !important;
+        width: 100% !important;
+    }
+
+    .modal-content {
+        border-radius: 16px !important;
+    }
+
+    .modal-header {
+        padding: 1rem 1.25rem !important;
+    }
+
+    .modal-title {
+        font-size: 1.1rem !important;
+    }
+
+    .modal-body {
+        padding: 1.25rem 1rem !important;
+    }
+
+    .form-label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+
+    .form-control, .form-select {
+        padding: 0.65rem 0.85rem !important;
+        font-size: 0.9rem !important;
+        border-radius: 10px !important;
+    }
+
+    textarea.form-control {
+        min-height: 80px;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+
+    form button[type="submit"], .btn-primary {
+        width: 100% !important;
+        padding: 0.8rem 1rem !important;
+        font-size: 0.85rem !important;
+        justify-content: center;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem !important;
+    }
+
+    .modal-footer > * {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}

@@ -40,19 +40,27 @@ export default function ForgotPassword() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '20px'
+                padding: '16px'
             }}
         >
-            <div
-                style={{
-                    background: 'white',
-                    borderRadius: '20px',
-                    padding: '40px',
-                    width: '100%',
-                    maxWidth: '420px',
-                    boxShadow: '0 20px 60px rgba(200, 100, 120, 0.15)'
-                }}
-            >
+            <style>{`
+                .auth-card {
+                    background: white;
+                    border-radius: 20px;
+                    padding: 40px 32px;
+                    width: 100%;
+                    maxWidth: 420px;
+                    box-shadow: 0 20px 60px rgba(200, 100, 120, 0.15);
+                }
+                @media (max-width: 480px) {
+                    .auth-card {
+                        padding: 28px 18px;
+                        border-radius: 16px;
+                    }
+                }
+            `}</style>
+
+            <div className="auth-card">
                 <h2
                     className="text-center mb-3"
                     style={{ color: '#C97A85' }}
