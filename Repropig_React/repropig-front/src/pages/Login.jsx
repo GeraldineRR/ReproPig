@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import apiAxios from '../api/axiosConfig'
 import { useAuth } from '../context/AuthContext'
 import logo from '../assets/logo.png'
@@ -9,6 +9,8 @@ export default function Login() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
     const [cargando, setCargando] = useState(false)
+    const [searchParams] = useSearchParams()
+    const sesionExpirada = searchParams.get('expired') === '1'
 
     const { login } = useAuth()
     const navigate = useNavigate()
@@ -132,6 +134,19 @@ export default function Login() {
                         Inicia sesión para continuar
                     </p>
                 </div>
+
+                {sesionExpirada && !error && (
+                    <div
+                        className="alert alert-warning py-2 text-center mb-3"
+                        style={{
+                            borderRadius: '10px',
+                            fontSize: '0.9rem',
+                            border: '1px solid #ffeeba'
+                        }}
+                    >
+                        Tu sesión ha expirado por seguridad. Por favor ingresa tus datos nuevamente.
+                    </div>
+                )}
 
                 {error && (
                     <div

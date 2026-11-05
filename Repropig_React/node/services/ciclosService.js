@@ -6,6 +6,7 @@ import colectaModel from "../models/colectaModel.js";
 import CalendarioModel from "../models/CalendarioModel.js";
 import PartosModel from "../models/PartosModel.js";
 import NovedadesModel from "../models/novedadesModel.js";
+import db from "../database/db.js";
 
 class ciclosService {
 
@@ -238,12 +239,27 @@ class ciclosService {
     }
 
     async delete(id) {
-        const ciclo = await ciclosModel.findByPk(id)
-        if (!ciclo) throw new Error('Ciclo no encontrada')
-        await MontaModel.destroy({ where: { Id_Ciclo: id } })
-        await InseminacionModel.destroy({ where: { Id_Ciclo: id } })
-        await ciclosModel.destroy({ where: { Id_Ciclo: id } })
-        return true
+        return await db.transaction(async (t) => {
+            const ciclo = await ciclosModel.findByPk(id, { transaction: t })
+            if (!ciclo) throw new Error('Ciclo no encontrado')
+
+            // Validar si tiene partos asociados antes de permitir borrar
+            const partosAsociados = await PartosModel.count({ where: { Id_Ciclo: id }, transaction: t })
+            if (partosAsociados > 0) {
+                throw new Error('No se puede eliminar el ciclo porque tiene un parto registrado. Elimine el parto primero.')
+            }
+
+            // Limpiar eventos en calendario vinculados a este ciclo
+            await CalendarioModel.destroy({ where: { Id_Ciclo: id }, transaction: t })
+
+            // Limpiar montas e inseminaciones vinculadas
+            await MontaModel.destroy({ where: { Id_Ciclo: id }, transaction: t })
+            await InseminacionModel.destroy({ where: { Id_Ciclo: id }, transaction: t })
+
+            // Eliminar ciclo
+            await ciclosModel.destroy({ where: { Id_Ciclo: id }, transaction: t })
+            return true
+        })
     }
 }
 

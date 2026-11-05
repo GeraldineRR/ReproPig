@@ -201,11 +201,22 @@ if (data.Id_Ciclo) {
     async delete(id) {
         return await db.transaction(async (t) => {
             const parto = await PartosModel.findByPk(id, { transaction: t })
+            // Validar si existen lechones vinculados a este parto
+            const lechonesCount = await PorcinoModel.count({ where: { Id_parto: id }, transaction: t })
+            if (lechonesCount > 0) {
+                throw new Error(`No se puede eliminar el parto porque tiene ${lechonesCount} lechón(es) registrado(s). Debe gestionar las crías antes de eliminar el parto.`)
+            }
+
             const deleted = await PartosModel.destroy({ where: { Id_parto: id }, transaction: t })
 
             if (!deleted) throw new Error("Parto no encontrado")
 
             if (parto && parto.Id_Ciclo) {
+                // Revertir el estado del ciclo a Activo
+                await ciclosModel.update(
+                    { Estado: 'Activo' },
+                    { where: { Id_Ciclo: parto.Id_Ciclo }, transaction: t }
+                )
                 try {
                     await CalendarioModel.update(
                         { real_parto: null, observaciones_parto: null },

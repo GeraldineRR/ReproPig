@@ -110,8 +110,27 @@ import tipoActividadRoutes from './routes/tipoActividadRoutes.js'
 
 const app = express()
 
+const allowedOrigins = [
+    'https://repropiglagranja.com',
+    'http://repropiglagranja.com',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:5173'
+]
+
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+            callback(null, true)
+        } else {
+            callback(new Error('Acceso no permitido por política de CORS'))
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}))
 
 app.use('/api/porcino', porcinoRoutes)
 app.use('/api/raza', razaRoutes)

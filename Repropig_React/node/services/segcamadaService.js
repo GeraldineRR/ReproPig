@@ -14,7 +14,7 @@ class SegcamadaService {
                 {
                     model: PorcinoModel,
                     as: 'porcino',
-                    where: { Tipo_Cerdo: 'Lechon', Gen_Porcino: { [Op.ne]: '-' } },
+                    required: false,
                     include: {
                         model: PartosModel,
                         as: 'parto',

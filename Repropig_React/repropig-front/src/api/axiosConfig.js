@@ -20,4 +20,22 @@ apiAxios.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+apiAxios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            const url = error.config?.url || '';
+            const esRutaAuth = url.includes('/auth/login') || url.includes('/auth/reset-password') || url.includes('/auth/forgot-password');
+            if (!esRutaAuth) {
+                sessionStorage.removeItem('token');
+                sessionStorage.removeItem('usuario');
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login?expired=1';
+                }
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default apiAxios;

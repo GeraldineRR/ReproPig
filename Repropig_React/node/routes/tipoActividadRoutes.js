@@ -7,8 +7,11 @@ import {
     toggleEstadoTipo,
     deleteTipo
 } from "../controllers/tipoActividadController.js";
+import { verificarToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
+
+router.use(verificarToken);
 
 router.get("/", getAllTipos);
 router.get("/:id", getTipo);

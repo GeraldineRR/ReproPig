@@ -86,6 +86,9 @@ function App() {
       <Route path="/Seguimiento_Cerda" element={<Navigate to="/seguimiento_cerda" replace />} />
       <Route path="/Calendario" element={<Navigate to="/calendario" replace />} />
       <Route path="/Actividades" element={<Navigate to="/tipos_actividad" replace />} />
+
+      {/* Redirección para cualquier ruta inexistente (404 fallback) */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   )
 }
