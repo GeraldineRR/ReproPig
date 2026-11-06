@@ -66,8 +66,10 @@ export const registerRevision = async (req, res) => {
             return res.status(400).json({ message: "El campo 'evento' es obligatorio" })
         }
 
+        const id = String(req.params.id || '').replace(/^:+/, '')
+
         const updated = await CalendarioService.registerRevision(
-            req.params.id,
+            id,
             evento,
             { fecha_revision, resultado, observaciones }
         )
@@ -75,7 +77,7 @@ export const registerRevision = async (req, res) => {
         res.status(200).json(updated)
 
     } catch (error) {
-        console.error(error)
+        console.error("Error en registerRevision:", error.message)
         res.status(400).json({ message: error.message })
     }
 }

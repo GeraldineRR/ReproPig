@@ -154,7 +154,8 @@ const CrudCiclos = () => {
             Id_Ciclo: sanitizedId,
             Id_Porcino: row.Id_Cerda || row.Id_Porcino || '',
             TipoCiclo: tipoCiclo,
-            activo: row.Estado || row.Estado || 'Activo',
+            activo: row.Estado || 'Activo',
+            Estado: row.Estado || 'Activo',
             nombreCerda: row.porcino?.Nom_Porcino || `Cerda #${row.Id_Cerda || ''}`,
             fechaServicio: fecha,
         }
@@ -377,8 +378,6 @@ const CrudCiclos = () => {
             motivoBaja = 'Muerte';
         } else if (estadoPorcino === 'trasladado') {
             motivoBaja = 'Traslado';
-        } else if (estadoPorcino === 'inactivo') {
-            motivoBaja = 'Descarte';
         }
 
         if (motivoBaja) {

@@ -99,6 +99,21 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
             return
         }
 
+        if (mostrarTodo) {
+            if (volumen !== '' && volumen !== null && parseFloat(volumen) < 0) {
+                MySwal.fire({ icon: 'warning', title: 'Valor inválido', text: 'El volumen no puede ser un número negativo.' });
+                return;
+            }
+            if (cant_generada !== '' && cant_generada !== null && parseFloat(cant_generada) < 0) {
+                MySwal.fire({ icon: 'warning', title: 'Valor inválido', text: 'La cantidad de pajillas no puede ser un número negativo.' });
+                return;
+            }
+            if (cant_utilizada !== '' && cant_utilizada !== null && parseFloat(cant_utilizada) < 0) {
+                MySwal.fire({ icon: 'warning', title: 'Valor inválido', text: 'La cantidad de pajillas utilizadas no puede ser un número negativo.' });
+                return;
+            }
+        }
+
         const formData = {
             Fecha,
             Uso_colecta,
@@ -272,8 +287,19 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                             <input
                                 type="number"
                                 className="form-control shadow-sm"
+                                min="0"
+                                step="any"
+                                placeholder="Ej: 150"
                                 value={volumen}
-                                onChange={e => setVolumen(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === '-' || e.key === 'e') e.preventDefault();
+                                }}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    if (val === '' || parseFloat(val) >= 0) {
+                                        setVolumen(val);
+                                    }
+                                }}
                             />
                         </div>
 
@@ -311,8 +337,18 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                         <input
                             type="number"
                             className="form-control border-primary shadow-sm"
+                            min="0"
+                            step="1"
                             value={cant_generada}
-                            onChange={e => setCant_generada(e.target.value)}
+                            onKeyDown={e => {
+                                if (e.key === '-' || e.key === 'e' || e.key === '.') e.preventDefault();
+                            }}
+                            onChange={e => {
+                                const val = e.target.value;
+                                if (val === '' || parseInt(val, 10) >= 0) {
+                                    setCant_generada(val);
+                                }
+                            }}
                             placeholder="Cantidad total disponible"
                             required
                         />

@@ -131,12 +131,6 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
         try {
             if (textFormButton === 'Guardar') {
                 await apiAxios.post('/novedades/', data);
-                
-                // Si la novedad es Muerte o Descarte, actualizar el estado del porcino
-                if (Tipo_Novedad === 'Muerte' || Tipo_Novedad === 'Descarte') {
-                    const nuevoEstado = Tipo_Novedad === 'Muerte' ? 'Muerto' : 'Inactivo';
-                    await apiAxios.put(`/porcino/${Id_Porcino}`, { Estado: nuevoEstado });
-                }
 
                 await reload();
                 MySwal.fire({
@@ -155,11 +149,6 @@ const NovedadesForm = ({ hideModal, novedadEdit, reload }) => {
                 }
                 
                 await apiAxios.put(`/novedades/${novedadEdit.Id_Novedad}`, data);
-
-                if (Tipo_Novedad === 'Muerte' || Tipo_Novedad === 'Descarte') {
-                    const nuevoEstado = Tipo_Novedad === 'Muerte' ? 'Muerto' : 'Inactivo';
-                    await apiAxios.put(`/porcino/${Id_Porcino}`, { Estado: nuevoEstado });
-                }
 
                 await reload();
                 MySwal.fire({ title: 'Actualizado', text: 'Novedad actualizada correctamente.', icon: 'success' });

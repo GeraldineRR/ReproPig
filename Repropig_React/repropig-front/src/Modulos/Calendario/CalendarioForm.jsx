@@ -36,8 +36,11 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     const nombreCerda = cData.nombreCerda || preloaded?.porcino?.Nom_Porcino || 'Sin nombre'
     const idCiclo = cData.Id_Ciclo || preloaded?.Id_Ciclo || calendario?.Id_Ciclo || ''
     const tipoCiclo = cData.TipoCiclo || preloaded?.TipoCiclo || 'Monta'
-    const activo = cData.Estado ?? preloaded?.Estado ?? 'Activo'
-    const estadoCiclo = activo === 'Activo' ? 'Activo' : 'Inactivo'
+    const activo = cData.Estado ?? cData.activo ?? preloaded?.Estado ?? 'Activo'
+    const isCicloDetenido = Boolean(
+        isInactive ||
+        (activo && String(activo).trim().toLowerCase() !== 'activo')
+    )
 
     const extractDateOnly = (val) => {
         if (!val) return ''
@@ -440,15 +443,31 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
 
         setLoading(true)
         try {
-            // Si no existe calendario, crearlo primero
+            // Si no existe calendario en el estado local, asegurar su existencia
             let cal = calendario
-            if (!cal) {
+            if (!cal || !cal.Id_Calendario) {
                 cal = await crearCalendario()
-                if (!cal) {
-                    MySwal.fire({ icon: 'error', title: 'Error', text: 'No se pudo crear el calendario. Verifica que el ciclo tenga una fecha de servicio.' })
-                    setLoading(false)
-                    return
+            }
+            if (!cal || !cal.Id_Calendario) {
+                try {
+                    const res = await apiAxios.get(`/calendario/ciclo/${resolvedIdCiclo}`)
+                    if (res.data) {
+                        cal = res.data
+                        setCalendario(res.data)
+                    }
+                } catch (e) {
+                    console.error("Error buscando calendario existente:", e)
                 }
+            }
+
+            if (!cal || !cal.Id_Calendario) {
+                MySwal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo crear el calendario. Verifica que el ciclo tenga una fecha de servicio válida (registra monta o inseminación).'
+                })
+                setLoading(false)
+                return
             }
 
             let resultadoToSend = null
@@ -458,7 +477,8 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                 resultadoToSend = revSeRealizo === 'no' ? 'no_realizado' : 'realizado'
             }
 
-            const response = await apiAxios.patch(`/calendario/${cal.Id_Calendario}/revision`, {
+            const calId = cal.Id_Calendario || cal.id || cal.id_calendario
+            const response = await apiAxios.put(`/calendario/${calId}/revision`, {
                 evento: revisionPanel.key,
                 fecha_revision: revFechaRevision,
                 resultado: resultadoToSend,
@@ -494,10 +514,12 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
             reload && reload()
 
         } catch (error) {
+            console.error("Error al guardar revisión:", error)
+            const msg = error.response?.data?.message || error.message || 'Error al guardar la revisión'
             MySwal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: error.response?.data?.message || 'Error al guardar la revisión'
+                text: msg
             })
         }
         setLoading(false)

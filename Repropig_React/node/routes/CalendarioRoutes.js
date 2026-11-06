@@ -11,6 +11,7 @@ router.get('/ciclo/:idCiclo', getCalendarioByCiclo);
 router.get('/:id', getCalendario);
 router.post('/', createCalendario);
 router.put('/:id', updateCalendario);
+router.put('/:id/revision', registerRevision);
 router.patch('/:id/revision', registerRevision);
 router.delete('/:id', deleteCalendario);
 

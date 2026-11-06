@@ -20,8 +20,11 @@ class ciclosService {
                 attributes: ['Id_Porcino', 'Tipo_Novedad']
             });
 
-            if (novedadesBaja && novedadesBaja.length > 0) {
-                const idsBaja = [...new Set(novedadesBaja.map(n => n.Id_Porcino))];
+            const idsBaja = novedadesBaja && novedadesBaja.length > 0
+                ? [...new Set(novedadesBaja.map(n => n.Id_Porcino))]
+                : [];
+
+            if (idsBaja.length > 0) {
                 await ciclosModel.update(
                     { Estado: 'Inactivo' },
                     {
@@ -40,24 +43,42 @@ class ciclosService {
                 }
             }
 
-            // También para cualquier porcino con Estado Muerto, Trasladado o Inactivo
+            // Revisar porcinos que estén marcados como Muerto, Trasladado o Inactivo
             const porcinosNoActivos = await PorcinoModel.findAll({
                 where: {
                     Estado: ['Muerto', 'Trasladado', 'Inactivo']
                 },
-                attributes: ['Id_Porcino']
+                attributes: ['Id_Porcino', 'Estado']
             });
-            if (porcinosNoActivos && porcinosNoActivos.length > 0) {
-                const idsNoActivos = porcinosNoActivos.map(p => p.Id_Porcino);
-                await ciclosModel.update(
-                    { Estado: 'Inactivo' },
-                    {
-                        where: {
-                            Id_Cerda: idsNoActivos,
-                            Estado: 'Activo'
+
+            // Si hay algún porcino marcado como Inactivo/Muerto/Trasladado que ya NO tiene novedad de baja
+            // (por ejemplo, porque se editó la novedad de Descarte a Lesión o se eliminó),
+            // restaurarlo a Activo y restablecer su ciclo reproductivo activo más reciente si no está finalizado.
+            const porcinosSinBaja = porcinosNoActivos.filter(p => !idsBaja.includes(p.Id_Porcino));
+            for (const p of porcinosSinBaja) {
+                await PorcinoModel.update({ Estado: 'Activo' }, { where: { Id_Porcino: p.Id_Porcino } });
+
+                const cicloActivoExistente = await ciclosModel.findOne({
+                    where: { Id_Cerda: p.Id_Porcino, Estado: 'Activo' }
+                });
+
+                if (!cicloActivoExistente) {
+                    const ultimoCiclo = await ciclosModel.findOne({
+                        where: { Id_Cerda: p.Id_Porcino },
+                        order: [['Id_Ciclo', 'DESC']]
+                    });
+
+                    if (ultimoCiclo) {
+                        const hayParto = (await PartosModel.count({ where: { Id_Ciclo: ultimoCiclo.Id_Ciclo } })) > 0;
+                        const cal = await CalendarioModel.findOne({ where: { Id_Ciclo: ultimoCiclo.Id_Ciclo } });
+                        const tienePartoReal = Boolean(cal && cal.real_parto);
+                        const tieneRecelo = Boolean(cal && (cal.resultado_rc1 === 'recelo_detectado' || cal.resultado_rc2 === 'recelo_detectado'));
+
+                        if (!hayParto && !tienePartoReal && !tieneRecelo) {
+                            await ultimoCiclo.update({ Estado: 'Activo' });
                         }
                     }
-                );
+                }
             }
         } catch (syncErr) {
             console.error('Error sincronizando estados de ciclos y novedades:', syncErr);
