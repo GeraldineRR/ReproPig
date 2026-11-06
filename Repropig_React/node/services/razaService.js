@@ -1,4 +1,5 @@
 import RazaModel from "../models/razaModel.js"
+import { Op } from "sequelize"
 
 class RazaService {
 
@@ -15,26 +16,34 @@ class RazaService {
     }
 
     async create(data) {
-    const existe = await RazaModel.findOne({
-        where: { Nom_Raza: data.Nom_Raza }
-    })
+        const nombreTrim = data.Nom_Raza ? data.Nom_Raza.trim() : '';
+        if (!nombreTrim) throw new Error('El nombre de la raza es obligatorio');
 
-    if (existe) {
-        throw new Error('La raza ya existe')
+        const existe = await RazaModel.findOne({
+            where: { Nom_Raza: nombreTrim }
+        })
+
+        if (existe) {
+            throw new Error('La raza ya existe')
+        }
+
+        return await RazaModel.create({ ...data, Nom_Raza: nombreTrim });
     }
-
-    return await RazaModel.create(data);
-}
 
     async update(id, data) {
         const raza = await RazaModel.findByPk(id)
         if (!raza) throw new Error('Raza no encontrada')
 
-        if (data.Nom_Raza && data.Nom_Raza.trim() !== raza.Nom_Raza) {
+        if (data.Nom_Raza) {
+            const nombreTrim = data.Nom_Raza.trim()
             const existe = await RazaModel.findOne({
-                where: { Nom_Raza: data.Nom_Raza.trim() }
+                where: {
+                    Nom_Raza: nombreTrim,
+                    Id_Raza: { [Op.ne]: id }
+                }
             })
-            if (existe) throw new Error('Ya existe una raza con este nombre')
+            if (existe) throw new Error('Ya existe otra raza con este nombre')
+            data.Nom_Raza = nombreTrim
         }
 
         await raza.update(data)
