@@ -169,10 +169,8 @@ if (data.Id_Ciclo) {
 
     async update(id, data) {
         const partoAnterior = await PartosModel.findByPk(id)
-        const result = await PartosModel.update(data, { where: { Id_parto: id } })
-        const update = result[0]
-
-        if (update === 0) throw new Error("Parto no encontrado o sin cambios")
+        if (!partoAnterior) throw new Error("Parto no encontrado")
+        await PartosModel.update(data, { where: { Id_parto: id } })
 
         // Sincronizar fecha de revisión en el Calendario
         const idCiclo = data.Id_Ciclo || partoAnterior?.Id_Ciclo

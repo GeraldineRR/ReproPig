@@ -17,11 +17,9 @@ class MedicamentosService {
     }
 
     async update(id, data) {
-        const result = await MedicamentosModel.update(data, {where: { Id_Medicamento: id } })
-        const update = result[0]
-
-        if (update === 0) throw new Error("Medicamento no encontrado o sin cambios")
-
+        const med = await MedicamentosModel.findByPk(id)
+        if (!med) throw new Error("Medicamento no encontrado")
+        await med.update(data)
         return true
     }
     async delete (id){

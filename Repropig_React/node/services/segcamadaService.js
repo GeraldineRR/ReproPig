@@ -80,10 +80,7 @@ class SegcamadaService {
             throw new Error('No se puede editar: Existe un seguimiento posterior para este cerdo');
         }
 
-        const result = await SegcamadaModel.update(data, { where: { Id_SegCamada: id } })
-        const update = result[0]
-
-        if (update === 0) throw new Error('Camada no encontrada o sin cambios')
+        await SegcamadaModel.update(data, { where: { Id_SegCamada: id } })
         return true
     }
 

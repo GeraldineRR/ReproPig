@@ -27,11 +27,18 @@ class RazaService {
 }
 
     async update(id, data) {
-        const result = await RazaModel.update(data, { where: { Id_Raza: id } })
-        const update = result[0]
+        const raza = await RazaModel.findByPk(id)
+        if (!raza) throw new Error('Raza no encontrada')
 
-        if (update === 0) throw new Error('Raza no encontrada o sin cambios')
-        return true
+        if (data.Nom_Raza && data.Nom_Raza.trim() !== raza.Nom_Raza) {
+            const existe = await RazaModel.findOne({
+                where: { Nom_Raza: data.Nom_Raza.trim() }
+            })
+            if (existe) throw new Error('Ya existe una raza con este nombre')
+        }
+
+        await raza.update(data)
+        return raza
     }
 
     async delete(id) {

@@ -88,10 +88,9 @@ class CalendarioService {
             data.parto = eventos.parto;
         }
 
-        const result = await CalendarioModel.update(data, { where: { Id_Calendario: id } })
-        const updated = result[0]
-
-        if (updated === 0) throw new Error('Calendario no encontrado o sin cambios')
+        const calItem = await CalendarioModel.findByPk(id)
+        if (!calItem) throw new Error('Calendario no encontrado')
+        await CalendarioModel.update(data, { where: { Id_Calendario: id } })
         return true
     }
 

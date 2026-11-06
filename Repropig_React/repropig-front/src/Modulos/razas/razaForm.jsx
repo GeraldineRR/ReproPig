@@ -69,7 +69,7 @@ const RazaForm = ({ hideModal, razaEdit, reload }) => {
                     return
                 }
 
-                await apiAxios.put(`/razas/${razaEdit.Id_Raza}`, {
+                await apiAxios.put(`/raza/${razaEdit.Id_Raza}`, {
                     Nom_Raza
                 })
 

@@ -132,22 +132,54 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }))
 
+// ====== Rutas API y sus alias singulares/plurales/minúsculas ======
 app.use('/api/porcino', porcinoRoutes)
+app.use('/api/porcinos', porcinoRoutes)
+
 app.use('/api/raza', razaRoutes)
+app.use('/api/razas', razaRoutes)
+
 app.use('/api/medicamentos', MedicamentosRoutes)
+app.use('/api/medicamento', MedicamentosRoutes)
+
 app.use('/api/ciclos', ciclosRoutes)
+app.use('/api/ciclo', ciclosRoutes)
+
 app.use('/api/colectas', colectaRoutes)
+app.use('/api/colecta', colectaRoutes)
+
 app.use('/api/monta', montaRoutes)
+app.use('/api/montas', montaRoutes)
+
 app.use('/api/inseminacion', inseminacionRoutes)
+app.use('/api/inseminaciones', inseminacionRoutes)
+
 app.use('/api/Partos', PartosRoutes)
+app.use('/api/partos', PartosRoutes)
+app.use('/api/parto', PartosRoutes)
+
 app.use('/api/responsables', responsablesRoutes)
+app.use('/api/responsable', responsablesRoutes)
+
 app.use('/api/actividades_camada', actividadesCamadaRoutes)
+app.use('/api/actividad_camada', actividadesCamadaRoutes)
+
 app.use('/api/Seguimiento_Cerda', Seguimiento_CerdaRoutes)
+app.use('/api/seguimiento_cerda', Seguimiento_CerdaRoutes)
+
 app.use('/api/auth', authRoutes)
+
 app.use('/api/calendario', calendarioRoutes)
+app.use('/api/calendarios', calendarioRoutes)
+
 app.use('/api/novedades', novedadesRoutes)
+app.use('/api/novedad', novedadesRoutes)
+
 app.use('/api/segcamada', segcamadaRoutes)
+app.use('/api/seguimiento_camada', segcamadaRoutes)
+
 app.use('/api/tipos_actividad', tipoActividadRoutes)
+app.use('/api/tipo_actividad', tipoActividadRoutes)
 
 app.get('/', (req, res) => {
     res.send('Hola mundo ADSO')
