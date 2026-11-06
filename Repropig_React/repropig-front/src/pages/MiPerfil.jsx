@@ -8,6 +8,7 @@ function ModalCambioContrasena({ onCerrar }) {
     const { usuario, token } = useAuth()
     const [form, setForm] = useState({ actual: "", nueva: "", confirmar: "" })
     const [mostrar, setMostrar] = useState({ actual: false, nueva: false, confirmar: false })
+    const [aceptaPoliticas, setAceptaPoliticas] = useState(false)
     const [error, setError] = useState("")
     const [exito, setExito] = useState("")
     const [cargando, setCargando] = useState(false)
@@ -29,6 +30,8 @@ function ModalCambioContrasena({ onCerrar }) {
             return "La nueva contraseña debe tener al menos 6 caracteres."
         if (form.nueva !== form.confirmar)
             return "La nueva contraseña y la confirmación no coinciden."
+        if (!aceptaPoliticas)
+            return "Debes aceptar los Términos y Condiciones y la Política de Privacidad del SENA."
         return null
     }
 
@@ -45,6 +48,7 @@ function ModalCambioContrasena({ onCerrar }) {
             )
             setExito("¡Contraseña actualizada correctamente!")
             setForm({ actual: "", nueva: "", confirmar: "" })
+            setAceptaPoliticas(false)
         } catch (err) {
             const msg = err?.response?.data?.message || "Error al cambiar la contraseña. Verifica tu contraseña actual."
             setError(msg)
@@ -110,6 +114,41 @@ function ModalCambioContrasena({ onCerrar }) {
                     ))}
                 </div>
 
+                {/* Aceptación de Términos y Políticas */}
+                <div className="mt-4 flex items-start gap-2.5 bg-gray-50/70 p-3 rounded-xl border border-gray-100">
+                    <input
+                        type="checkbox"
+                        id="aceptaPoliticasPerfil"
+                        checked={aceptaPoliticas}
+                        onChange={(e) => {
+                            setAceptaPoliticas(e.target.checked)
+                            setError("")
+                        }}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-pink-600 focus:ring-pink-400 cursor-pointer"
+                    />
+                    <label htmlFor="aceptaPoliticasPerfil" className="text-xs text-gray-600 cursor-pointer leading-relaxed select-none">
+                        Acepto los{" "}
+                        <a
+                            href="/terminos-condiciones"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-600 underline font-semibold hover:text-pink-700"
+                        >
+                            Términos y Condiciones
+                        </a>{" "}
+                        y la{" "}
+                        <a
+                            href="/politica-privacidad"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-pink-600 underline font-semibold hover:text-pink-700"
+                        >
+                            Política de Privacidad
+                        </a>{" "}
+                        del SENA.
+                    </label>
+                </div>
+
                 {/* Mensajes */}
                 {error && (
                     <div className="mt-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
@@ -134,7 +173,7 @@ function ModalCambioContrasena({ onCerrar }) {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={cargando}
+                        disabled={cargando || !aceptaPoliticas}
                         className="flex-1 py-2.5 rounded-xl bg-pink-500 text-white font-bold text-sm shadow-sm hover:bg-pink-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         {cargando
