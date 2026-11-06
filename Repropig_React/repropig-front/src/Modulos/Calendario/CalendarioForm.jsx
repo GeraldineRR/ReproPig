@@ -395,7 +395,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     const abrirPanelRevision = (evento, data) => {
         setRevisionPanel(evento)
         setRevFechaRevision(data.fechaReal || new Date().toISOString().split('T')[0])
-        setRevResultado(data.resultado || '')
+        setRevResultado(data.resultado || (evento.esRecelo ? 'no_recelo' : ''))
         if (evento.esOpcionalRealizado) {
             setRevSeRealizo(data.resultado === 'no_realizado' ? 'no' : 'si')
         } else {
@@ -730,13 +730,14 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                                         ¿Presentó recelo? <span className="required">*</span>
                                     </label>
                                     <div className="cal-radio-group">
-                                        <div
+                                        <label
                                             className={`cal-radio-option ${revResultado === 'no_recelo' ? 'selected-no-recelo' : ''}`}
-                                            onClick={() => setRevResultado('no_recelo')}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             <input
                                                 type="radio"
                                                 name="resultado_recelo"
+                                                value="no_recelo"
                                                 checked={revResultado === 'no_recelo'}
                                                 onChange={() => setRevResultado('no_recelo')}
                                             />
@@ -744,15 +745,16 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                                                 <span className="cal-radio-label">🟢 No presentó recelo</span>
                                                 <span className="cal-radio-desc">La cerda no mostró signos de celo</span>
                                             </div>
-                                        </div>
+                                        </label>
 
-                                        <div
+                                        <label
                                             className={`cal-radio-option ${revResultado === 'recelo_detectado' ? 'selected-recelo' : ''}`}
-                                            onClick={() => setRevResultado('recelo_detectado')}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             <input
                                                 type="radio"
                                                 name="resultado_recelo"
+                                                value="recelo_detectado"
                                                 checked={revResultado === 'recelo_detectado'}
                                                 onChange={() => setRevResultado('recelo_detectado')}
                                             />
@@ -760,7 +762,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                                                 <span className="cal-radio-label">🔴 Sí presentó recelo</span>
                                                 <span className="cal-radio-desc">La cerda volvió a entrar en celo</span>
                                             </div>
-                                        </div>
+                                        </label>
                                     </div>
                                 </div>
                             )}
@@ -772,13 +774,14 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                                         ¿Se realizó {revisionPanel.nombre.toLowerCase()}? <span className="required">*</span>
                                     </label>
                                     <div className="cal-radio-group">
-                                        <div
+                                        <label
                                             className={`cal-radio-option ${revSeRealizo === 'si' ? 'selected-no-recelo' : ''}`}
-                                            onClick={() => setRevSeRealizo('si')}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             <input
                                                 type="radio"
                                                 name="se_realizo_actividad"
+                                                value="si"
                                                 checked={revSeRealizo === 'si'}
                                                 onChange={() => setRevSeRealizo('si')}
                                             />
@@ -790,15 +793,16 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                                                         : 'La cerda fue trasladada a la sala de lactancia.'}
                                                 </span>
                                             </div>
-                                        </div>
+                                        </label>
 
-                                        <div
+                                        <label
                                             className={`cal-radio-option ${revSeRealizo === 'no' ? 'selected-recelo' : ''}`}
-                                            onClick={() => setRevSeRealizo('no')}
+                                            style={{ cursor: 'pointer' }}
                                         >
                                             <input
                                                 type="radio"
                                                 name="se_realizo_actividad"
+                                                value="no"
                                                 checked={revSeRealizo === 'no'}
                                                 onChange={() => setRevSeRealizo('no')}
                                             />
@@ -810,7 +814,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                                                         : 'Hubo complicación, indisponibilidad de insumo o prescripción especial.'}
                                                 </span>
                                             </div>
-                                        </div>
+                                        </label>
                                     </div>
                                 </div>
                             )}

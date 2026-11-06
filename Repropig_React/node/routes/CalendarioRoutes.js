@@ -10,9 +10,9 @@ router.get('/', getAllCalendario);
 router.get('/ciclo/:idCiclo', getCalendarioByCiclo);
 router.get('/:id', getCalendario);
 router.post('/', createCalendario);
-router.put('/:id', updateCalendario);
 router.put('/:id/revision', registerRevision);
 router.patch('/:id/revision', registerRevision);
+router.put('/:id', updateCalendario);
 router.delete('/:id', deleteCalendario);
 
 export default router;

@@ -109,6 +109,7 @@ import segcamadaRoutes from './routes/segcamadaRoutes.js'
 import tipoActividadRoutes from './routes/tipoActividadRoutes.js'
 
 const app = express()
+app.set('trust proxy', 1)
 
 const allowedOrigins = [
     'https://repropiglagranja.com',
