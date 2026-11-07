@@ -69,10 +69,10 @@ const Dashboard = () => {
   });
 
   const [tableroData, setTableroData] = useState({
-    proximas: [],
-    gestantes: [],
-    recelo: [],
-    lactantes: []
+    recelo1: [],
+    recelo2: [],
+    cambioAlimento: [],
+    trasladoLactancia: []
   });
 
   const cargarDatos = async () => {
@@ -138,11 +138,11 @@ const Dashboard = () => {
         cerdasMalas: malas
       })
 
-      // Agrupar cerdas en el Tablero de Control Reproductivo
-      const proximas = []
-      const gestantes = []
-      const recelo = []
-      const lactantes = []
+      // Agrupar cerdas en el Tablero de Control Reproductivo según etapas cronológicas
+      const recelo1 = []
+      const recelo2 = []
+      const cambioAlimento = []
+      const trasladoLactancia = []
 
       ciclos.data.forEach(c => {
         const estadoLower = (c.Estado || '').toLowerCase()
@@ -178,18 +178,18 @@ const Dashboard = () => {
           partoObj: c.partos?.[0] || null
         }
 
-        if (c.calendario?.real_parto || estadoLower === 'lactante') {
-          lactantes.push(item)
-        } else if (diasGestacion >= 107) {
-          proximas.push(item)
-        } else if (diasGestacion >= 42) {
-          gestantes.push(item)
+        if (c.calendario?.real_parto || estadoLower === 'lactante' || diasGestacion >= 107) {
+          trasladoLactancia.push(item)
+        } else if (diasGestacion >= 43) {
+          cambioAlimento.push(item)
+        } else if (diasGestacion >= 22) {
+          recelo2.push(item)
         } else {
-          recelo.push(item)
+          recelo1.push(item)
         }
       })
 
-      setTableroData({ proximas, gestantes, recelo, lactantes })
+      setTableroData({ recelo1, recelo2, cambioAlimento, trasladoLactancia })
 
       const ultimas = [...ciclos.data].reverse().slice(0, 5)
       setUltimasCiclos(ultimas)
@@ -331,44 +331,44 @@ const Dashboard = () => {
 
     const columnas = [
       {
-        titulo: "🚨 Próximas a Parir (Día 107+)",
-        badgeBg: "bg-red-500 text-white",
-        borderColor: "border-red-200",
-        headerBg: "bg-red-50",
-        items: tableroData.proximas,
-        icono: "⚠️",
-        btnTexto: "Registrar Parto",
-        btnRuta: "/partos"
-      },
-      {
-        titulo: "🤰 En Gestación (Día 42 - 106)",
-        badgeBg: "bg-blue-600 text-white",
-        borderColor: "border-blue-200",
-        headerBg: "bg-blue-50",
-        items: tableroData.gestantes,
-        icono: "🤰",
-        btnTexto: "Ver Calendario",
-        btnRuta: "/calendario"
-      },
-      {
-        titulo: "🔍 Revisión de Celo (Día 1 - 41)",
+        titulo: "🔍 1ª Revisión de Celo (Día 1 - 21)",
         badgeBg: "bg-amber-500 text-white",
         borderColor: "border-amber-200",
         headerBg: "bg-amber-50",
-        items: tableroData.recelo,
+        items: tableroData.recelo1,
         icono: "🔍",
         btnTexto: "Revisar Celo",
-        btnRuta: "/calendario"
+        btnRuta: "/ciclos"
       },
       {
-        titulo: "🐽 En Lactancia / Parto",
-        badgeBg: "bg-emerald-600 text-white",
-        borderColor: "border-emerald-200",
-        headerBg: "bg-emerald-50",
-        items: tableroData.lactantes,
-        icono: "🐽",
-        btnTexto: "Ver Camada",
-        btnRuta: "/actividades_camada"
+        titulo: "🔍 2ª Revisión de Celo (Día 22 - 42)",
+        badgeBg: "bg-orange-500 text-white",
+        borderColor: "border-orange-200",
+        headerBg: "bg-orange-50",
+        items: tableroData.recelo2,
+        icono: "🔍",
+        btnTexto: "Revisar Celo",
+        btnRuta: "/ciclos"
+      },
+      {
+        titulo: "🌽 Cambio de Alimento (Día 43 - 100)",
+        badgeBg: "bg-blue-600 text-white",
+        borderColor: "border-blue-200",
+        headerBg: "bg-blue-50",
+        items: tableroData.cambioAlimento,
+        icono: "🌽",
+        btnTexto: "Ver Calendario",
+        btnRuta: "/ciclos"
+      },
+      {
+        titulo: "🚨 Traslado a Lactancia / Próx. a Parir (Día 107 - 114)",
+        badgeBg: "bg-rose-500 text-white",
+        borderColor: "border-rose-200",
+        headerBg: "bg-rose-50",
+        items: tableroData.trasladoLactancia,
+        icono: "🚨",
+        btnTexto: "Registrar Parto",
+        btnRuta: "/partos"
       }
     ];
 
@@ -382,8 +382,8 @@ const Dashboard = () => {
             <h3 className="text-xl sm:text-2xl font-black text-gray-800 tracking-tight">Monitoreo de Cerdas en Tiempo Real</h3>
             <p className="text-xs sm:text-sm text-gray-500">Estado de gestación, recelo, partos y lactancia del plantel porcino</p>
           </div>
-          <button onClick={() => navigate('/calendario')} className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-xs w-full sm:w-auto text-center cursor-pointer">
-            📅 Abrir Calendario Completo
+          <button onClick={() => navigate('/ciclos')} className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all shadow-xs w-full sm:w-auto text-center cursor-pointer">
+            📅 Abrir Ciclos Reproductivos
           </button>
         </div>
 
@@ -391,7 +391,7 @@ const Dashboard = () => {
           {columnas.map((col, idx) => (
             <div key={idx} className={`rounded-2xl border ${col.borderColor} bg-slate-50/50 overflow-hidden flex flex-col`}>
               <div className={`${col.headerBg} p-3 sm:p-4 border-b ${col.borderColor} flex items-center justify-between`}>
-                <span className="font-bold text-gray-800 text-xs sm:text-sm truncate">{col.titulo}</span>
+                <span className="font-bold text-gray-800 text-xs sm:text-sm truncate" title={col.titulo}>{col.titulo}</span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-black shadow-xs ${col.badgeBg}`}>
                   {col.items.length}
                 </span>
@@ -412,7 +412,7 @@ const Dashboard = () => {
                         </span>
                       </div>
 
-                      {col.titulo.includes("Lactancia") ? (
+                      {item.realParto ? (
                         <div className="text-xs text-gray-500 space-y-1 mb-3">
                           <p>📅 Parto real: <strong className="text-gray-800">{item.realParto || 'Registrado'}</strong></p>
                           {item.partoObj && (
@@ -433,8 +433,25 @@ const Dashboard = () => {
                       )}
 
                       <div className="flex gap-2">
-                        <button onClick={() => navigate(col.btnRuta)} className="flex-1 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[11px] font-bold py-1.5 rounded-lg transition-colors text-center">
-                          {col.btnTexto}
+                        <button
+                          onClick={() => {
+                            if (item.realParto) {
+                              navigate('/actividades_camada');
+                            } else if (col.btnTexto === "Registrar Parto") {
+                              navigate('/partos');
+                            } else {
+                              navigate('/ciclos', {
+                                state: {
+                                  Id_Ciclo: item.idCiclo,
+                                  abrirCalendarioCicloId: item.idCiclo,
+                                  abrirCalendario: true
+                                }
+                              });
+                            }
+                          }}
+                          className="flex-1 bg-pink-50 hover:bg-pink-100 text-pink-700 text-[11px] font-bold py-1.5 rounded-lg transition-colors text-center cursor-pointer"
+                        >
+                          {item.realParto ? "Ver Camada" : col.btnTexto}
                         </button>
                         <button onClick={() => navigate(`/perfil-cerda/${item.idCerda}`)} className="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2 py-1.5 rounded-lg text-xs" title="Ver Perfil Cerda">
                           👁️

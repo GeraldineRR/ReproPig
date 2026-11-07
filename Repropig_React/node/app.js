@@ -69,6 +69,9 @@ SeguimientoCerda_Model.belongsTo(PorcinoModel, { foreignKey: 'Id_Porcino', as: '
 MedicamentosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Medicamento', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(MedicamentosModel, { foreignKey: 'Id_Medicamento', as: 'medicamentos' })
 
+SeguimientoCerda_Model.belongsTo(TipoActividadModel, { foreignKey: 'Id_Tipo', as: 'tipo_actividad' })
+TipoActividadModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Tipo', as: 'seguimientos_cerda' })
+
 ciclosModel.hasMany(SeguimientoCerda_Model, { foreignKey: 'Id_Ciclo', as: 'seguimiento_cerda' })
 SeguimientoCerda_Model.belongsTo(ciclosModel, { foreignKey: 'Id_Ciclo', as: 'ciclo' })
 

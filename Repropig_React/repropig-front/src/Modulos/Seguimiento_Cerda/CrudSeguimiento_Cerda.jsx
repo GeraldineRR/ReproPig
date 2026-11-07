@@ -14,7 +14,6 @@ import {
     TbSearch,
     TbPlus,
     TbPencil,
-    TbPower,
     TbArrowLeft
 } from "react-icons/tb";
 
@@ -26,6 +25,7 @@ const CrudSeguimiento_Cerda = () => {
     const [porcinos, setPorcinos] = useState([]);
     const [responsables, setResponsables] = useState([]);
     const [medicamentos, setMedicamentos] = useState([]);
+    const [tiposActividad, setTiposActividad] = useState([]);
     const [Seguimiento_CerdaEdit, setSeguimiento_CerdaEdit] = useState(null);
     const [filterText, setFilterText] = useState("");
     const [modalKey, setModalKey] = useState(0);
@@ -48,10 +48,11 @@ const CrudSeguimiento_Cerda = () => {
                 apiAxios.get(url),
                 apiAxios.get("/porcino/"),
                 apiAxios.get("/responsables/"),
-                apiAxios.get("/medicamentos/")
+                apiAxios.get("/medicamentos/"),
+                apiAxios.get("/tipos_actividad/")
             ]);
 
-            const [segRes, porcRes, respRes, medRes] = results;
+            const [segRes, porcRes, respRes, medRes, tipRes] = results;
 
             if (segRes.status === "fulfilled") {
                 setSeguimiento_Cerda(Array.isArray(segRes.value.data) ? segRes.value.data : []);
@@ -70,6 +71,10 @@ const CrudSeguimiento_Cerda = () => {
 
             if (medRes.status === "fulfilled") {
                 setMedicamentos(Array.isArray(medRes.value.data) ? medRes.value.data : []);
+            }
+
+            if (tipRes && tipRes.status === "fulfilled") {
+                setTiposActividad(Array.isArray(tipRes.value.data) ? tipRes.value.data : []);
             }
         } catch (error) {
             console.error("Error general al obtener seguimientos:", error);
@@ -122,6 +127,16 @@ const CrudSeguimiento_Cerda = () => {
         });
         return map;
     }, [medicamentos]);
+
+    const tiposActividadMap = useMemo(() => {
+        const map = {};
+        tiposActividad.forEach(t => {
+            if (t && t.Id_Tipo != null) {
+                map[String(t.Id_Tipo)] = t;
+            }
+        });
+        return map;
+    }, [tiposActividad]);
 
     // Extrae IDs de campos que pueden venir como número, string, array o JSON string
     const parseIds = (val) => {
@@ -183,49 +198,6 @@ const CrudSeguimiento_Cerda = () => {
     };
 
     // ==========================================
-    // CAMBIAR ESTADO
-    // ==========================================
-    const toggleEstado = async (row) => {
-        const esActivo =
-            row.Estado === "Activo" ||
-            row.Estado === "A" ||
-            !row.Estado;
-
-        const accion = esActivo ? "inactivar" : "activar";
-
-        const result = await MySwal.fire({
-            title: `¿Deseas ${accion} este seguimiento de cerda?`,
-            text: `El seguimiento pasará a estar ${esActivo ? "Inactivo" : "Activo"}.`,
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonColor: esActivo ? "#d33" : "#198754",
-            cancelButtonColor: "#6c757d",
-            confirmButtonText: `Sí, ${accion}`,
-            cancelButtonText: "Cancelar"
-        });
-
-        if (!result.isConfirmed) return;
-
-        try {
-            await apiAxios.put(`/Seguimiento_Cerda/${row.Id_Seguimiento_Cerda}/toggle-estado`);
-            await MySwal.fire({
-                icon: "success",
-                title: "Estado actualizado",
-                timer: 1500,
-                showConfirmButton: false
-            });
-            getAllSeguimiento_Cerda();
-        } catch (error) {
-            console.error("Error cambiando estado:", error.response?.data || error.message);
-            MySwal.fire({
-                icon: "error",
-                title: "Error",
-                text: error.response?.data?.message || "No se pudo cambiar el estado."
-            });
-        }
-    };
-
-    // ==========================================
     // MODAL EDITAR / NUEVO / CERRAR
     // ==========================================
     const handleEdit = (row) => {
@@ -272,8 +244,11 @@ const CrudSeguimiento_Cerda = () => {
             const rawFecha = String(row.Fecha || "").toLowerCase();
             const horaStr = String(row.Hora || "").toLowerCase();
             const obs = String(row.Observaciones || "").toLowerCase();
-            const estado = String(row.Estado || "").toLowerCase();
-            const ciclo = String(row.Id_Ciclo || "").toLowerCase();
+
+            // Actividad
+            const nomActividad = String(
+                row.tipo_actividad?.Nombre || tiposActividadMap[String(row.Id_Tipo)]?.Nombre || ""
+            ).toLowerCase();
 
             // Cerda
             const cerda = porcinosMap[String(row.Id_Porcino)];
@@ -291,17 +266,16 @@ const CrudSeguimiento_Cerda = () => {
                 nomCerda.includes(query) ||
                 chapeta.includes(query) ||
                 idPorcino.includes(query) ||
+                nomActividad.includes(query) ||
                 respNames.includes(query) ||
                 medNames.includes(query) ||
                 fechaStr.includes(query) ||
                 rawFecha.includes(query) ||
                 horaStr.includes(query) ||
-                obs.includes(query) ||
-                estado.includes(query) ||
-                ciclo.includes(query)
+                obs.includes(query)
             );
         });
-    }, [Seguimiento_Cerda, filterText, porcinosMap, responsablesMap, medicamentosMap]);
+    }, [Seguimiento_Cerda, filterText, porcinosMap, responsablesMap, medicamentosMap, tiposActividadMap]);
 
     // ==========================================
     // COLUMNAS (Sin columna Id)
@@ -358,18 +332,20 @@ const CrudSeguimiento_Cerda = () => {
             minWidth: "170px"
         },
         {
-            name: "Ciclo",
-            selector: row => row.Id_Ciclo || 0,
+            name: "Actividad",
+            selector: row => row.tipo_actividad?.Nombre || tiposActividadMap[String(row.Id_Tipo)]?.Nombre || "",
             sortable: true,
-            cell: row =>
-                row.Id_Ciclo ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                        #{row.Id_Ciclo}
+            cell: row => {
+                const nombreTipo = row.tipo_actividad?.Nombre || tiposActividadMap[String(row.Id_Tipo)]?.Nombre;
+                return nombreTipo ? (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200/80">
+                        {nombreTipo}
                     </span>
                 ) : (
                     <span className="text-gray-400 text-xs">—</span>
-                ),
-            width: "95px"
+                );
+            },
+            minWidth: "160px"
         },
         {
             name: "Responsables",
@@ -439,32 +415,6 @@ const CrudSeguimiento_Cerda = () => {
             grow: 2
         },
         {
-            name: "Estado",
-            cell: row => {
-                const esActivo =
-                    row.Estado === "Activo" ||
-                    row.Estado === "A" ||
-                    !row.Estado;
-
-                return (
-                    <button
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
-                            esActivo
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80 hover:bg-emerald-100"
-                                : "bg-rose-50 text-rose-700 border border-rose-200/80 hover:bg-rose-100"
-                        }`}
-                        onClick={() => toggleEstado(row)}
-                        title="Clic para cambiar estado"
-                    >
-                        <span className={`w-1.5 h-1.5 rounded-full ${esActivo ? "bg-emerald-500" : "bg-rose-500"}`}></span>
-                        {esActivo ? "Activo" : "Inactivo"}
-                    </button>
-                );
-            },
-            width: "105px",
-            center: true
-        },
-        {
             name: "Acciones",
             cell: row => (
                 <div className="flex gap-1.5 items-center justify-end w-full">
@@ -475,24 +425,9 @@ const CrudSeguimiento_Cerda = () => {
                     >
                         <TbPencil className="w-4 h-4" />
                     </button>
-                    <button
-                        className={`w-8 h-8 flex items-center justify-center rounded-xl transition-colors shadow-xs ${
-                            row.Estado === "Inactivo" || row.Estado === "I"
-                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                        }`}
-                        onClick={() => toggleEstado(row)}
-                        title={
-                            row.Estado === "Inactivo" || row.Estado === "I"
-                                ? "Activar"
-                                : "Inactivar"
-                        }
-                    >
-                        <TbPower className="w-4 h-4" />
-                    </button>
                 </div>
             ),
-            width: "100px"
+            width: "80px"
         }
     ];
 
@@ -554,7 +489,7 @@ const CrudSeguimiento_Cerda = () => {
                             className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-2xl focus:bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-100 outline-none transition-all placeholder:text-gray-400"
                             value={filterText}
                             onChange={e => setFilterText(e.target.value)}
-                            placeholder="Buscar por cerda, responsable, medicamento..."
+                            placeholder="Buscar por cerda, actividad, responsable, medicamento..."
                         />
                     </div>
                 </div>

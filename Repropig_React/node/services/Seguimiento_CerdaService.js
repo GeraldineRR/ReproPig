@@ -4,6 +4,7 @@ import PorcinoModel from "../models/porcinoModel.js";
 import responsablesModel from "../models/responsablesModel.js";
 import MedicamentosModel from "../models/MedicamentosModel.js";
 import ciclosModel from "../models/ciclosModel.js";
+import TipoActividadModel from "../models/tipoActividadModel.js";
 
 class Seguimiento_CerdaService {
 
@@ -17,6 +18,7 @@ class Seguimiento_CerdaService {
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
                 { model: ciclosModel, as: 'ciclo' },
+                { model: TipoActividadModel, as: 'tipo_actividad' },
             ],
             order: [["Id_Seguimiento_Cerda", "DESC"]]
         });
@@ -33,6 +35,7 @@ class Seguimiento_CerdaService {
                 { model: responsablesModel, as: 'Responsables' },
                 { model: MedicamentosModel, as: 'medicamentos' },
                 { model: ciclosModel, as: 'ciclo' },
+                { model: TipoActividadModel, as: 'tipo_actividad' },
             ]
         })
         if (!Seguimiento_Cerda) throw new Error('Seguimiento_Cerda no encontrado')

@@ -53,12 +53,12 @@ export default function NotificacionesCamada() {
     const totalAtrasado = notificaciones.filter(n => n.tipo === 'atrasado').length;
     const totalHoy = notificaciones.filter(n => n.tipo === 'hoy').length;
     const totalCamada = notificaciones.filter(n => n.categoria === 'camada').length;
-    const totalCalendario = notificaciones.filter(n => n.categoria === 'calendario' || n.categoria === 'cerda').length;
+    const totalCalendario = notificaciones.filter(n => n.categoria === 'calendario').length;
 
     // Filtrar por pestaña
     const notificacionesFiltradas = notificaciones.filter(n => {
         if (filtroCategoria === "camada") return n.categoria === "camada";
-        if (filtroCategoria === "calendario") return n.categoria === "calendario" || n.categoria === "cerda";
+        if (filtroCategoria === "calendario") return n.categoria === "calendario";
         return true;
     });
 
@@ -95,9 +95,6 @@ export default function NotificacionesCamada() {
                 } else {
                     navigate('/calendario');
                 }
-            } else if (notif.categoria === 'cerda') {
-                // Notificación de seguimiento de cerda
-                navigate(notif.ruta || '/seguimiento_cerda');
             } else if (notif.ruta) {
                 navigate(notif.ruta);
             } else {
@@ -213,7 +210,7 @@ export default function NotificacionesCamada() {
                                         Alertas y Seguimiento
                                     </h3>
                                     <p style={{ margin: 0, fontSize: "11px", color: "#9d174d", fontWeight: "600" }}>
-                                        Camadas, Cerdas y Calendario
+                                        Camadas y Calendario
                                     </p>
                                 </div>
                             </div>
@@ -311,7 +308,7 @@ export default function NotificacionesCamada() {
                                     boxShadow: filtroCategoria === "calendario" ? "0 2px 6px rgba(190,24,93,0.3)" : "none"
                                 }}
                             >
-                                📅 Cerdas & Ciclos ({totalCalendario})
+                                📅 Calendario ({totalCalendario})
                             </button>
                         </div>
                     </div>
@@ -351,9 +348,7 @@ export default function NotificacionesCamada() {
 
                                 const catBadgeColor = notif.categoria === 'camada'
                                     ? { bg: "#fce7f3", text: "#9d174d", border: "#fbcfe8", label: "🍼 Camada" }
-                                    : notif.categoria === 'calendario'
-                                        ? { bg: "#ede9fe", text: "#5b21b6", border: "#ddd6fe", label: "📅 Calendario" }
-                                        : { bg: "#fef3c7", text: "#92400e", border: "#fde68a", label: "🐖 Cerda" };
+                                    : { bg: "#ede9fe", text: "#5b21b6", border: "#ddd6fe", label: "📅 Calendario" };
 
                                 return (
                                     <div
@@ -467,7 +462,7 @@ export default function NotificacionesCamada() {
                                                 color: "#64748b"
                                             }}>
                                                 <span>
-                                                    📅 {notif.fechaProgramada}
+                                                    📅 {notif.fechaProgramada || notif.fecha21 || 'Pendiente'}
                                                 </span>
                                                 <span style={{ color: "#ec4899", fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}>
                                                     Ir al módulo <i className="fa-solid fa-chevron-right" style={{ fontSize: "9px" }}></i>

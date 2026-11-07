@@ -30,6 +30,11 @@ const Seguimiento_CerdaModel = db.define(
             allowNull: true
         },
 
+        Id_Tipo: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+
         Id_Responsable: {
             type: DataTypes.TEXT,
             allowNull: true

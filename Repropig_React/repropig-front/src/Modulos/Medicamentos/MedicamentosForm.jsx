@@ -4,7 +4,7 @@ import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
-const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
+const MedicamentosForm = ({ hideModal, medicamentoEdit, reload }) => {
 
     const MySwal = withReactContent(Swal)
 
@@ -63,6 +63,10 @@ const MedicamentosForm = ({ hideModal, medicamentoEdit }) => {
                     `/medicamentos/${medicamentoEdit.Id_Medicamento}`,
                     data
                 )
+            }
+
+            if (reload) {
+                await reload()
             }
 
             MySwal.fire({

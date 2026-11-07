@@ -2,6 +2,8 @@ import { useState, useEffect } from "react"
 import apiAxios from "../../api/axiosConfig.js"
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
+import SelectorResponsables from "../../components/SelectorResponsables.jsx"
+import SelectorMedicamentos from "../../components/SelectorMedicamentos.jsx"
 
 const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => {
 
@@ -12,17 +14,14 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const [Hora, setHora] = useState('')
     const [Observaciones, setObservaciones] = useState('')
     const [Id_Porcino, setId_Porcino] = useState('')
+    const [Id_Tipo, setIdTipo] = useState('')
     const [Id_Responsable, setId_Responsable] = useState([])
     const [Id_Medicamento, setId_Medicamento] = useState([])
-    const [Id_Ciclo, setId_Ciclo] = useState('')
 
     const [porcinos, setPorcinos] = useState([])
     const [responsables, setResponsables] = useState([])
     const [medicamentos, setMedicamentos] = useState([])
-    const [ciclosActivas, setCiclosActivas] = useState([])
-
-    const [showResponsables, setShowResponsables] = useState(false)
-    const [showMedicamentos, setShowMedicamentos] = useState(false)
+    const [tiposActividad, setTiposActividad] = useState([])
 
     const [textFormButton, setTextFormButton] = useState('Enviar')
 
@@ -30,6 +29,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
         getPorcinos()
         getResponsables()
         getMedicamentos()
+        getTiposActividad()
     }, [])
 
     const parsearMultiples = (val) => {
@@ -48,25 +48,19 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             setHora(Seguimiento_CerdaEdit.Hora ?? '')
             setObservaciones(Seguimiento_CerdaEdit.Observaciones ?? '')
             setId_Porcino(Seguimiento_CerdaEdit.Id_Porcino ?? '')
+            setIdTipo(Seguimiento_CerdaEdit.Id_Tipo ?? '')
             setId_Responsable(parsearMultiples(Seguimiento_CerdaEdit.Id_Responsable))
             setId_Medicamento(parsearMultiples(Seguimiento_CerdaEdit.Id_Medicamento))
-            setId_Ciclo(Seguimiento_CerdaEdit.Id_Ciclo ?? '')
             setTextFormButton("Actualizar")
-
-            // Cargar ciclos de esa cerda para edición
-            if (Seguimiento_CerdaEdit.Id_Porcino) {
-                getCiclosActivas(Seguimiento_CerdaEdit.Id_Porcino)
-            }
         } else {
             setId_Seguimiento_Cerda('')
             setFecha('')
             setHora('')
             setObservaciones('')
             setId_Porcino('')
+            setIdTipo('')
             setId_Responsable([])
             setId_Medicamento([])
-            setId_Ciclo('')
-            setCiclosActivas([])
             setTextFormButton("Enviar")
         }
     }, [Seguimiento_CerdaEdit])
@@ -93,7 +87,6 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
     const getResponsables = async () => {
         try {
             const res = await apiAxios.get('/responsables/')
-            // Filtrar activos o si ya está seleccionado en edición
             setResponsables(res.data.filter(r =>
                 r.Estado === 'Activo' || (Seguimiento_CerdaEdit && Seguimiento_CerdaEdit.Id_Responsable === r.Id_Responsable)
             ))
@@ -105,35 +98,29 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
     const getMedicamentos = async () => {
         try {
-            const medicamentos = await apiAxios.get('/medicamentos/')
-            setMedicamentos(medicamentos.data)
+            const res = await apiAxios.get('/medicamentos/')
+            setMedicamentos(Array.isArray(res.data) ? res.data : [])
         } catch (error) {
             console.error('Error obteniendo medicamentos:', error)
             setMedicamentos([])
         }
     }
 
-    const getCiclosActivas = async (idPorcino) => {
-        if (!idPorcino) { setCiclosActivas([]); return }
+    const getTiposActividad = async () => {
         try {
-            const response = await apiAxios.get('/ciclos/')
-            const lista = Array.isArray(response.data) ? response.data : []
-            const activas = lista.filter(r =>
-                (String(r.Id_Cerda) === String(idPorcino) || String(r.porcino?.Id_Porcino) === String(idPorcino)) &&
-                (!r.Estado || (r.Estado || '').toUpperCase() === 'ACTIVO')
-            )
-            setCiclosActivas(activas)
+            const res = await apiAxios.get('/tipos_actividad/')
+            const lista = Array.isArray(res.data) ? res.data : []
+            setTiposActividad(lista.filter(t =>
+                !t.Estado || t.Estado === 'Activo' || (Seguimiento_CerdaEdit && Number(Seguimiento_CerdaEdit.Id_Tipo) === Number(t.Id_Tipo))
+            ))
         } catch (error) {
-            console.error('Error obteniendo ciclos:', error)
-            setCiclosActivas([])
+            console.error('Error obteniendo tipos de actividad:', error)
+            setTiposActividad([])
         }
     }
 
     const handlePorcinoChange = (e) => {
-        const val = e.target.value
-        setId_Porcino(val)
-        setId_Ciclo('')
-        getCiclosActivas(val)
+        setId_Porcino(e.target.value)
     }
 
     const toggleResponsable = (id) => {
@@ -164,9 +151,9 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
             Hora,
             Observaciones,
             Id_Porcino,
+            Id_Tipo: Id_Tipo ? Number(Id_Tipo) : null,
             Id_Responsable: formatMultiField(Id_Responsable),
-            Id_Medicamento: formatMultiField(Id_Medicamento),
-            Id_Ciclo: Id_Ciclo || null
+            Id_Medicamento: formatMultiField(Id_Medicamento)
         }
 
         try {
@@ -203,7 +190,7 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
 
             <div className="text-center mb-4">
                 <h5 className="fw-bold">📋 Seguimiento de Cerda</h5>
-                <small className="text-muted">Registro vinculado al ciclo</small>
+                <small className="text-muted">Trazabilidad sanitaria y tratamientos</small>
             </div>
 
             <div className="row g-3">
@@ -250,85 +237,41 @@ const Seguimiento_CerdaForm = ({ hideModal, Seguimiento_CerdaEdit, reload }) => 
                     </select>
                 </div>
 
-                {/* CICLO ACTIVO */}
+                {/* TIPO DE ACTIVIDAD */}
                 <div className="col-md-6">
-                    <label className="form-label fw-semibold">🔁 Ciclo</label>
+                    <label className="form-label fw-semibold">🏷️ Tipo de Actividad</label>
                     <select
                         className="form-select shadow-sm"
-                        value={Id_Ciclo}
-                        onChange={(e) => setId_Ciclo(e.target.value)}
+                        value={Id_Tipo}
+                        onChange={(e) => setIdTipo(e.target.value)}
                     >
-                        <option value="">
-                            {!Id_Porcino
-                                ? 'Primero seleccione una cerda'
-                                : ciclosActivas.length === 0
-                                    ? 'Sin ciclos activos'
-                                    : 'Seleccione un ciclo'}
-                        </option>
-                        {ciclosActivas.map(r => (
-                            <option key={r.Id_Ciclo} value={r.Id_Ciclo}>
-                                #{r.Id_Ciclo} — {r.TipoCiclo}
+                        <option value="">Selecciona tipo de actividad...</option>
+                        {tiposActividad.map((tipo) => (
+                            <option key={tipo.Id_Tipo} value={tipo.Id_Tipo}>
+                                {tipo.Nombre}
                             </option>
                         ))}
                     </select>
                 </div>
 
-                {/* RESPONSABLE */}
-                <div className="col-12">
-                    <label className="form-label fw-semibold d-block">
-                        👨‍🌾 Responsables ({Id_Responsable.length})
-                    </label>
-                    <div className="d-flex flex-wrap gap-2">
-                        {responsables.length === 0 ? (
-                            <span className="text-muted small">No hay responsables registrados</span>
-                        ) : (
-                            responsables.map((responsable) => {
-                                const activo = Id_Responsable.map(String).includes(String(responsable.Id_Responsable));
-                                return (
-                                    <span
-                                        key={responsable.Id_Responsable}
-                                        onClick={() => toggleResponsable(responsable.Id_Responsable)}
-                                        className={`px-3 py-1.5 rounded-pill user-select-none ${activo
-                                                ? "bg-success text-white shadow-sm fw-bold"
-                                                : "bg-white border text-secondary"
-                                            }`}
-                                        style={{ cursor: "pointer", fontSize: "13px" }}
-                                    >
-                                        {activo ? "✓ " : "+ "}{responsable.Nombres} {responsable.Apellidos || ""}
-                                    </span>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
-
                 {/* MEDICAMENTO */}
                 <div className="col-12 mt-3">
-                    <label className="form-label fw-semibold d-block">
-                        💊 Medicamentos ({Id_Medicamento.length})
-                    </label>
-                    <div className="d-flex flex-wrap gap-2">
-                        {medicamentos.length === 0 ? (
-                            <span className="text-muted small">No hay medicamentos registrados</span>
-                        ) : (
-                            medicamentos.map((medicamento) => {
-                                const activo = Id_Medicamento.map(String).includes(String(medicamento.Id_Medicamento));
-                                return (
-                                    <span
-                                        key={medicamento.Id_Medicamento}
-                                        onClick={() => toggleMedicamento(medicamento.Id_Medicamento)}
-                                        className={`px-3 py-1.5 rounded-pill user-select-none ${activo
-                                                ? "bg-success text-white shadow-sm fw-bold"
-                                                : "bg-white border text-secondary"
-                                            }`}
-                                        style={{ cursor: "pointer", fontSize: "13px" }}
-                                    >
-                                        {activo ? "✓ " : "+ "}{medicamento.Nombre}
-                                    </span>
-                                );
-                            })
-                        )}
-                    </div>
+                    <SelectorMedicamentos
+                        medicamentos={medicamentos}
+                        seleccionados={Id_Medicamento}
+                        onToggle={toggleMedicamento}
+                        className="position-relative"
+                    />
+                </div>
+
+                {/* RESPONSABLE */}
+                <div className="col-12">
+                    <SelectorResponsables
+                        responsables={responsables}
+                        seleccionados={Id_Responsable}
+                        onToggle={toggleResponsable}
+                        className="position-relative"
+                    />
                 </div>
 
                 {/* OBSERVACIONES */}

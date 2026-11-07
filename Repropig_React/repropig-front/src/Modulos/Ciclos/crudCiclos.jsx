@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom"
 import apiAxios from "../../api/axiosConfig"
 import DataTable from 'react-data-table-component'
 import { customTableStyles } from "../../styles/tableStyles.js"
@@ -27,15 +27,11 @@ const CrudCiclos = () => {
     const MySwal = WithReactContent(Swal)
     const navigate = useNavigate()
     const location = useLocation()
+    const [searchParams] = useSearchParams()
     const [ciclos, setCiclos] = useState([])
     const [cicloEdit, setCicloEdit] = useState(null)
     const [filterText, setFilterText] = useState("")
 
-    useEffect(() => {
-        if (location.state?.Id_Ciclo) {
-            setFilterText(String(location.state.Id_Ciclo))
-        }
-    }, [location.state])
     const [modalEncadenado, setModalEncadenado] = useState(null)
     const [colectaParaInseminacion, setColectaParaInseminacion] = useState(null)
     const [calendarioData, setCalendarioData] = useState(null)
@@ -44,6 +40,34 @@ const CrudCiclos = () => {
 
     const modalCalendarioRef = useRef(null)
     const modalCalendarioInstanceRef = useRef(null)
+    const yaAbiertoCalendarioRef = useRef(null)
+
+    useEffect(() => {
+        if (location.state?.Id_Ciclo && !location.state?.abrirCalendario) {
+            setFilterText(String(location.state.Id_Ciclo))
+        }
+    }, [location.state])
+
+    // Auto-abrir modal de calendario si se solicita por state o query param
+    useEffect(() => {
+        const targetId = location.state?.abrirCalendarioCicloId ||
+            (location.state?.abrirCalendario ? location.state?.Id_Ciclo : null) ||
+            searchParams.get('abrirCalendario') ||
+            searchParams.get('ciclo')
+
+        if (!targetId || !ciclos.length) return
+
+        if (yaAbiertoCalendarioRef.current !== String(targetId)) {
+            yaAbiertoCalendarioRef.current = String(targetId)
+            const encontrado = ciclos.find(c => String(c.Id_Ciclo) === String(targetId))
+            if (encontrado) {
+                setFilterText(String(targetId))
+                setTimeout(() => {
+                    handleAgregarCalendario(encontrado)
+                }, 200)
+            }
+        }
+    }, [ciclos, location.state, searchParams])
 
     const modalRef = useRef(null)
     const modalInstanceRef = useRef(null)

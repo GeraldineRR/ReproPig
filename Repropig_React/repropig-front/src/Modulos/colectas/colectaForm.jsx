@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import apiAxios from "../../api/axiosConfig.js";
 import Swal from "sweetalert2";
 import WithReactContent from "sweetalert2-react-content";
+import SelectorResponsables from "../../components/SelectorResponsables";
 
 // ✅ Acepta onColectaCreada para flujo encadenado desde ciclos
 const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada }) => {
@@ -250,32 +251,13 @@ const ColectaForm = ({ hideModal, rowToEdit = {}, refreshTable, onColectaCreada 
                 </div>
             )}
 
-            {/* RESPONSABLES */}
-            <div className="mt-4">
-                <label className="form-label fw-semibold">
-                    👨‍🌾 Responsables ({Id_Responsable.length})
-                </label>
-
-                <div className="d-flex flex-wrap gap-2">
-                    {responsables.map(r => {
-                        const activo = Id_Responsable.includes(r.Id_Responsable)
-
-                        return (
-                            <span
-                                key={r.Id_Responsable}
-                                onClick={() => toggleResponsable(r.Id_Responsable)}
-                                className={`px-3 py-2 rounded-pill ${activo
-                                    ? "bg-primary text-white shadow"
-                                    : "bg-light border"
-                                    }`}
-                                style={{ cursor: "pointer", fontSize: "13px" }}
-                            >
-                                {r.Nombres} {r.Apellidos}
-                            </span>
-                        )
-                    })}
-                </div>
-            </div>
+            {/* RESPONSABLES DROPDOWN */}
+            <SelectorResponsables
+                responsables={responsables}
+                seleccionados={Id_Responsable}
+                onToggle={toggleResponsable}
+                className="mt-4 position-relative"
+            />
 
             {/* DATOS FÍSICOS */}
             <div className="row g-3 mt-2">

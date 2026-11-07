@@ -85,19 +85,36 @@ export const getNotificacionesSeguimiento = async (req, res) => {
         const formatDateLocal = (dateVal) => {
             if (!dateVal) return null;
             if (typeof dateVal === 'string') {
-                const str = dateVal.split('T')[0].trim();
+                const str = dateVal.split('T')[0].split(' ')[0].trim();
                 if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
                     return str;
                 }
             }
             if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
-                return dateVal.toISOString().split('T')[0];
+                const y = dateVal.getFullYear();
+                const m = String(dateVal.getMonth() + 1).padStart(2, '0');
+                const d = String(dateVal.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
             }
-            const strVal = String(dateVal).split('T')[0].split(' ')[0];
+            const strVal = String(dateVal).split('T')[0].split(' ')[0].trim();
             if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) {
                 return strVal;
             }
             return null;
+        };
+
+        // Proyectar fecha sumando días de forma exacta local
+        const proyectarFecha = (fechaBaseStr, dias) => {
+            if (!fechaBaseStr) return null;
+            const clean = String(fechaBaseStr).split('T')[0].split(' ')[0].trim();
+            const [y, m, d] = clean.split('-').map(Number);
+            if (!y || !m || !d) return null;
+            const dateObj = new Date(y, m - 1, d, 12, 0, 0);
+            dateObj.setDate(dateObj.getDate() + dias);
+            const yyyy = dateObj.getFullYear();
+            const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateObj.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
         };
 
         const getTodayLocal = (offsetDays = 0) => {
@@ -116,7 +133,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
         const notificaciones = [];
 
         // =========================================================================
-        // 1. SEGUIMIENTO DE CAMADA (Lechones en partos activos - EAGER LOADED)
+        // 1. SEGUIMIENTO DE CAMADA (Lechones en partos activos)
         // =========================================================================
         try {
             const partos = await PartosModel.findAll({
@@ -128,21 +145,6 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                         model: PorcinoModel,
                         as: 'porcino',
                         attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
-                    },
-                    {
-                        model: PorcinoModel,
-                        as: 'lechones',
-                        where: { Tipo_Cerdo: 'Lechon' },
-                        required: false,
-                        attributes: ['Id_Porcino', 'Num_Chapeta'],
-                        include: [
-                            {
-                                model: SegCamadaModel,
-                                as: 'segcamadas',
-                                required: false,
-                                attributes: ['Id_SegCamada', 'Id_Porcino', 'Dia_Programado']
-                            }
-                        ]
                     }
                 ],
                 order: [['Id_parto', 'DESC']]
@@ -157,21 +159,27 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                 const madre = parto.porcino;
                 const nombreCerda = madre?.Nom_Porcino || madre?.Num_Chapeta || `Cerda #${parto.Id_Porcino}`;
 
-
                 const lechones = await PorcinoModel.findAll({
                     where: {
                         Id_parto: parto.Id_parto,
                         Tipo_Cerdo: 'Lechon',
                         Gen_Porcino: { [Op.ne]: '-' }
                     },
+                    include: [
+                        {
+                            model: SegCamadaModel,
+                            as: 'segcamadas',
+                            required: false,
+                            attributes: ['Id_SegCamada', 'Id_Porcino', 'Dia_Programado', 'Peso_Cria', 'Fecha_Real', 'Estado']
+                        }
+                    ],
                     order: [['Id_Porcino', 'ASC']]
                 });
-
 
                 // VERIFICAR LECHONES FALTANTES (REGISTRO INCOMPLETO)
                 const nacVivos = parto.Nac_vivos || 0;
                 const registradosVivos = lechones.length;
-                
+
                 if (nacVivos > registradosVivos) {
                     const faltantes = nacVivos - registradosVivos;
                     notificaciones.push({
@@ -196,18 +204,42 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                 // ALERTA DE PESO A LOS 21 DÍAS DE LOS LECHONES
                 // =========================================================================
                 const lechonesVivos = lechones.filter(l => l.Estado !== 'Muerto');
-                const lechonesSinPeso21 = lechonesVivos.filter(l =>
-                    l.Pes_21_Dias === null || l.Pes_21_Dias === undefined || l.Pes_21_Dias === '' || Number(l.Pes_21_Dias) <= 0
-                );
+
+                // Verificar si un lechón tiene peso registrado (en ficha o en seguimientos)
+                const tienePesoRegistrado = (l) => {
+                    const segs = l.segcamadas || [];
+                    // 1. Verificar peso en segcamada
+                    const tieneSegConPeso = segs.some(s =>
+                        s.Peso_Cria !== null &&
+                        s.Peso_Cria !== undefined &&
+                        Number(s.Peso_Cria) > 0 &&
+                        (!s.Estado || s.Estado.toLowerCase() === 'activo')
+                    );
+                    if (tieneSegConPeso) return true;
+
+                    // 2. Verificar peso al nacer registrado en la ficha del lechón
+                    if (l.Pes_Nacer !== null && l.Pes_Nacer !== undefined && Number(l.Pes_Nacer) > 0) {
+                        return true;
+                    }
+
+                    // 3. Fallback en caso de que exista columna Pes_21_Dias
+                    if (l.Pes_21_Dias !== null && l.Pes_21_Dias !== undefined && Number(l.Pes_21_Dias) > 0) {
+                        return true;
+                    }
+
+                    return false;
+                };
+
+                const lechonesSinPeso21 = lechonesVivos.filter(l => !tienePesoRegistrado(l));
 
                 if (lechonesSinPeso21.length > 0) {
                     const fecBase = lechones[0]?.Fec_Nac_Porcino || parto.Fec_fin || parto.Fec_inicio;
                     if (fecBase) {
                         const fecBaseStr = formatDateLocal(fecBase);
                         if (fecBaseStr) {
-                            const [by, bm, bd] = fecBaseStr.split('-').map(Number);
-                            const fecha21 = new Date(by, bm - 1, bd + 21);
-                            const fecha21Str = formatDateLocal(fecha21);
+                            const fecha21Str = proyectarFecha(fecBaseStr, 21);
+                            const [by, bm, bd] = fecha21Str.split('-').map(Number);
+                            const fecha21 = new Date(by, bm - 1, bd);
 
                             const [hy, hm, hd] = hoyStr.split('-').map(Number);
                             const dHoy = new Date(hy, hm - 1, hd);
@@ -243,6 +275,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                                     mensaje: mensajePeso21,
                                     ruta: `/partos`,
                                     idParto: parto.Id_parto,
+                                    fechaProgramada: fecha21Str,
                                     fecha21: fecha21Str,
                                     diasDiferencia: diffDays,
                                     cantidadPendientes: lechonesSinPeso21.length,
@@ -356,45 +389,52 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                     cal.ciclo?.porcino?.Num_Chapeta ||
                     `Cerda #${cal.ciclo?.Id_Cerda || '—'}`;
 
+                const fechaServicioStr = formatDateLocal(cal.Fecha_Servicio);
+
                 const eventosCalendario = [
                     {
                         clave: 'rc1',
+                        dias: 21,
                         nombre: '1er Control de Celo (RC1 - 21 días)',
-                        fecha: cal.rc1,
+                        fecha: fechaServicioStr ? proyectarFecha(fechaServicioStr, 21) : formatDateLocal(cal.rc1),
                         realizada: cal.real_rc1,
                         descripcion: 'Verificar si la cerda repite celo a los 21 días post-servicio.'
                     },
                     {
                         clave: 'rc2',
+                        dias: 42,
                         nombre: '2do Control de Celo (RC2 - 42 días)',
-                        fecha: cal.rc2,
+                        fecha: fechaServicioStr ? proyectarFecha(fechaServicioStr, 42) : formatDateLocal(cal.rc2),
                         realizada: cal.real_rc2,
                         descripcion: 'Confirmar ausencia de celo para asegurar diagnóstico de gestación (42 días).'
                     },
                     {
                         clave: 'cambio_alimento',
+                        dias: 100,
                         nombre: 'Ajuste de Alimento Gestación (Día 100)',
-                        fecha: cal.cambio_alimento,
+                        fecha: fechaServicioStr ? proyectarFecha(fechaServicioStr, 100) : formatDateLocal(cal.cambio_alimento),
                         realizada: cal.real_cambio_alimento,
                         descripcion: 'Ajustar ración alimenticia y requerimientos nutricionales del último tercio.'
                     },
                     {
                         clave: 'dia_107',
+                        dias: 107,
                         nombre: 'Maternidad y Lavado (Día 107)',
-                        fecha: cal.dia_107,
+                        fecha: fechaServicioStr ? proyectarFecha(fechaServicioStr, 107) : formatDateLocal(cal.dia_107),
                         realizada: cal.real_dia_107,
                         descripcion: 'Bañar, desparasitar y trasladar la cerda a jaula de paritorio.'
                     },
                     {
                         clave: 'parto',
+                        dias: 114,
                         nombre: 'Fecha Estimada de Parto (Día 114)',
-                        fecha: cal.parto,
+                        fecha: fechaServicioStr ? proyectarFecha(fechaServicioStr, 114) : formatDateLocal(cal.parto),
                         realizada: cal.real_parto,
                         descripcion: 'Monitorear dilatación y preparar kit de asistencia de parto.'
                     }
                 ];
 
-                // Verificar si hubo recelo que cancela eventos posteriores
+                // Verificar si hubo recelo que detiene las etapas posteriores
                 const receloRc1 = cal.resultado_rc1 === 'recelo_detectado';
                 const receloRc2 = cal.resultado_rc2 === 'recelo_detectado';
 
@@ -402,20 +442,31 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                     if (ev.realizada) continue;
                     if (!ev.fecha) continue;
 
-                    // Si recelo en RC1, solo RC1 aplica
+                    // Si hubo recelo en RC1, ninguna etapa posterior aplica
                     if (receloRc1 && ev.clave !== 'rc1') continue;
-                    // Si no hubo recelo en RC1 pero sí en RC2, solo RC1 y RC2 aplican
-                    if (!receloRc1 && receloRc2 && ev.clave !== 'rc1' && ev.clave !== 'rc2') continue;
+                    // Si hubo recelo en RC2, las etapas posteriores no aplican
+                    if (receloRc2 && ev.clave !== 'rc1' && ev.clave !== 'rc2') continue;
 
-                    const evFechaStr = formatDateLocal(ev.fecha);
-                    if (!evFechaStr) continue;
+                    // Validar secuencia lógica de prerequisitos
+                    if (ev.clave === 'rc2' && !cal.real_rc1) continue;
+                    if (ev.clave === 'cambio_alimento' && !cal.real_rc2) continue;
+                    if (ev.clave === 'dia_107' && !cal.real_rc2) continue;
+                    if (ev.clave === 'parto' && !cal.real_rc2) continue;
+
+                    const evFechaStr = ev.fecha;
+                    const [ey, em, ed] = evFechaStr.split('-').map(Number);
+                    const evDate = new Date(ey, em - 1, ed);
+
+                    const [hy, hm, hd] = hoyStr.split('-').map(Number);
+                    const hoyDate = new Date(hy, hm - 1, hd);
+                    const diffDays = Math.round((evDate.getTime() - hoyDate.getTime()) / (1000 * 60 * 60 * 24));
 
                     let tipo = null;
-                    if (evFechaStr === hoyStr) {
+                    if (diffDays === 0) {
                         tipo = 'hoy';
-                    } else if (evFechaStr === mananaStr || evFechaStr === enDosDiasStr) {
+                    } else if (diffDays > 0 && diffDays <= 3) {
                         tipo = 'recordatorio';
-                    } else if (evFechaStr < hoyStr) {
+                    } else if (diffDays < 0 && diffDays >= -60) {
                         tipo = 'atrasado';
                     }
 
@@ -423,11 +474,13 @@ export const getNotificacionesSeguimiento = async (req, res) => {
 
                     let mensaje = '';
                     if (tipo === 'hoy') {
-                        mensaje = `¡Hoy! Toca registrar ${ev.nombre} para ${nombreCerda} (Ciclo #${cal.Id_Ciclo}).`;
+                        mensaje = `¡Hoy! Toca registrar ${ev.nombre} para ${nombreCerda} (Ciclo #${cal.Id_Ciclo}). Fecha proyectada: ${evFechaStr}.`;
                     } else if (tipo === 'recordatorio') {
-                        mensaje = `Recordatorio: El ${evFechaStr} corresponde ${ev.nombre} para ${nombreCerda} (Ciclo #${cal.Id_Ciclo}).`;
+                        mensaje = diffDays === 1
+                            ? `Recordatorio: Mañana corresponde ${ev.nombre} para ${nombreCerda} (Ciclo #${cal.Id_Ciclo}). Fecha proyectada: ${evFechaStr}.`
+                            : `Recordatorio: En ${diffDays} días (${evFechaStr}) corresponde ${ev.nombre} para ${nombreCerda} (Ciclo #${cal.Id_Ciclo}).`;
                     } else if (tipo === 'atrasado') {
-                        mensaje = `⚠ Atrasado: ${ev.nombre} para ${nombreCerda} venció el ${evFechaStr} y está pendiente de registro.`;
+                        mensaje = `⚠️ Atrasado: ${ev.nombre} para ${nombreCerda} debió realizarse el ${evFechaStr} (hace ${Math.abs(diffDays)} días) y está pendiente de registro.`;
                     }
 
                     notificaciones.push({
@@ -438,6 +491,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
                         nombreCerda,
                         eventoClave: ev.clave,
                         fechaProgramada: evFechaStr,
+                        diasDiferencia: diffDays,
                         tipo,
                         titulo: ev.nombre,
                         mensaje,
@@ -450,65 +504,7 @@ export const getNotificacionesSeguimiento = async (req, res) => {
         }
 
         // =========================================================================
-        // 3. SEGUIMIENTO DE LA CERDA (Revisiones y tratamientos - EAGER LOADED)
-        // =========================================================================
-        try {
-            const seguimientosCerda = await Seguimiento_CerdaModel.findAll({
-                where: {
-                    Estado: 'Activo'
-                },
-                include: [
-                    {
-                        model: PorcinoModel,
-                        as: 'porcino',
-                        attributes: ['Id_Porcino', 'Nom_Porcino', 'Num_Chapeta']
-                    }
-                ],
-                order: [['Id_Seguimiento_Cerda', 'DESC']],
-                limit: 50
-            });
-
-            for (const seg of seguimientosCerda) {
-                if (!seg.Fecha) continue;
-                const segFechaStr = formatDateLocal(seg.Fecha);
-                if (!segFechaStr) continue;
-
-                let tipo = null;
-                if (segFechaStr === hoyStr) {
-                    tipo = 'hoy';
-                } else if (segFechaStr === mananaStr) {
-                    tipo = 'recordatorio';
-                } else if (segFechaStr < hoyStr) {
-                    // solo alertar si es reciente (últimos 7 días)
-                    const diffDays = Math.round((new Date(hoyStr) - new Date(segFechaStr)) / (1000 * 60 * 60 * 24));
-                    if (diffDays <= 7) {
-                        tipo = 'atrasado';
-                    }
-                }
-
-                if (!tipo) continue;
-
-                const nombreCerda = seg.porcino?.Nom_Porcino || seg.porcino?.Num_Chapeta || (seg.Id_Porcino ? `Cerda #${seg.Id_Porcino}` : '—');
-
-                notificaciones.push({
-                    id: `segcerda-${seg.Id_Seguimiento_Cerda}`,
-                    categoria: 'cerda',
-                    idSeguimientoCerda: seg.Id_Seguimiento_Cerda,
-                    idPorcino: seg.Id_Porcino,
-                    nombreCerda,
-                    fechaProgramada: segFechaStr,
-                    tipo,
-                    titulo: `Seguimiento de Cerda #${seg.Id_Seguimiento_Cerda}`,
-                    mensaje: seg.Observaciones ? `${nombreCerda}: ${seg.Observaciones}` : `Seguimiento clínico programado para ${nombreCerda}.`,
-                    ruta: `/seguimiento_cerda`
-                });
-            }
-        } catch (errCerda) {
-            console.error("Error cargando notificaciones de seguimiento cerda:", errCerda);
-        }
-
-        // =========================================================================
-        // 4. ORDENAR NOTIFICACIONES
+        // 3. ORDENAR NOTIFICACIONES
         // =========================================================================
         const ordenPrioridad = {
             atrasado: 0,

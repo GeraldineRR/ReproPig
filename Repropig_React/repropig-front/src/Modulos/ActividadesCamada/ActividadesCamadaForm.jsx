@@ -4,6 +4,7 @@ import apiAxios from "../../api/axiosConfig";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { calcularFechaProgramada } from "../../utils/dateUtils";
+import SelectorResponsables from "../../components/SelectorResponsables";
 
 const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
     const MySwal = withReactContent(Swal);
@@ -625,45 +626,12 @@ const ActividadesCamadaForm = ({ hideModal, actividadEdit, reload }) => {
                     </div>
 
                     {/* RESPONSABLES DROPDOWN */}
-                    <div className="mb-3 position-relative" ref={responsablesRef}>
-                        <label className="form-label fw-semibold">
-                            👨‍🌾 Responsables ({Id_Responsable.length})
-                        </label>
-                        <div 
-                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
-                            onClick={() => setShowResponsables(!showResponsables)}
-                            style={{ cursor: "pointer", userSelect: "none", backgroundColor: "#fff" }}
-                        >
-                            <span>
-                                {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
-                            </span>
-                            <span className="text-muted small">▼</span>
-                        </div>
-                        {showResponsables && (
-                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
-                                {responsables.length === 0 ? (
-                                    <li className="dropdown-item text-muted small">No hay responsables registrados</li>
-                                ) : (
-                                    responsables.filter(r => r.Estado === 'Activo' || Id_Responsable.map(String).includes(String(r.Id_Responsable))).map(r => {
-                                        const activo = Id_Responsable.map(String).includes(String(r.Id_Responsable));
-                                        return (
-                                            <li key={r.Id_Responsable} onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}>
-                                                <a className="dropdown-item d-flex align-items-center gap-2" href="#" onClick={(e) => e.preventDefault()} style={{ cursor: 'pointer' }}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="form-check-input m-0" 
-                                                        checked={activo}
-                                                        readOnly
-                                                    />
-                                                    {r.Nombres} {r.Apellidos || ''}
-                                                </a>
-                                            </li>
-                                        );
-                                    })
-                                )}
-                            </ul>
-                        )}
-                    </div>
+                    <SelectorResponsables
+                        responsables={responsables}
+                        seleccionados={Id_Responsable}
+                        onToggle={toggleResponsable}
+                        className="mb-3 position-relative"
+                    />
 
                     {/* TIPO DE ACTIVIDAD (arriba de Medicamentos) */}
                     <div className="mb-3">

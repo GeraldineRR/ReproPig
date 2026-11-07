@@ -3,6 +3,7 @@ import apiAxios from "../../api/axiosConfig";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { calcularFechaProgramada } from "../../utils/dateUtils";
+import SelectorResponsables from "../../components/SelectorResponsables";
 
 const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
     const MySwal = withReactContent(Swal);
@@ -428,42 +429,12 @@ const SegcamadaForm = ({ hideModal, segcamadaEdit, reload }) => {
                         />
                     </div>
 
-                    <div className="mb-3 position-relative">
-                        <label className="form-label fw-semibold">👨‍🌾 Responsables ({Id_Responsable.length})</label>
-
-                        <div
-                            className="form-control shadow-sm d-flex justify-content-between align-items-center"
-                            onClick={() => setShowResponsables(!showResponsables)}
-                            style={{ cursor: "pointer", userSelect: "none" }}
-                        >
-                            {Id_Responsable.length === 0 ? "Seleccionar responsables..." : `${Id_Responsable.length} seleccionados`}
-                        </div>
-
-                        {showResponsables && (
-                            <ul className="dropdown-menu show w-100 shadow-sm border-0 border-top-0 rounded-bottom" style={{ position: 'absolute', top: '100%', left: 0, zIndex: 1000, maxHeight: '200px', overflowY: 'auto', border: '1px solid #dee2e6' }}>
-                                {responsables.length === 0 ? (
-                                    <li className="dropdown-item text-muted small">No hay responsables registrados</li>
-                                ) : (
-                                    responsables.map(r => {
-                                        const activo = Id_Responsable.includes(String(r.Id_Responsable))
-                                        return (
-                                            <span
-                                                key={r.Id_Responsable}
-                                                onClick={(e) => { e.stopPropagation(); toggleResponsable(r.Id_Responsable); }}
-                                                className={`px-3 py-1.5 rounded-pill user-select-none ${activo
-                                                    ? "bg-primary text-white shadow-sm fw-bold"
-                                                    : "bg-white border text-secondary"
-                                                    }`}
-                                                style={{ cursor: "pointer", fontSize: "13px" }}
-                                            >
-                                                {activo ? "✓ " : "+ "}{r.Nombres} {r.Apellidos}
-                                            </span>
-                                        )
-                                    })
-                                )}
-                            </ul>
-                        )}
-                    </div>
+                    <SelectorResponsables
+                        responsables={responsables}
+                        seleccionados={Id_Responsable}
+                        onToggle={toggleResponsable}
+                        className="mb-3 position-relative"
+                    />
 
                     <div className="mb-3 position-relative">
                         <label className="form-label fw-semibold">💊 Medicamentos ({Id_Medicamento.length})</label>
