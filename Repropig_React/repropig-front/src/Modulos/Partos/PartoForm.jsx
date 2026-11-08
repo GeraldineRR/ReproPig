@@ -90,12 +90,6 @@ const PartosForm = ({ hideModal, rowToEdit = {}, reload, preloaded = null, onPar
             return false
         }
 
-        // Todos los eventos anteriores al parto deben estar registrados (no pendientes)
-        // 1er control de recelo (RC1), 2° control de recelo (RC2), cambio de alimento y día 107
-        if (!cal.real_rc1 || !cal.real_rc2 || !cal.real_cambio_alimento || !cal.real_dia_107) {
-            return false
-        }
-
         // No debe tener ya parto registrado (ni en cal.real_parto ni en c.partos)
         if (cal.real_parto) {
             return false

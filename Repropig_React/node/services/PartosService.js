@@ -87,11 +87,19 @@ if (data.Id_Ciclo) {
             if (cal.resultado_rc1 === 'recelo_detectado' || cal.resultado_rc2 === 'recelo_detectado') {
                 throw new Error("El ciclo presentó recelo detectado. No se puede registrar un parto en este ciclo");
             }
-            if (!cal.real_rc1 || !cal.real_rc2 || !cal.real_cambio_alimento || !cal.real_dia_107) {
-                throw new Error("El ciclo tiene eventos pendientes en el calendario reproductivo (debe completar RC1, RC2, Cambio de alimento y Día 107 para habilitar el parto)");
-            }
             if (cal.real_parto || (ciclo.partos && ciclo.partos.length > 0)) {
                 throw new Error("Este ciclo ya tiene un parto registrado");
+            }
+
+            // Si es un ciclo histórico o no se completaron manualmente los pasos previos del calendario,
+            // autocompletar con las fechas proyectadas para garantizar coherencia y permitir el registro
+            const autoUpdates = {};
+            if (!cal.real_rc1) { autoUpdates.real_rc1 = cal.rc1; autoUpdates.resultado_rc1 = 'no_recelo'; }
+            if (!cal.real_rc2) { autoUpdates.real_rc2 = cal.rc2; autoUpdates.resultado_rc2 = 'no_recelo'; }
+            if (!cal.real_cambio_alimento) { autoUpdates.real_cambio_alimento = cal.cambio_alimento; autoUpdates.resultado_cambio = 'realizado'; }
+            if (!cal.real_dia_107) { autoUpdates.real_dia_107 = cal.dia_107; autoUpdates.resultado_107 = 'realizado'; }
+            if (Object.keys(autoUpdates).length > 0) {
+                await CalendarioModel.update(autoUpdates, { where: { Id_Calendario: cal.Id_Calendario } });
             }
         }
 

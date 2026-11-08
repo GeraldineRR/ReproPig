@@ -305,29 +305,20 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
             }
 
             return (
-
                 <button
                     className="cal-btn-registrar"
                     style={{ whiteSpace: 'nowrap' }}
                     onClick={() => abrirFormularioParto(data)}
-                    disabled={isBloqueadoPorAnterior}
-                    title={
-                        isBloqueadoPorAnterior
-                            ? `Debes completar primero la etapa: ${anteriorCheck.anteriorNombre}`
-                            : 'Registrar parto'
-                    }
+                    title="Registrar parto"
                 >
-                    {isBloqueadoPorAnterior ? '🔒 Bloqueado' : '🐖 Registrar Parto'}
+                    🐖 Registrar Parto
                 </button>
-
             )
         }
 
         if (estado === 'pendiente') {
-            const disabled = isBloqueadoPorAnterior || isDisabledByNext
-            const tooltipTitle = isBloqueadoPorAnterior
-                ? `Debes completar primero la etapa: ${anteriorCheck.anteriorNombre}`
-                : isDisabledByNext
+            const disabled = isDisabledByNext
+            const tooltipTitle = isDisabledByNext
                 ? "No se puede registrar porque ya hay revisiones posteriores"
                 : "Registrar revisión"
 
@@ -338,7 +329,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
                     disabled={disabled}
                     title={tooltipTitle}
                 >
-                    {isBloqueadoPorAnterior ? '🔒 Bloqueado' : 'Registrar revisión'}
+                    Registrar revisión
                 </button>
             )
         }
@@ -394,7 +385,7 @@ const CalendarioForm = ({ hideModal, calendarioEdit, reload, preloaded, isInacti
     // Open revision panel
     const abrirPanelRevision = (evento, data) => {
         setRevisionPanel(evento)
-        setRevFechaRevision(data.fechaReal || new Date().toISOString().split('T')[0])
+        setRevFechaRevision(data.fechaReal || data.fechaProyectada || new Date().toISOString().split('T')[0])
         setRevResultado(data.resultado || (evento.esRecelo ? 'no_recelo' : ''))
         if (evento.esOpcionalRealizado) {
             setRevSeRealizo(data.resultado === 'no_realizado' ? 'no' : 'si')

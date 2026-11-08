@@ -118,35 +118,37 @@ class CalendarioService {
             throw new Error('No se puede modificar este evento porque ya existe un registro posterior')
         }
 
-        // Validar orden secuencial: los pasos anteriores deben estar completados
+        // Sincronizar orden secuencial: autocompletar pasos previos no registrados si se avanza a una etapa posterior (ej. ciclos históricos)
         if (evento === 'rc2' && !calendario.real_rc1) {
-            throw new Error('Debes completar primero el 1er control de recelo (RC1) antes de registrar el 2° control.')
+            calendario.real_rc1 = calendario.rc1;
+            calendario.resultado_rc1 = 'no_recelo';
+            await CalendarioModel.update({ real_rc1: calendario.rc1, resultado_rc1: 'no_recelo' }, { where: { Id_Calendario: id } });
         }
         if (evento === 'cambio_alimento') {
-            if (!calendario.real_rc1) {
-                throw new Error('Debes completar primero el 1er control de recelo (RC1).')
-            }
-            if (!calendario.real_rc2) {
-                throw new Error('Debes completar primero el 2° control de recelo (RC2).')
+            const autoUpdates = {};
+            if (!calendario.real_rc1) { autoUpdates.real_rc1 = calendario.rc1; autoUpdates.resultado_rc1 = 'no_recelo'; }
+            if (!calendario.real_rc2) { autoUpdates.real_rc2 = calendario.rc2; autoUpdates.resultado_rc2 = 'no_recelo'; }
+            if (Object.keys(autoUpdates).length > 0) {
+                await CalendarioModel.update(autoUpdates, { where: { Id_Calendario: id } });
             }
         }
         if (evento === 'dia_107') {
-            if (!calendario.real_rc1 || !calendario.real_rc2) {
-                throw new Error('Debes completar primero los controles de recelo anteriores.')
-            }
-            if (!calendario.real_cambio_alimento) {
-                throw new Error('Debes registrar primero el evento de Cambio de Alimento antes del Traslado a Lactancia.')
+            const autoUpdates = {};
+            if (!calendario.real_rc1) { autoUpdates.real_rc1 = calendario.rc1; autoUpdates.resultado_rc1 = 'no_recelo'; }
+            if (!calendario.real_rc2) { autoUpdates.real_rc2 = calendario.rc2; autoUpdates.resultado_rc2 = 'no_recelo'; }
+            if (!calendario.real_cambio_alimento) { autoUpdates.real_cambio_alimento = calendario.cambio_alimento; autoUpdates.resultado_cambio = 'realizado'; }
+            if (Object.keys(autoUpdates).length > 0) {
+                await CalendarioModel.update(autoUpdates, { where: { Id_Calendario: id } });
             }
         }
         if (evento === 'parto') {
-            if (!calendario.real_rc1 || !calendario.real_rc2) {
-                throw new Error('Debes completar primero los controles de recelo anteriores.')
-            }
-            if (!calendario.real_cambio_alimento) {
-                throw new Error('Debes completar primero el Cambio de Alimento.')
-            }
-            if (!calendario.real_dia_107) {
-                throw new Error('Debes completar primero el Traslado a Lactancia (Día 107).')
+            const autoUpdates = {};
+            if (!calendario.real_rc1) { autoUpdates.real_rc1 = calendario.rc1; autoUpdates.resultado_rc1 = 'no_recelo'; }
+            if (!calendario.real_rc2) { autoUpdates.real_rc2 = calendario.rc2; autoUpdates.resultado_rc2 = 'no_recelo'; }
+            if (!calendario.real_cambio_alimento) { autoUpdates.real_cambio_alimento = calendario.cambio_alimento; autoUpdates.resultado_cambio = 'realizado'; }
+            if (!calendario.real_dia_107) { autoUpdates.real_dia_107 = calendario.dia_107; autoUpdates.resultado_107 = 'realizado'; }
+            if (Object.keys(autoUpdates).length > 0) {
+                await CalendarioModel.update(autoUpdates, { where: { Id_Calendario: id } });
             }
         }
 
